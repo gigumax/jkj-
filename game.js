@@ -296,10 +296,18 @@ class World {
         if (tile.biome === 'desert') density = 0.20;
         if (tile.biome === 'mountain') density = 0.25;
         if (tile.biome === 'snow') density = 0.15;
+        // Mountain peaks (highest elevation) are rockier
+        if (tile.biome === 'mountain' && tile.elevation > 0.85) density = 0.65;
         if (r < density) {
             if (tile.biome === 'mountain') {
                 const r2 = this.rand(x, y, 2);
-                if (r2 < 0.20) tile.resource = 'stone';
+                if (tile.elevation > 0.85) {
+                    // Peaks are mostly bare rock
+                    if (r2 < 0.65) tile.resource = 'stone';
+                    else if (r2 < 0.78) tile.resource = 'coal';
+                    else if (r2 < 0.88) tile.resource = 'iron';
+                    else tile.resource = 'stone';
+                } else if (r2 < 0.20) tile.resource = 'stone';
                 else if (r2 < 0.38) tile.resource = 'coal';
                 else if (r2 < 0.55) tile.resource = 'iron';
                 else if (r2 < 0.70) tile.resource = 'copper';
@@ -426,6 +434,7 @@ class Player {
         this.harvesting = null;
         this.jumpVel = 0;
         this.yOffset = 0; // height above terrain from jumping
+        this.isClimbing = false;
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -1831,21 +1840,38 @@ class Game {
             let speed = PLAYER_SPEED * dt;
             if (isSprinting && !isSwimming) speed *= 1.8;
             if (isSwimming) speed *= 0.5; // slower in water
+            // Climbing: hold Space against mountain/snow terrain to scale steep slopes
+            const CLIMBABLE_BIOMES = ['mountain', 'snow'];
+            const isHoldingClimb = this.keys[' '] || this.keys['space'];
+            const curBiomeClimbable = currentTile && CLIMBABLE_BIOMES.includes(currentTile.biome);
+            let isClimbing = false;
+            if (isHoldingClimb && curBiomeClimbable) {
+                isClimbing = true;
+                speed *= 0.5; // climbing is slower than walking
+            }
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
-            // Collision + max step height (can't climb steep walls)
+            // Collision + max step height (can't climb steep walls unless climbing)
             const curH = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
             const MAX_STEP = 2.5;
+            const MAX_CLIMB = 40;
             const canStep = (nx, nz) => {
                 if (!this.world.isWalkable(nx, nz)) return false;
+                const targetTile = this.world.getTile(nx, nz);
                 const h = this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
-                return h - (curH + p.yOffset) <= MAX_STEP;
+                const diff = h - (curH + p.yOffset);
+                if (diff <= MAX_STEP) return true;
+                if (isClimbing && targetTile && CLIMBABLE_BIOMES.includes(targetTile.biome) && diff <= MAX_CLIMB) return true;
+                return false;
             };
             if (canStep(newX, p.z)) p.x = newX;
             if (canStep(p.x, newZ)) p.z = newZ;
             // Update facing
             p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
+            p.isClimbing = isClimbing;
+        } else {
+            p.isClimbing = false;
         }
 
         // Movement energy costs
@@ -1860,6 +1886,10 @@ class Game {
         if (isSwimming) {
             p.energy = Math.max(0, p.energy - dt * 0.5);
             if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 3); // drowning damage
+        }
+        // Climbing costs energy
+        if (p.isClimbing) {
+            p.energy = Math.max(0, p.energy - dt * 2.5);
         }
 
         p.x = Math.max(0.5, Math.min(WORLD_W - 0.5, p.x));
@@ -1880,6 +1910,12 @@ class Game {
         const targetY = groundY + p.yOffset;
         if (p.yOffset > 0) {
             p.y = targetY; // during jump, follow physics exactly
+        } else if (p.isClimbing) {
+            // Climb at a controlled vertical rate instead of snapping to full height
+            const CLIMB_RISE_SPEED = 3.5; // units/sec
+            const delta = targetY - p.y;
+            const step = Math.sign(delta) * Math.min(Math.abs(delta), CLIMB_RISE_SPEED * dt);
+            p.y += step;
         } else {
             p.y += (targetY - p.y) * Math.min(1, dt * 12);
         }
