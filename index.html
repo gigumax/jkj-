@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore & Build — Survival Technology</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Crosshair for 3D targeting -->
+        <div id="crosshair">+</div>
+
+        <!-- Pointer lock prompt -->
+        <div id="pointer-lock-prompt" class="hidden">Click to look around</div>
+
+        <!-- Top HUD -->
+        <div id="hud-top">
+            <div class="hud-item" id="hud-health">
+                <span class="hud-icon">❤️</span>
+                <div class="hud-bar"><div class="hud-bar-fill" id="health-bar"></div></div>
+            </div>
+            <div class="hud-item" id="hud-energy">
+                <span class="hud-icon">⚡</span>
+                <div class="hud-bar"><div class="hud-bar-fill" id="energy-bar"></div></div>
+            </div>
+            <div class="hud-item" id="hud-research">
+                <span class="hud-icon">🔬</span>
+                <span id="research-points">0</span> RP
+            </div>
+            <div class="hud-item" id="hud-power">
+                <span class="hud-icon">🔌</span>
+                <span id="power-display">0 / 0</span>
+            </div>
+        </div>
+
+        <!-- Inventory bar at bottom -->
+        <div id="inventory-bar"></div>
+
+        <!-- Side panels -->
+        <div id="panel-crafting" class="side-panel hidden">
+            <div class="panel-header">
+                <h2>🔨 Crafting</h2>
+                <button class="panel-close" data-panel="panel-crafting">✕</button>
+            </div>
+            <div id="crafting-list"></div>
+        </div>
+
+        <div id="panel-build" class="side-panel hidden">
+            <div class="panel-header">
+                <h2>🏗️ Build</h2>
+                <button class="panel-close" data-panel="panel-build">✕</button>
+            </div>
+            <div id="build-list"></div>
+        </div>
+
+        <div id="panel-tech" class="side-panel hidden">
+            <div class="panel-header">
+                <h2>🔬 Technology</h2>
+                <button class="panel-close" data-panel="panel-tech">✕</button>
+            </div>
+            <div id="tech-list"></div>
+        </div>
+
+        <!-- Build placement mode indicator -->
+        <div id="build-mode-indicator" class="hidden">
+            <span id="build-mode-name"></span>
+            <span class="hint">Press ESC to cancel</span>
+        </div>
+
+        <!-- Interaction prompt -->
+        <div id="interaction-prompt" class="hidden"></div>
+
+        <!-- Harvest progress -->
+        <div id="harvest-progress" class="hidden">
+            <div id="harvest-progress-fill"></div>
+            <span id="harvest-label"></span>
+        </div>
+
+        <!-- Bottom controls -->
+        <div id="bottom-controls">
+            <button class="ctrl-btn" id="btn-craft" title="Crafting (C)">🔨</button>
+            <button class="ctrl-btn" id="btn-build" title="Build (B)">🏗️</button>
+            <button class="ctrl-btn" id="btn-tech" title="Technology (T)">🔬</button>
+        </div>
+
+        <!-- Quest / Objective tracker -->
+        <div id="quest-tracker">
+            <div id="quest-icon">🎯</div>
+            <div id="quest-text"></div>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notifications"></div>
+
+        <!-- Start screen -->
+        <div id="start-screen">
+            <div class="start-content">
+                <h1>🌍 Explore & Build 3D</h1>
+                <p class="tagline">Gather resources. Craft tools. Build machines. Research technology. Endless exploration awaits!</p>
+
+                <div class="how-to-play">
+                    <h3>📖 How to Play</h3>
+                    <div class="htp-section">
+                        <div class="htp-title">1. Explore & Gather</div>
+                        <div class="htp-desc">Walk to <b>🌲 trees</b> and <b>🪨 rocks</b>. Look at them and press <kbd>E</kbd> or <kbd>Click</kbd> to harvest. You get <b>wood</b>, <b>stone</b>, <b>food</b>, and more. Resources respawn over time!</div>
+                    </div>
+                    <div class="htp-section">
+                        <div class="htp-title">2. Craft Tools</div>
+                        <div class="htp-desc">Press <kbd>C</kbd> to open crafting. Make a <b>⛏️ wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
+                    </div>
+                    <div class="htp-section">
+                        <div class="htp-title">3. Build Structures</div>
+                        <div class="htp-desc">Press <kbd>B</kbd> to open build menu. Place a <b>🔥 campfire</b> to restore energy. Build <b>🏭 furnaces</b> to smelt ore into ingots.</div>
+                    </div>
+                    <div class="htp-section">
+                        <div class="htp-title">4. Research Technology</div>
+                        <div class="htp-desc">Press <kbd>T</kbd> to open the tech tree. You earn <b>Research Points (RP)</b> from harvesting, crafting, and building <b>🔬 labs</b>. Unlock new tools, buildings, and automation!</div>
+                    </div>
+                    <div class="htp-section">
+                        <div class="htp-title">5. Automate Everything</div>
+                        <div class="htp-desc">Build <b>⛏️ mining drills</b>, <b>⚡ power plants</b>, <b>🤖 assemblers</b>, and <b>🔆 solar panels</b>. Create a self-running industrial empire!</div>
+                    </div>
+                    <div class="htp-section">
+                        <div class="htp-title">💡 Survival Tips</div>
+                        <div class="htp-desc">Stay near a campfire to restore energy. If energy hits zero, you lose health. If you die, you respawn nearby — no game over, ever!</div>
+                    </div>
+                </div>
+
+                <div class="controls-info">
+                    <h3>🎮 Controls</h3>
+                    <div class="control-row"><kbd>W A S D</kbd> <span>Move</span></div>
+                    <div class="control-row"><kbd>Mouse</kbd> <span>Look around</span></div>
+                    <div class="control-row"><kbd>E / Click</kbd> <span>Harvest / Interact / Place</span></div>
+                    <div class="control-row"><kbd>C</kbd> <span>Crafting Menu</span></div>
+                    <div class="control-row"><kbd>B</kbd> <span>Build Menu</span></div>
+                    <div class="control-row"><kbd>T</kbd> <span>Technology Tree</span></div>
+                    <div class="control-row"><kbd>ESC</kbd> <span>Cancel / Close / Release mouse</span></div>
+                </div>
+                <button id="start-btn">▶ Start Game</button>
+            </div>
+        </div>
+
+        <!-- Respawn screen -->
+        <div id="game-over" class="hidden">
+            <div class="start-content">
+                <h1>� You Collapsed!</h1>
+                <p>You'll respawn nearby with partial health. The world goes on forever!</p>
+                <button id="restart-btn">▶ Respawn</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
