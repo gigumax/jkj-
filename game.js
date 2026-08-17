@@ -24,8 +24,15 @@ const BIOMES = {
 
 // --- Resource types ---
 const RESOURCE_TYPES = {
-    tree:    { icon: '🌲', name: 'Tree',    yields: { wood: 3 },       biome: ['forest','grass'], hardness: 1 },
-    bush:    { icon: '🫐', name: 'Bush',    yields: { food: 2 },       biome: ['forest','grass'], hardness: 0 },
+    tree:    { icon: '🌲', name: 'Tree',    yields: { wood: 3 },       biome: ['forest','grass','sand','desert'], hardness: 1 },
+    bush:    { icon: '🫐', name: 'Berry Bush', yields: { food: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    red_mushroom:  { icon: '🍄', name: 'Red Mushroom', yields: { food: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    purple_mushroom: { icon: '🟣', name: 'Purple Mushroom', yields: { poison: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'poisonous' },
+    red_berries:   { icon: '🔴', name: 'Red Berries', yields: { food: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    nightshade:    { icon: '🫐', name: 'Dark Berries', yields: { deadly: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
+    cactus_fruit:  { icon: '🌵', name: 'Cactus Fruit', yields: { food: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    glowing_plant: { icon: '✨', name: 'Glowing Plant', yields: { food: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
+    thorn_bush:    { icon: '🌿', name: 'Thorn Bush', yields: { poison: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
     stone:   { icon: '🪨', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain'],       hardness: 2 },
     coal:    { icon: '⚫', name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
     iron:    { icon: '🔩', name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 3 },
@@ -38,6 +45,13 @@ const RESOURCE_TYPES = {
 const RESOURCE_RESPAWN = {
     tree: 45,
     bush: 30,
+    red_mushroom: 25,
+    purple_mushroom: 25,
+    red_berries: 30,
+    nightshade: 35,
+    cactus_fruit: 40,
+    glowing_plant: 50,
+    thorn_bush: 35,
     stone: 60,
     coal: 90,
     iron: 90,
@@ -262,27 +276,62 @@ class World {
     maybeSpawnResource(tile, x, y) {
         if (!BIOMES[tile.biome].walkable) return;
         const r = this.noise2.noise2D(x * 3, y * 3);
-        const biomeResources = Object.entries(RESOURCE_TYPES).filter(([_, def]) => def.biome.includes(tile.biome));
-        if (biomeResources.length === 0) return;
         let density = 0.15;
-        if (tile.biome === 'forest') density = 0.35;
+        if (tile.biome === 'forest') density = 0.50;
+        if (tile.biome === 'grass') density = 0.35;
+        if (tile.biome === 'sand') density = 0.20;
+        if (tile.biome === 'desert') density = 0.20;
         if (tile.biome === 'mountain') density = 0.25;
-        if (tile.biome === 'desert') density = 0.08;
+        if (tile.biome === 'snow') density = 0.15;
         if (r < density) {
             if (tile.biome === 'mountain') {
                 const r2 = this.noise.noise2D(x * 5, y * 5);
-                if (r2 < 0.25) tile.resource = 'stone';
-                else if (r2 < 0.45) tile.resource = 'coal';
-                else if (r2 < 0.65) tile.resource = 'iron';
-                else if (r2 < 0.78) tile.resource = 'copper';
-                else if (r2 < 0.85) tile.resource = 'gold';
+                if (r2 < 0.20) tile.resource = 'stone';
+                else if (r2 < 0.38) tile.resource = 'coal';
+                else if (r2 < 0.55) tile.resource = 'iron';
+                else if (r2 < 0.70) tile.resource = 'copper';
+                else if (r2 < 0.78) tile.resource = 'gold';
+                else if (r2 < 0.85) tile.resource = 'glowing_plant';
                 else tile.resource = 'stone';
-            } else if (tile.biome === 'forest' || tile.biome === 'grass') {
-                tile.resource = r < density * 0.7 ? 'tree' : 'bush';
-            } else if (tile.biome === 'desert' || tile.biome === 'snow') {
+            } else if (tile.biome === 'forest') {
                 const r2 = this.noise.noise2D(x * 7, y * 7);
-                if (r2 < 0.12) tile.resource = 'oil';
-                else if (tile.biome === 'snow' && r2 < 0.3) tile.resource = 'stone';
+                if (r2 < 0.45) tile.resource = 'tree';
+                else if (r2 < 0.58) tile.resource = 'bush';
+                else if (r2 < 0.68) tile.resource = 'red_berries';
+                else if (r2 < 0.76) tile.resource = 'red_mushroom';
+                else if (r2 < 0.84) tile.resource = 'purple_mushroom';
+                else if (r2 < 0.90) tile.resource = 'nightshade';
+                else tile.resource = 'tree';
+            } else if (tile.biome === 'grass') {
+                const r2 = this.noise.noise2D(x * 7, y * 7);
+                if (r2 < 0.50) tile.resource = 'tree';
+                else if (r2 < 0.65) tile.resource = 'bush';
+                else if (r2 < 0.75) tile.resource = 'red_berries';
+                else if (r2 < 0.82) tile.resource = 'red_mushroom';
+                else if (r2 < 0.88) tile.resource = 'purple_mushroom';
+                else if (r2 < 0.93) tile.resource = 'nightshade';
+                else tile.resource = 'tree';
+            } else if (tile.biome === 'sand') {
+                const r2 = this.noise.noise2D(x * 7, y * 7);
+                if (r2 < 0.40) tile.resource = 'tree';
+                else if (r2 < 0.60) tile.resource = 'red_berries';
+                else if (r2 < 0.75) tile.resource = 'cactus_fruit';
+                else if (r2 < 0.88) tile.resource = 'thorn_bush';
+                else tile.resource = 'tree';
+            } else if (tile.biome === 'desert') {
+                const r2 = this.noise.noise2D(x * 7, y * 7);
+                if (r2 < 0.30) tile.resource = 'tree';
+                else if (r2 < 0.50) tile.resource = 'cactus_fruit';
+                else if (r2 < 0.65) tile.resource = 'thorn_bush';
+                else if (r2 < 0.72) tile.resource = 'oil';
+                else tile.resource = 'tree';
+            } else if (tile.biome === 'snow') {
+                const r2 = this.noise.noise2D(x * 7, y * 7);
+                if (r2 < 0.20) tile.resource = 'tree';
+                else if (r2 < 0.35) tile.resource = 'glowing_plant';
+                else if (r2 < 0.50) tile.resource = 'stone';
+                else if (r2 < 0.60) tile.resource = 'oil';
+                else tile.resource = 'tree';
             }
             if (tile.resource) {
                 tile.resourceAmount = RESOURCE_TYPES[tile.resource].yields
@@ -298,7 +347,7 @@ class World {
     isWalkable(x, y) {
         const t = this.getTile(x, y);
         if (!t) return false;
-        if (!BIOMES[t.biome].walkable) return false;
+        // Water is walkable (swimming) but not buildable
         if (t.building) return false;
         return true;
     }
@@ -504,6 +553,13 @@ class ModelFactory {
         switch(type) {
             case 'tree': return this.createTree();
             case 'bush': return this.createBush();
+            case 'red_mushroom': return this.createMushroom(0xe74c3c, 0xfff8e7);
+            case 'purple_mushroom': return this.createMushroom(0x9b59b6, 0xfff8e7);
+            case 'red_berries': return this.createBerryPlant(0xe74c3c);
+            case 'nightshade': return this.createBerryPlant(0x2c0a3e);
+            case 'cactus_fruit': return this.createCactus();
+            case 'glowing_plant': return this.createGlowingPlant();
+            case 'thorn_bush': return this.createThornBush();
             case 'stone': return this.createRock(0x95a5a6);
             case 'coal': return this.createOreVein(0x1a1a1a);
             case 'iron': return this.createOreVein(0xc08050);
@@ -512,6 +568,132 @@ class ModelFactory {
             case 'oil': return this.createOilDeposit();
             default: return new THREE.Group();
         }
+    }
+
+    static createMushroom(capColor, stemColor) {
+        const group = new THREE.Group();
+        // Stem
+        const stem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.15, 0.5, 6),
+            new THREE.MeshLambertMaterial({ color: stemColor })
+        );
+        stem.position.y = 0.25;
+        group.add(stem);
+        // Cap
+        const cap = new THREE.Mesh(
+            new THREE.SphereGeometry(0.3, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+            new THREE.MeshLambertMaterial({ color: capColor })
+        );
+        cap.position.y = 0.5;
+        cap.castShadow = true;
+        group.add(cap);
+        // Spots
+        const spotMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        for (let i = 0; i < 3; i++) {
+            const spot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), spotMat);
+            const angle = (i / 3) * Math.PI * 2;
+            spot.position.set(Math.cos(angle) * 0.18, 0.6, Math.sin(angle) * 0.18);
+            group.add(spot);
+        }
+        return group;
+    }
+
+    static createBerryPlant(berryColor) {
+        const group = new THREE.Group();
+        // Leaves
+        const leafMat = new THREE.MeshLambertMaterial({ color: 0x3a7a2a });
+        for (let i = 0; i < 4; i++) {
+            const s = new THREE.Mesh(new THREE.SphereGeometry(0.4, 6, 5), leafMat);
+            s.position.set((Math.random()-0.5)*0.6, 0.3 + Math.random()*0.2, (Math.random()-0.5)*0.6);
+            s.scale.setScalar(0.8 + Math.random()*0.3);
+            s.castShadow = true;
+            group.add(s);
+        }
+        // Berries
+        const berryMat = new THREE.MeshLambertMaterial({ color: berryColor });
+        for (let i = 0; i < 6; i++) {
+            const b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 5), berryMat);
+            b.position.set((Math.random()-0.5)*0.8, 0.4 + Math.random()*0.3, (Math.random()-0.5)*0.8);
+            group.add(b);
+        }
+        return group;
+    }
+
+    static createCactus() {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: 0x2d8a3e });
+        // Main body
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 1.5, 8), mat);
+        body.position.y = 0.75;
+        body.castShadow = true;
+        group.add(body);
+        // Arms
+        for (let i = 0; i < 2; i++) {
+            const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.6, 6), mat);
+            arm.position.set(i === 0 ? 0.4 : -0.4, 0.8, 0);
+            arm.rotation.z = i === 0 ? -0.5 : 0.5;
+            arm.castShadow = true;
+            group.add(arm);
+        }
+        // Fruit on top
+        const fruitMat = new THREE.MeshLambertMaterial({ color: 0xe74c3c });
+        const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), fruitMat);
+        fruit.position.y = 1.6;
+        group.add(fruit);
+        return group;
+    }
+
+    static createGlowingPlant() {
+        const group = new THREE.Group();
+        // Stem
+        const stem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.08, 0.1, 0.6, 5),
+            new THREE.MeshLambertMaterial({ color: 0x4a8c4a })
+        );
+        stem.position.y = 0.3;
+        group.add(stem);
+        // Glowing flower head
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), glowMat);
+        head.position.y = 0.7;
+        group.add(head);
+        // Petals
+        const petalMat = new THREE.MeshLambertMaterial({ color: 0x00cc66, emissive: 0x004422 });
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 5), petalMat);
+            petal.position.set(Math.cos(angle) * 0.25, 0.65, Math.sin(angle) * 0.25);
+            group.add(petal);
+        }
+        // Point light
+        const light = new THREE.PointLight(0x00ff88, 0.5, 4);
+        light.position.y = 0.7;
+        group.add(light);
+        return group;
+    }
+
+    static createThornBush() {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: 0x5a4a2a });
+        const thornMat = new THREE.MeshLambertMaterial({ color: 0x3a2a1a });
+        for (let i = 0; i < 5; i++) {
+            const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.8, 4), mat);
+            branch.position.set((Math.random()-0.5)*0.8, 0.3 + Math.random()*0.3, (Math.random()-0.5)*0.8);
+            branch.rotation.set(Math.random()*0.5, Math.random()*Math.PI, Math.random()*0.5);
+            branch.castShadow = true;
+            group.add(branch);
+            // Thorns
+            for (let j = 0; j < 3; j++) {
+                const thorn = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.15, 4), thornMat);
+                thorn.position.copy(branch.position);
+                thorn.position.x += (Math.random()-0.5)*0.3;
+                thorn.position.y += (Math.random()-0.5)*0.3;
+                thorn.position.z += (Math.random()-0.5)*0.3;
+                thorn.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+                group.add(thorn);
+            }
+        }
+        return group;
     }
 
     static createBuilding(type) {
@@ -1228,8 +1410,54 @@ class Game {
             return;
         }
         if (tile.resource) {
-            this.startHarvest(target.tx, target.ty, tile);
+            const resDef = RESOURCE_TYPES[tile.resource];
+            if (resDef.forage) {
+                this.forage(target.tx, target.ty, tile, resDef);
+            } else {
+                this.startHarvest(target.tx, target.ty, tile);
+            }
         }
+    }
+
+    forage(tx, ty, tile, resDef) {
+        const resKey = this.getLastResourceType(resDef);
+        const forageType = resDef.forageType;
+        if (forageType === 'edible') {
+            const yields = resDef.yields;
+            for (const [item, amt] of Object.entries(yields)) {
+                if (item === 'food') {
+                    this.player.addItem('food', amt);
+                    this.notify(`+${amt} food from ${resDef.name}`, 'success');
+                    this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 5);
+                } else {
+                    this.player.addItem(item, amt);
+                    this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
+                }
+            }
+        } else if (forageType === 'poisonous') {
+            this.player.health = Math.max(0, this.player.health - 15);
+            this.player.energy = Math.max(0, this.player.energy - 10);
+            this.notify(`☠️ The ${resDef.name} was poisonous! -15 HP, -10 energy`, 'warning');
+        } else if (forageType === 'deadly') {
+            this.player.health = Math.max(0, this.player.health - 50);
+            this.notify(`💀 The ${resDef.name} was deadly! -50 HP!`, 'warning');
+        }
+        tile.resource = null;
+        tile.resourceAmount = 0;
+        this.removeResourceMesh(tx, ty);
+        this.world.queueRespawn(tx, ty, resKey);
+        this.player.energy = Math.max(0, this.player.energy - 1);
+        this.researchPoints += 0.3;
+        this.updateInventoryUI();
+        this.updateUI();
+        this.checkQuests();
+    }
+
+    getLastResourceType(resDef) {
+        for (const [key, def] of Object.entries(RESOURCE_TYPES)) {
+            if (def === resDef) return key;
+        }
+        return 'bush';
     }
 
     startHarvest(tx, ty, tile) {
@@ -1554,10 +1782,19 @@ class Game {
         if (this.keys['a'] || this.keys['arrowleft']) { dx -= rightX; dz -= rightZ; }
         if (this.keys['d'] || this.keys['arrowright']) { dx += rightX; dz += rightZ; }
 
+        // Sprinting
+        const isSprinting = (this.keys['shift'] || this.keys['shiftleft']) && (dx !== 0 || dz !== 0) && p.energy > 0;
+        // Swimming
+        const ptx = Math.floor(p.x), pty = Math.floor(p.z);
+        const currentTile = this.world.getTile(ptx, pty);
+        const isSwimming = currentTile && currentTile.biome === 'water';
+
         if (dx !== 0 || dz !== 0) {
             const len = Math.sqrt(dx*dx + dz*dz);
             dx /= len; dz /= len;
-            const speed = PLAYER_SPEED * dt;
+            let speed = PLAYER_SPEED * dt;
+            if (isSprinting && !isSwimming) speed *= 1.8;
+            if (isSwimming) speed *= 0.5; // slower in water
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
             // Collision
@@ -1566,6 +1803,20 @@ class Game {
             // Update facing
             p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
+        }
+
+        // Movement energy costs
+        if (isSwimming && (dx !== 0 || dz !== 0)) {
+            p.energy = Math.max(0, p.energy - dt * 3); // swimming costs 3/s
+        } else if (isSprinting) {
+            p.energy = Math.max(0, p.energy - dt * 2); // running costs 2/s
+        } else if (dx !== 0 || dz !== 0) {
+            p.energy = Math.max(0, p.energy - dt * 0.5); // walking costs 0.5/s
+        }
+        // Swimming drains energy even when idle
+        if (isSwimming) {
+            p.energy = Math.max(0, p.energy - dt * 0.5);
+            if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 3); // drowning damage
         }
 
         p.x = Math.max(0.5, Math.min(WORLD_W - 0.5, p.x));
