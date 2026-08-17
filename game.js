@@ -1084,9 +1084,13 @@ class Game {
         });
         window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
 
+        // Clear all keys when window loses focus
+        window.addEventListener('blur', () => { this.keys = {}; });
+
         // Pointer lock change
         document.addEventListener('pointerlockchange', () => {
             this.pointerLocked = (document.pointerLockElement === this.canvas);
+            if (!this.pointerLocked) this.keys = {}; // Clear keys when lock lost
             const prompt = document.getElementById('pointer-lock-prompt');
             if (this.gameRunning && !this.pointerLocked && !this.anyPanelOpen()) {
                 prompt.classList.remove('hidden');
