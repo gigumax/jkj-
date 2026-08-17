@@ -311,7 +311,18 @@ class World {
     getTileHeight(tx, ty) {
         const t = this.getTile(tx, ty);
         if (!t) return 0;
-        return BIOMES[t.biome].height * TILE_SIZE * 0.3;
+        // Use elevation noise for smooth terrain + biome base height
+        const baseHeight = BIOMES[t.biome].height;
+        const elev = t.elevation; // 0..1 from Perlin noise
+        // Water is below sea level, mountains get tall
+        if (t.biome === 'water') return -2;
+        if (t.biome === 'sand') return 0.5 + elev * 2;
+        if (t.biome === 'grass') return 1 + elev * 4;
+        if (t.biome === 'forest') return 1.5 + elev * 5;
+        if (t.biome === 'mountain') return 4 + elev * 18;
+        if (t.biome === 'snow') return 8 + elev * 22;
+        if (t.biome === 'desert') return 0.8 + elev * 3;
+        return baseHeight * 3;
     }
 
     queueRespawn(tx, ty, resourceType) {
@@ -347,10 +358,12 @@ class Player {
         this.y = 0;
         this.health = 100; this.maxHealth = 100;
         this.energy = 100; this.maxEnergy = 100;
+        this.rotation = 0;
         this.inventory = {};
         this.selectedSlot = 0;
         this.harvesting = null;
-        this.rotation = 0; // facing angle
+        this.jumpVel = 0;
+        this.yOffset = 0; // height above terrain from jumping
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -808,7 +821,7 @@ class Game {
         waterGeo.rotateX(-Math.PI / 2);
         const waterMat = new THREE.MeshLambertMaterial({ color: 0x1a5276, transparent: true, opacity: 0.7 });
         const water = new THREE.Mesh(waterGeo, waterMat);
-        water.position.y = -0.3;
+        water.position.y = 0;
         this.scene.add(water);
         this.waterMesh = water;
     }
@@ -1060,6 +1073,9 @@ class Game {
             if (e.key.toLowerCase() === 'b' && this.gameRunning) this.togglePanel('panel-build');
             if (e.key.toLowerCase() === 't' && this.gameRunning) this.togglePanel('panel-tech');
             if (e.key.toLowerCase() === 'e' && this.gameRunning) this.interact();
+            if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
+                this.player.jumpVel = 12;
+            }
             const num = parseInt(e.key);
             if (num >= 1 && num <= 9 && this.gameRunning) {
                 this.player.selectedSlot = num - 1;
@@ -1551,8 +1567,18 @@ class Game {
         p.x = Math.max(0.5, Math.min(WORLD_W - 0.5, p.x));
         p.z = Math.max(0.5, Math.min(WORLD_H - 0.5, p.z));
 
-        // Update player Y to terrain height
-        p.y = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
+        // Update player Y to terrain height + jump offset
+        const groundY = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
+        // Jump physics
+        if (p.jumpVel !== 0 || p.yOffset > 0) {
+            p.yOffset += p.jumpVel * dt;
+            p.jumpVel -= 30 * dt; // gravity
+            if (p.yOffset <= 0) {
+                p.yOffset = 0;
+                p.jumpVel = 0;
+            }
+        }
+        p.y = groundY + p.yOffset;
 
         // Update player mesh (hidden in FPV but kept for shadows)
         this.playerMesh.position.set(p.x * TILE_SIZE, p.y, p.z * TILE_SIZE);
