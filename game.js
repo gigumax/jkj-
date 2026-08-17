@@ -971,7 +971,8 @@ class Game {
 
     // --- Terrain mesh ---
     buildTerrain() {
-        const geo = new THREE.PlaneGeometry(WORLD_W * TILE_SIZE, WORLD_H * TILE_SIZE, WORLD_W - 1, WORLD_H - 1);
+        // (WORLD_W-1) segments of exactly TILE_SIZE each so vertices align with tile grid
+        const geo = new THREE.PlaneGeometry((WORLD_W - 1) * TILE_SIZE, (WORLD_H - 1) * TILE_SIZE, WORLD_W - 1, WORLD_H - 1);
         geo.rotateX(-Math.PI / 2);
 
         const colors = [];
@@ -993,6 +994,8 @@ class Game {
 
         const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: false });
         const terrain = new THREE.Mesh(geo, mat);
+        // Align terrain with tile grid: plane is centered at origin, shift so tile (0,0) is at world (0,0)
+        terrain.position.set((WORLD_W - 1) * TILE_SIZE / 2, 0, (WORLD_H - 1) * TILE_SIZE / 2);
         terrain.receiveShadow = true;
         terrain.name = 'terrain';
         this.scene.add(terrain);
@@ -1208,7 +1211,7 @@ class Game {
         }
       } catch (err) {
         console.error('Game start error:', err);
-        this.notify('Error starting game: ' + err.message, 'warning');
+        alert('Error starting game: ' + err.message + '\n\n' + err.stack);
         this.gameRunning = false;
       }
     }
@@ -1797,9 +1800,16 @@ class Game {
             if (isSwimming) speed *= 0.5; // slower in water
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
-            // Collision
-            if (this.world.isWalkable(newX, p.z)) p.x = newX;
-            if (this.world.isWalkable(p.x, newZ)) p.z = newZ;
+            // Collision + max step height (can't climb steep walls)
+            const curH = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
+            const MAX_STEP = 2.5;
+            const canStep = (nx, nz) => {
+                if (!this.world.isWalkable(nx, nz)) return false;
+                const h = this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
+                return h - (curH + p.yOffset) <= MAX_STEP;
+            };
+            if (canStep(newX, p.z)) p.x = newX;
+            if (canStep(p.x, newZ)) p.z = newZ;
             // Update facing
             p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
@@ -1833,7 +1843,13 @@ class Game {
                 p.jumpVel = 0;
             }
         }
-        p.y = groundY + p.yOffset;
+        // Smooth Y toward ground height (no snapping when walking slopes)
+        const targetY = groundY + p.yOffset;
+        if (p.yOffset > 0) {
+            p.y = targetY; // during jump, follow physics exactly
+        } else {
+            p.y += (targetY - p.y) * Math.min(1, dt * 12);
+        }
 
         // Update player mesh (hidden in FPV but kept for shadows)
         this.playerMesh.position.set(p.x * TILE_SIZE, p.y, p.z * TILE_SIZE);
