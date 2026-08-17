@@ -26,13 +26,13 @@ const BIOMES = {
 const RESOURCE_TYPES = {
     tree:    { icon: '🌲', name: 'Tree',    yields: { wood: 3 },       biome: ['forest','grass','sand','desert'], hardness: 1 },
     bush:    { icon: '🫐', name: 'Berry Bush', yields: { food: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
-    red_mushroom:  { icon: '🍄', name: 'Red Mushroom', yields: { food: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
-    purple_mushroom: { icon: '🟣', name: 'Purple Mushroom', yields: { poison: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'poisonous' },
-    red_berries:   { icon: '🔴', name: 'Red Berries', yields: { food: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
-    nightshade:    { icon: '🫐', name: 'Dark Berries', yields: { deadly: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
-    cactus_fruit:  { icon: '🌵', name: 'Cactus Fruit', yields: { food: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
-    glowing_plant: { icon: '✨', name: 'Glowing Plant', yields: { food: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
-    thorn_bush:    { icon: '🌿', name: 'Thorn Bush', yields: { poison: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
+    red_mushroom:  { icon: '🍄', name: 'Red Mushroom', yields: { red_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    purple_mushroom: { icon: '🟣', name: 'Purple Mushroom', yields: { purple_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'poisonous' },
+    red_berries:   { icon: '🔴', name: 'Red Berries', yields: { red_berries: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    nightshade:    { icon: '🫐', name: 'Dark Berries', yields: { nightshade: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
+    cactus_fruit:  { icon: '🌵', name: 'Cactus Fruit', yields: { cactus_fruit: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    glowing_plant: { icon: '✨', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
+    thorn_bush:    { icon: '🌿', name: 'Thorn Bush', yields: { thorn_bush: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
     stone:   { icon: '🪨', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain'],       hardness: 2 },
     coal:    { icon: '⚫', name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
     iron:    { icon: '🔩', name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 3 },
@@ -61,10 +61,18 @@ const RESOURCE_RESPAWN = {
 };
 
 // --- Items ---
+// Edible items have `edible: true` and effects applied only when eaten (press F)
 const ITEMS = {
     wood:        { icon: '🪵', name: 'Wood' },
     stone:       { icon: '🪨', name: 'Stone' },
-    food:        { icon: '🫐', name: 'Food' },
+    food:        { icon: '🫐', name: 'Food', edible: true, energy: 15, health: 0 },
+    red_mushroom:    { icon: '🍄', name: 'Red Mushroom', edible: true, energy: 10, health: 0 },
+    red_berries:     { icon: '🔴', name: 'Red Berries', edible: true, energy: 12, health: 0 },
+    cactus_fruit:    { icon: '🌵', name: 'Cactus Fruit', edible: true, energy: 12, health: 0 },
+    glowing_plant:   { icon: '✨', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
+    purple_mushroom: { icon: '🟣', name: 'Purple Mushroom', edible: true, energy: -10, health: -15 },
+    thorn_bush:      { icon: '🌿', name: 'Thorn Bush', edible: true, energy: -10, health: -15 },
+    nightshade:      { icon: '🫐', name: 'Dark Berries', edible: true, energy: 0, health: -50 },
     coal:        { icon: '⚫', name: 'Coal' },
     iron_ore:    { icon: '🔩', name: 'Iron Ore' },
     iron_ingot:  { icon: '🔗', name: 'Iron Ingot' },
@@ -1263,6 +1271,7 @@ class Game {
             if (e.key.toLowerCase() === 'b' && this.gameRunning) this.togglePanel('panel-build');
             if (e.key.toLowerCase() === 't' && this.gameRunning) this.togglePanel('panel-tech');
             if (e.key.toLowerCase() === 'e' && this.gameRunning) this.interact();
+            if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
                 this.player.jumpVel = 12;
             }
@@ -1429,26 +1438,10 @@ class Game {
 
     forage(tx, ty, tile, resDef) {
         const resKey = this.getLastResourceType(resDef);
-        const forageType = resDef.forageType;
-        if (forageType === 'edible') {
-            const yields = resDef.yields;
-            for (const [item, amt] of Object.entries(yields)) {
-                if (item === 'food') {
-                    this.player.addItem('food', amt);
-                    this.notify(`+${amt} food from ${resDef.name}`, 'success');
-                    this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 5);
-                } else {
-                    this.player.addItem(item, amt);
-                    this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
-                }
-            }
-        } else if (forageType === 'poisonous') {
-            this.player.health = Math.max(0, this.player.health - 15);
-            this.player.energy = Math.max(0, this.player.energy - 10);
-            this.notify(`☠️ The ${resDef.name} was poisonous! -15 HP, -10 energy`, 'warning');
-        } else if (forageType === 'deadly') {
-            this.player.health = Math.max(0, this.player.health - 50);
-            this.notify(`💀 The ${resDef.name} was deadly! -50 HP!`, 'warning');
+        // Picking up a plant is always safe - effects only apply when eaten
+        for (const [item, amt] of Object.entries(resDef.yields)) {
+            this.player.addItem(item, amt);
+            this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
         }
         tile.resource = null;
         tile.resourceAmount = 0;
@@ -1467,6 +1460,37 @@ class Game {
         }
         return 'bush';
     }
+
+    // --- Eating ---
+    eatSelectedItem() {
+        const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
+        const entry = items[this.player.selectedSlot];
+        if (!entry) { this.notify('No item selected!', 'warning'); return; }
+        const [itemKey] = entry;
+        const def = ITEMS[itemKey];
+        if (!def || !def.edible) { this.notify(`Can't eat ${def?.name || itemKey}!`, 'warning'); return; }
+        this.player.removeItem(itemKey, 1);
+        if (def.energy > 0 || def.health > 0) {
+            this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + Math.max(0, def.energy));
+            this.player.health = Math.min(this.player.maxHealth, this.player.health + Math.max(0, def.health));
+        }
+        if (def.health < 0) {
+            this.player.health = Math.max(0, this.player.health + def.health);
+        }
+        if (def.energy < 0) {
+            this.player.energy = Math.max(0, this.player.energy + def.energy);
+        }
+        if (def.health < 0 && def.health <= -40) {
+            this.notify(`💀 The ${def.name} was deadly! ${def.health} HP!`, 'warning');
+        } else if (def.health < 0) {
+            this.notify(`☠️ The ${def.name} was poisonous! ${def.health} HP, ${def.energy} energy`, 'warning');
+        } else {
+            this.notify(`🍽️ Ate ${def.name}: +${def.energy} energy`, 'success');
+        }
+        this.updateInventoryUI();
+        this.updateUI();
+    }
+
 
     startHarvest(tx, ty, tile) {
         const resDef = RESOURCE_TYPES[tile.resource];
