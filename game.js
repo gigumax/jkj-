@@ -1791,8 +1791,12 @@ class Game {
         const dt = Math.min((time - this.lastTime) / 1000, 0.1);
         this.lastTime = time;
         this.time += dt;
-        this.update(dt);
-        this.render();
+        try {
+            this.update(dt);
+            this.render();
+        } catch (err) {
+            console.error('Game loop error:', err);
+        }
         requestAnimationFrame((t) => this.loop(t));
     }
 
@@ -2039,7 +2043,7 @@ class Game {
         const h = this.player.harvesting;
         if (!h) return;
         const el = document.getElementById('harvest-progress');
-        const fill = document.getElementById('harvest-progress-fill').firstElementChild;
+        const fill = document.getElementById('harvest-progress-fill');
         const label = document.getElementById('harvest-label');
         const resDef = RESOURCE_TYPES[h.resource];
         const pct = (h.progress / h.total) * 100;
