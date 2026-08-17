@@ -7,7 +7,7 @@
 const TILE_SIZE = 4;       // 3D world units per tile
 const WORLD_W = 100;
 const WORLD_H = 100;
-const PLAYER_SPEED = 8;
+const PLAYER_SPEED = 3;
 const PLAYER_HEIGHT = 1.8;
 const INTERACT_RANGE = 6;
 
