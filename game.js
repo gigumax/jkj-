@@ -946,6 +946,12 @@ class Game {
         requestAnimationFrame((t) => this.loop(t));
         this.notify('🌍 Welcome to the 3D world! Explore, gather, build, and research.', 'info');
         this.requestPointerLock();
+        // Show prompt if pointer lock didn't engage
+        if (!this.pointerLocked) {
+            const prompt = document.getElementById('pointer-lock-prompt');
+            prompt.classList.remove('hidden');
+            prompt.classList.add('visible');
+        }
       } catch (err) {
         console.error('Game start error:', err);
         this.notify('Error starting game: ' + err.message, 'warning');
@@ -955,10 +961,21 @@ class Game {
 
     // --- Pointer lock ---
     requestPointerLock() {
-        this.canvas.requestPointerLock = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock;
+        // Try to lock immediately (works if called within user gesture like click)
+        if (this.gameRunning && !this.pointerLocked && !this.anyPanelOpen()) {
+            const el = this.canvas;
+            const req = el.requestPointerLock || el.mozRequestPointerLock;
+            if (req) {
+                try { req.call(el); } catch(e) {}
+            }
+        }
+        // Also set up click handler for re-locking after ESC or panel close
         this.canvas.onclick = () => {
             if (this.gameRunning && !this.pointerLocked && !this.anyPanelOpen()) {
-                this.canvas.requestPointerLock();
+                const req = this.canvas.requestPointerLock || this.canvas.mozRequestPointerLock;
+                if (req) {
+                    try { req.call(this.canvas); } catch(e) {}
+                }
             }
         };
     }
@@ -1010,7 +1027,7 @@ class Game {
             if (this.pointerLocked && this.gameRunning) {
                 this.cameraRotation.yaw -= e.movementX * 0.002;
                 this.cameraRotation.pitch -= e.movementY * 0.002;
-                this.cameraRotation.pitch = Math.max(-1.4, Math.min(0.3, this.cameraRotation.pitch));
+                this.cameraRotation.pitch = Math.max(-1.4, Math.min(1.4, this.cameraRotation.pitch));
             }
         });
 
@@ -1044,6 +1061,7 @@ class Game {
             btn.addEventListener('click', () => {
                 document.getElementById(btn.dataset.panel).classList.add('hidden');
                 document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+                this.requestPointerLock();
             });
         });
     }
@@ -1068,6 +1086,15 @@ class Game {
     closePanels() {
         document.querySelectorAll('.side-panel').forEach(p => p.classList.add('hidden'));
         document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+        // Re-request pointer lock after closing panels
+        if (this.gameRunning) {
+            this.requestPointerLock();
+            if (!this.pointerLocked) {
+                const prompt = document.getElementById('pointer-lock-prompt');
+                prompt.classList.remove('hidden');
+                prompt.classList.add('visible');
+            }
+        }
     }
 
     updatePanelContent(id) {
@@ -1401,6 +1428,11 @@ class Game {
         this.lastTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
         this.requestPointerLock();
+        if (!this.pointerLocked) {
+            const prompt = document.getElementById('pointer-lock-prompt');
+            prompt.classList.remove('hidden');
+            prompt.classList.add('visible');
+        }
     }
 
     // --- Notifications ---
@@ -1427,28 +1459,31 @@ class Game {
         const p = this.player;
 
         // Movement (WASD relative to camera yaw)
-        let mx = 0, mz = 0;
-        if (this.keys['w'] || this.keys['arrowup']) mz -= 1;
-        if (this.keys['s'] || this.keys['arrowdown']) mz += 1;
-        if (this.keys['a'] || this.keys['arrowleft']) mx -= 1;
-        if (this.keys['d'] || this.keys['arrowright']) mx += 1;
+        const yaw = this.cameraRotation.yaw;
+        // Forward vector (where camera looks on XZ plane)
+        const fwdX = -Math.sin(yaw);
+        const fwdZ = -Math.cos(yaw);
+        // Right vector (perpendicular to forward)
+        const rightX = Math.cos(yaw);
+        const rightZ = -Math.sin(yaw);
 
-        if (mx !== 0 || mz !== 0) {
-            const len = Math.sqrt(mx*mx + mz*mz);
-            mx /= len; mz /= len;
-            // Rotate by camera yaw
-            const cos = Math.cos(this.cameraRotation.yaw);
-            const sin = Math.sin(this.cameraRotation.yaw);
-            const wx = mx * cos - mz * sin;
-            const wz = mx * sin + mz * cos;
+        let dx = 0, dz = 0;
+        if (this.keys['w'] || this.keys['arrowup']) { dx += fwdX; dz += fwdZ; }
+        if (this.keys['s'] || this.keys['arrowdown']) { dx -= fwdX; dz -= fwdZ; }
+        if (this.keys['a'] || this.keys['arrowleft']) { dx -= rightX; dz -= rightZ; }
+        if (this.keys['d'] || this.keys['arrowright']) { dx += rightX; dz += rightZ; }
+
+        if (dx !== 0 || dz !== 0) {
+            const len = Math.sqrt(dx*dx + dz*dz);
+            dx /= len; dz /= len;
             const speed = PLAYER_SPEED * dt;
-            const newX = p.x + wx * speed;
-            const newZ = p.z + wz * speed;
+            const newX = p.x + dx * speed;
+            const newZ = p.z + dz * speed;
             // Collision
             if (this.world.isWalkable(newX, p.z)) p.x = newX;
             if (this.world.isWalkable(p.x, newZ)) p.z = newZ;
             // Update facing
-            p.rotation = Math.atan2(wx, wz);
+            p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
         }
 
@@ -1458,20 +1493,21 @@ class Game {
         // Update player Y to terrain height
         p.y = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
 
-        // Update player mesh
+        // Update player mesh (hidden in FPV but kept for shadows)
         this.playerMesh.position.set(p.x * TILE_SIZE, p.y, p.z * TILE_SIZE);
         this.playerMesh.rotation.y = p.rotation;
+        this.playerMesh.visible = false;
 
-        // Camera: third-person follow
-        const camDist = 6;
-        const camHeight = 3 + PLAYER_HEIGHT;
-        const yaw = this.cameraRotation.yaw;
-        const pitch = this.cameraRotation.pitch;
-        const camX = p.x * TILE_SIZE - Math.sin(yaw) * Math.cos(pitch) * camDist;
-        const camY = p.y + camHeight + Math.sin(-pitch) * camDist;
-        const camZ = p.z * TILE_SIZE - Math.cos(yaw) * Math.cos(pitch) * camDist;
-        this.camera.position.set(camX, camY, camZ);
-        this.camera.lookAt(p.x * TILE_SIZE, p.y + 1.5, p.z * TILE_SIZE);
+        // Camera: first-person view
+        const camYaw = this.cameraRotation.yaw;
+        const camPitch = this.cameraRotation.pitch;
+        const eyeHeight = PLAYER_HEIGHT;
+        this.camera.position.set(p.x * TILE_SIZE, p.y + eyeHeight, p.z * TILE_SIZE);
+        // Look direction from yaw + pitch
+        const lookX = p.x * TILE_SIZE - Math.sin(camYaw) * Math.cos(camPitch);
+        const lookY = p.y + eyeHeight + Math.sin(camPitch);
+        const lookZ = p.z * TILE_SIZE - Math.cos(camYaw) * Math.cos(camPitch);
+        this.camera.lookAt(lookX, lookY, lookZ);
 
         // Harvesting
         if (p.harvesting) {
