@@ -273,9 +273,14 @@ class World {
             }
         }
     }
+    // Deterministic pseudo-random 0..1 from tile coords (Perlin is always 0.5 at integer points!)
+    rand(x, y, salt = 0) {
+        const s = Math.sin(x * 127.1 + y * 311.7 + salt * 74.7 + this.seed * 0.001) * 43758.5453;
+        return s - Math.floor(s);
+    }
     maybeSpawnResource(tile, x, y) {
         if (!BIOMES[tile.biome].walkable) return;
-        const r = this.noise2.noise2D(x * 3, y * 3);
+        const r = this.rand(x, y, 1);
         let density = 0.15;
         if (tile.biome === 'forest') density = 0.50;
         if (tile.biome === 'grass') density = 0.35;
@@ -285,7 +290,7 @@ class World {
         if (tile.biome === 'snow') density = 0.15;
         if (r < density) {
             if (tile.biome === 'mountain') {
-                const r2 = this.noise.noise2D(x * 5, y * 5);
+                const r2 = this.rand(x, y, 2);
                 if (r2 < 0.20) tile.resource = 'stone';
                 else if (r2 < 0.38) tile.resource = 'coal';
                 else if (r2 < 0.55) tile.resource = 'iron';
@@ -294,7 +299,7 @@ class World {
                 else if (r2 < 0.85) tile.resource = 'glowing_plant';
                 else tile.resource = 'stone';
             } else if (tile.biome === 'forest') {
-                const r2 = this.noise.noise2D(x * 7, y * 7);
+                const r2 = this.rand(x, y, 3);
                 if (r2 < 0.45) tile.resource = 'tree';
                 else if (r2 < 0.58) tile.resource = 'bush';
                 else if (r2 < 0.68) tile.resource = 'red_berries';
@@ -303,7 +308,7 @@ class World {
                 else if (r2 < 0.90) tile.resource = 'nightshade';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'grass') {
-                const r2 = this.noise.noise2D(x * 7, y * 7);
+                const r2 = this.rand(x, y, 3);
                 if (r2 < 0.50) tile.resource = 'tree';
                 else if (r2 < 0.65) tile.resource = 'bush';
                 else if (r2 < 0.75) tile.resource = 'red_berries';
@@ -312,21 +317,21 @@ class World {
                 else if (r2 < 0.93) tile.resource = 'nightshade';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'sand') {
-                const r2 = this.noise.noise2D(x * 7, y * 7);
+                const r2 = this.rand(x, y, 3);
                 if (r2 < 0.40) tile.resource = 'tree';
                 else if (r2 < 0.60) tile.resource = 'red_berries';
                 else if (r2 < 0.75) tile.resource = 'cactus_fruit';
                 else if (r2 < 0.88) tile.resource = 'thorn_bush';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'desert') {
-                const r2 = this.noise.noise2D(x * 7, y * 7);
+                const r2 = this.rand(x, y, 3);
                 if (r2 < 0.30) tile.resource = 'tree';
                 else if (r2 < 0.50) tile.resource = 'cactus_fruit';
                 else if (r2 < 0.65) tile.resource = 'thorn_bush';
                 else if (r2 < 0.72) tile.resource = 'oil';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'snow') {
-                const r2 = this.noise.noise2D(x * 7, y * 7);
+                const r2 = this.rand(x, y, 3);
                 if (r2 < 0.20) tile.resource = 'tree';
                 else if (r2 < 0.35) tile.resource = 'glowing_plant';
                 else if (r2 < 0.50) tile.resource = 'stone';
