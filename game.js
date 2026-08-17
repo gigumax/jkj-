@@ -1889,7 +1889,6 @@ class Game {
         }
 
         // Campfire regen
-        const ptx = Math.floor(p.x), pty = Math.floor(p.z);
         for (let dy = -2; dy <= 2; dy++) {
             for (let dx = -2; dx <= 2; dx++) {
                 const t = this.world.getTile(ptx + dx, pty + dy);
