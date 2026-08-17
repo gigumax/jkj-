@@ -718,9 +718,11 @@ class Game {
         this.powerProduced = 0;
         this.powerConsumed = 0;
         this.tickAccumulator = 0;
+        this.meshUpdateAccumulator = 0;
         this.time = 0;
         this.resourceMeshes = new Map(); // "x,y" -> mesh
         this.buildingMeshes = new Map();
+        this.buildingPositions = new Set(); // "x,y" for efficient tick
         this.buildPreview = null;
         this.currentQuestIndex = 0;
         this.spawnPoint = { x: 0, z: 0 };
@@ -733,13 +735,13 @@ class Game {
     initThree() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87ceeb);
-        this.scene.fog = new THREE.Fog(0x87ceeb, 60, 200);
+        this.scene.fog = new THREE.Fog(0x87ceeb, 40, 140);
 
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 600);
 
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -750,14 +752,15 @@ class Game {
         const sun = new THREE.DirectionalLight(0xffffff, 0.8);
         sun.position.set(50, 80, 30);
         sun.castShadow = true;
-        sun.shadow.mapSize.width = 2048;
-        sun.shadow.mapSize.height = 2048;
-        sun.shadow.camera.left = -100;
-        sun.shadow.camera.right = 100;
-        sun.shadow.camera.top = 100;
-        sun.shadow.camera.bottom = -100;
-        sun.shadow.camera.far = 300;
+        sun.shadow.mapSize.width = 1024;
+        sun.shadow.mapSize.height = 1024;
+        sun.shadow.camera.left = -60;
+        sun.shadow.camera.right = 60;
+        sun.shadow.camera.top = 60;
+        sun.shadow.camera.bottom = -60;
+        sun.shadow.camera.far = 200;
         this.scene.add(sun);
+        this.scene.add(sun.target);
         this.sun = sun;
 
         // Hemisphere light for nicer ambient
@@ -801,7 +804,7 @@ class Game {
         this.terrainMesh = terrain;
 
         // Water plane at y=0
-        const waterGeo = new THREE.PlaneGeometry(WORLD_W * TILE_SIZE * 2, WORLD_H * TILE_SIZE * 2);
+        const waterGeo = new THREE.PlaneGeometry(WORLD_W * TILE_SIZE * 8, WORLD_H * TILE_SIZE * 8);
         waterGeo.rotateX(-Math.PI / 2);
         const waterMat = new THREE.MeshLambertMaterial({ color: 0x1a5276, transparent: true, opacity: 0.7 });
         const water = new THREE.Mesh(waterGeo, waterMat);
@@ -810,14 +813,38 @@ class Game {
         this.waterMesh = water;
     }
 
-    // --- Resource meshes ---
+    // --- Resource meshes (dynamic: only near player) ---
     buildResources() {
-        for (let y = 0; y < WORLD_H; y++) {
-            for (let x = 0; x < WORLD_W; x++) {
-                const tile = this.world.tiles[y][x];
-                if (tile.resource) {
-                    this.addResourceMesh(x, y, tile.resource);
+        this.resourceLoadRadius = 25; // tiles
+        this.updateResourceMeshes();
+    }
+
+    updateResourceMeshes() {
+        const ptx = Math.floor(this.player.x);
+        const pty = Math.floor(this.player.z);
+        const r = this.resourceLoadRadius;
+        const needed = new Set();
+        for (let dy = -r; dy <= r; dy++) {
+            for (let dx = -r; dx <= r; dx++) {
+                if (dx*dx + dy*dy <= r*r) {
+                    const tx = ptx + dx, ty = pty + dy;
+                    if (tx < 0 || tx >= WORLD_W || ty < 0 || ty >= WORLD_H) continue;
+                    const tile = this.world.tiles[ty][tx];
+                    if (tile.resource) {
+                        const key = `${tx},${ty}`;
+                        needed.add(key);
+                        if (!this.resourceMeshes.has(key)) {
+                            this.addResourceMesh(tx, ty, tile.resource);
+                        }
+                    }
                 }
+            }
+        }
+        // Remove meshes that are too far away
+        for (const [key, mesh] of this.resourceMeshes) {
+            if (!needed.has(key)) {
+                this.scene.remove(mesh);
+                this.resourceMeshes.delete(key);
             }
         }
     }
@@ -840,6 +867,36 @@ class Game {
         if (mesh) {
             this.scene.remove(mesh);
             this.resourceMeshes.delete(key);
+        }
+    }
+
+    // --- Building meshes (dynamic: only near player) ---
+    updateBuildingMeshes() {
+        const ptx = Math.floor(this.player.x);
+        const pty = Math.floor(this.player.z);
+        const r = this.resourceLoadRadius;
+        const needed = new Set();
+        for (let dy = -r; dy <= r; dy++) {
+            for (let dx = -r; dx <= r; dx++) {
+                if (dx*dx + dy*dy <= r*r) {
+                    const tx = ptx + dx, ty = pty + dy;
+                    if (tx < 0 || tx >= WORLD_W || ty < 0 || ty >= WORLD_H) continue;
+                    const tile = this.world.tiles[ty][tx];
+                    if (tile.building) {
+                        const key = `${tx},${ty}`;
+                        needed.add(key);
+                        if (!this.buildingMeshes.has(key)) {
+                            this.addBuildingMesh(tx, ty, tile.building);
+                        }
+                    }
+                }
+            }
+        }
+        for (const [key, mesh] of this.buildingMeshes) {
+            if (!needed.has(key)) {
+                this.scene.remove(mesh);
+                this.buildingMeshes.delete(key);
+            }
         }
     }
 
@@ -915,19 +972,21 @@ class Game {
             }
             this.resourceMeshes.clear();
             this.buildingMeshes.clear();
+            this.buildingPositions.clear();
             // Re-add lights
             this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
             const sun = new THREE.DirectionalLight(0xffffff, 0.8);
             sun.position.set(50, 80, 30);
             sun.castShadow = true;
-            sun.shadow.mapSize.width = 2048;
-            sun.shadow.mapSize.height = 2048;
-            sun.shadow.camera.left = -100;
-            sun.shadow.camera.right = 100;
-            sun.shadow.camera.top = 100;
-            sun.shadow.camera.bottom = -100;
-            sun.shadow.camera.far = 300;
+            sun.shadow.mapSize.width = 1024;
+            sun.shadow.mapSize.height = 1024;
+            sun.shadow.camera.left = -60;
+            sun.shadow.camera.right = 60;
+            sun.shadow.camera.top = 60;
+            sun.shadow.camera.bottom = -60;
+            sun.shadow.camera.far = 200;
             this.scene.add(sun);
+            this.scene.add(sun.target);
             this.sun = sun;
             this.scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a1f, 0.3));
         }
@@ -1235,6 +1294,7 @@ class Game {
         this.player.payCost(def.cost);
         tile.building = this.buildMode;
         tile.buildingData = { type: this.buildMode, progress: 0, fuelTimer: 0, active: false };
+        this.buildingPositions.add(`${tx},${ty}`);
         this.addBuildingMesh(tx, ty, this.buildMode);
         this.notify(`Built ${def.name}!`, 'success');
         this.updateInventoryUI();
@@ -1246,90 +1306,92 @@ class Game {
     buildingTick(dt) {
         this.powerProduced = 0;
         this.powerConsumed = 0;
-        for (let y = 0; y < WORLD_H; y++) {
-            for (let x = 0; x < WORLD_W; x++) {
-                const tile = this.world.tiles[y][x];
-                if (!tile.building) continue;
-                const def = BUILDINGS[tile.building];
-                const bd = tile.buildingData;
-                if (def.power > 0) {
-                    if (tile.building === 'power_plant') {
-                        if (bd.fuelTimer > 0) { bd.fuelTimer -= dt; this.powerProduced += def.power; bd.active = true; }
-                        else if (this.player.hasItem('coal', 1)) { this.player.removeItem('coal', 1); bd.fuelTimer = def.fuelTime; this.powerProduced += def.power; bd.active = true; }
-                        else bd.active = false;
-                    } else if (tile.building === 'solar_panel') { this.powerProduced += def.power; bd.active = true; }
-                }
-                if (def.powerUse > 0) this.powerConsumed += def.powerUse;
+        // First pass: calculate power
+        for (const key of this.buildingPositions) {
+            const [x, y] = key.split(',').map(Number);
+            const tile = this.world.tiles[y][x];
+            if (!tile.building) continue;
+            const def = BUILDINGS[tile.building];
+            const bd = tile.buildingData;
+            if (def.power > 0) {
+                if (tile.building === 'power_plant') {
+                    if (bd.fuelTimer > 0) { bd.fuelTimer -= dt; this.powerProduced += def.power; bd.active = true; }
+                    else if (this.player.hasItem('coal', 1)) { this.player.removeItem('coal', 1); bd.fuelTimer = def.fuelTime; this.powerProduced += def.power; bd.active = true; }
+                    else bd.active = false;
+                } else if (tile.building === 'solar_panel') { this.powerProduced += def.power; bd.active = true; }
             }
+            if (def.powerUse > 0) this.powerConsumed += def.powerUse;
         }
         const hasPower = this.powerProduced >= this.powerConsumed;
-        for (let y = 0; y < WORLD_H; y++) {
-            for (let x = 0; x < WORLD_W; x++) {
-                const tile = this.world.tiles[y][x];
-                if (!tile.building) continue;
-                const def = BUILDINGS[tile.building];
-                const bd = tile.buildingData;
-                if (def.powerUse > 0 && !hasPower) { bd.active = false; continue; }
-                if (tile.building === 'mining_drill') {
-                    bd.progress += dt;
-                    if (bd.progress >= 2) {
-                        bd.progress = 0;
-                        const neighbors = [[0,-1],[1,0],[0,1],[-1,0],[0,0]];
-                        for (const [dx,dy] of neighbors) {
-                            const nt = this.world.getTile(x+dx, y+dy);
-                            if (nt && nt.resource) {
-                                const resDef = RESOURCE_TYPES[nt.resource];
-                                for (const [item, amt] of Object.entries(resDef.yields)) this.player.addItem(item, amt);
-                                nt.resource = null; nt.resourceAmount = 0;
-                                this.removeResourceMesh(x+dx, y+dy);
-                                bd.active = true; break;
-                            }
+        // Second pass: production
+        for (const key of this.buildingPositions) {
+            const [x, y] = key.split(',').map(Number);
+            const tile = this.world.tiles[y][x];
+            if (!tile.building) continue;
+            const def = BUILDINGS[tile.building];
+            const bd = tile.buildingData;
+            if (def.powerUse > 0 && !hasPower) { bd.active = false; continue; }
+            if (tile.building === 'mining_drill') {
+                bd.progress += dt;
+                if (bd.progress >= 2) {
+                    bd.progress = 0;
+                    const neighbors = [[0,-1],[1,0],[0,1],[-1,0],[0,0]];
+                    for (const [dx,dy] of neighbors) {
+                        const nt = this.world.getTile(x+dx, y+dy);
+                        if (nt && nt.resource) {
+                            const resDef = RESOURCE_TYPES[nt.resource];
+                            for (const [item, amt] of Object.entries(resDef.yields)) this.player.addItem(item, amt);
+                            nt.resource = null; nt.resourceAmount = 0;
+                            this.removeResourceMesh(x+dx, y+dy);
+                            this.world.queueRespawn(x+dx, y+dy, nt.resource || 'stone');
+                            bd.active = true; break;
                         }
                     }
-                } else if (tile.building === 'oil_pump') {
-                    bd.progress += dt;
-                    if (bd.progress >= 3) {
-                        bd.progress = 0;
-                        const neighbors = [[0,0],[0,-1],[1,0],[0,1],[-1,0]];
-                        for (const [dx,dy] of neighbors) {
-                            const nt = this.world.getTile(x+dx, y+dy);
-                            if (nt && nt.resource === 'oil') {
-                                this.player.addItem('oil', 2);
-                                nt.resource = null; nt.resourceAmount = 0;
-                                this.removeResourceMesh(x+dx, y+dy);
-                                bd.active = true; break;
-                            }
+                }
+            } else if (tile.building === 'oil_pump') {
+                bd.progress += dt;
+                if (bd.progress >= 3) {
+                    bd.progress = 0;
+                    const neighbors = [[0,0],[0,-1],[1,0],[0,1],[-1,0]];
+                    for (const [dx,dy] of neighbors) {
+                        const nt = this.world.getTile(x+dx, y+dy);
+                        if (nt && nt.resource === 'oil') {
+                            this.player.addItem('oil', 2);
+                            nt.resource = null; nt.resourceAmount = 0;
+                            this.removeResourceMesh(x+dx, y+dy);
+                            this.world.queueRespawn(x+dx, y+dy, 'oil');
+                            bd.active = true; break;
                         }
                     }
-                } else if (tile.building === 'research_lab') {
-                    bd.progress += dt;
-                    if (bd.progress >= 2) { bd.progress = 0; this.researchPoints += def.researchRate; bd.active = true; }
-                } else if (tile.building === 'research_table') {
-                    bd.progress += dt;
-                    if (bd.progress >= 4) { bd.progress = 0; this.researchPoints += def.researchRate; bd.active = true; }
-                } else if (tile.building === 'furnace') {
-                    bd.progress += dt;
-                    if (bd.progress >= 3) {
-                        bd.progress = 0;
-                        for (const recipe of def.recipes) {
-                            if (this.player.hasCost(recipe.in)) {
-                                this.player.payCost(recipe.in);
-                                for (const [item, amt] of Object.entries(recipe.out)) this.player.addItem(item, amt);
-                                bd.active = true; break;
-                            }
+                }
+            } else if (tile.building === 'research_lab') {
+                bd.progress += dt;
+                if (bd.progress >= 2) { bd.progress = 0; this.researchPoints += def.researchRate; bd.active = true; }
+            } else if (tile.building === 'research_table') {
+                bd.progress += dt;
+                if (bd.progress >= 4) { bd.progress = 0; this.researchPoints += def.researchRate; bd.active = true; }
+            } else if (tile.building === 'furnace') {
+                bd.progress += dt;
+                if (bd.progress >= 3) {
+                    bd.progress = 0;
+                    for (const recipe of def.recipes) {
+                        if (this.player.hasCost(recipe.in)) {
+                            this.player.payCost(recipe.in);
+                            for (const [item, amt] of Object.entries(recipe.out)) this.player.addItem(item, amt);
+                            bd.active = true; break;
                         }
                     }
-                } else if (tile.building === 'assembler') {
-                    bd.progress += dt;
-                    if (bd.progress >= 2) {
-                        bd.progress = 0;
-                        for (const recipe of RECIPES) {
-                            if (recipe.tech && !this.completedTech.has(recipe.tech)) continue;
-                            if (this.player.hasCost(recipe.cost)) {
-                                this.player.payCost(recipe.cost);
-                                for (const [item, amt] of Object.entries(recipe.output)) this.player.addItem(item, amt);
-                                bd.active = true; break;
-                            }
+                }
+            } else if (tile.building === 'assembler') {
+                bd.progress += dt;
+                if (bd.progress >= 2) {
+                    bd.progress = 0;
+                    for (const recipe of RECIPES) {
+                        if (recipe.tech && !this.completedTech.has(recipe.tech)) continue;
+                        if (this.player.hasCost(recipe.cost)) {
+                            this.player.payCost(recipe.cost);
+                            for (const [item, amt] of Object.entries(recipe.output)) this.player.addItem(item, amt);
+                            bd.active = true; break;
                         }
                     }
                 }
@@ -1407,10 +1469,9 @@ class Game {
 
     countBuildings(type) {
         let count = 0;
-        for (let y = 0; y < WORLD_H; y++) {
-            for (let x = 0; x < WORLD_W; x++) {
-                if (this.world.tiles[y][x].building === type) count++;
-            }
+        for (const key of this.buildingPositions) {
+            const [x, y] = key.split(',').map(Number);
+            if (this.world.tiles[y][x].building === type) count++;
         }
         return count;
     }
@@ -1509,6 +1570,13 @@ class Game {
         const lookZ = p.z * TILE_SIZE - Math.cos(camYaw) * Math.cos(camPitch);
         this.camera.lookAt(lookX, lookY, lookZ);
 
+        // Move sun with player for consistent shadows
+        if (this.sun) {
+            this.sun.position.set(p.x * TILE_SIZE + 50, 80, p.z * TILE_SIZE + 30);
+            this.sun.target.position.set(p.x * TILE_SIZE, p.y, p.z * TILE_SIZE);
+            this.sun.target.updateMatrixWorld();
+        }
+
         // Harvesting
         if (p.harvesting) {
             p.harvesting.progress += dt;
@@ -1520,6 +1588,14 @@ class Game {
 
         // Interaction prompt
         this.updateInteractionPrompt();
+
+        // Dynamic mesh loading/unloading near player
+        this.meshUpdateAccumulator += dt;
+        if (this.meshUpdateAccumulator >= 0.3) {
+            this.meshUpdateAccumulator = 0;
+            this.updateResourceMeshes();
+            this.updateBuildingMeshes();
+        }
 
         // Building tick
         this.tickAccumulator += dt;
