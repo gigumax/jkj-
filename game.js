@@ -2423,9 +2423,32 @@ class Game {
         if (def.aggroWhenAttacked) targetCreature.aggroed = true;
         if (targetCreature.onWeb) targetCreature.onWeb = false;
 
+        const isRanged = itemDef?.ranged;
+        const isWolf = targetCreature.type === 'wolf';
+
+        // Wolves take fixed 10 hits from non-ranged weapons
+        if (isWolf && !isRanged) {
+            damage = targetCreature.maxHealth / 10;
+        }
+
+        // Headshot logic
         if (isHeadshot) {
-            damage = targetCreature.health;
-            this.notify(`HEADSHOT! ${def.name} killed instantly!`, 'success');
+            if (isWolf && !isRanged) {
+                // Headshot with non-ranged weapon knocks out the wolf
+                targetCreature.knockedOut = true;
+                targetCreature.knockoutTimer = 8;
+                targetCreature.state = 'idle';
+                targetCreature.targetX = targetCreature.x;
+                targetCreature.targetZ = targetCreature.z;
+                this.notify(`HEADSHOT! Wolf knocked out! (${Math.ceil(targetCreature.health / (targetCreature.maxHealth / 10))} hits left)`, 'success');
+                this.updateInventoryUI();
+                this.updateUI();
+                return true;
+            } else {
+                // Ranged weapon headshot = instant kill (for all creatures including wolves)
+                damage = targetCreature.health;
+                this.notify(`HEADSHOT! ${def.name} killed instantly!`, 'success');
+            }
         }
 
         targetCreature.health -= damage;
@@ -2442,7 +2465,12 @@ class Game {
             const mesh = this.creatureMeshes.get(targetCreature.id);
             if (mesh) { this.scene.remove(mesh); this.creatureMeshes.delete(targetCreature.id); }
         } else {
-            this.notify(`Hit ${def.name} for ${damage} with ${weaponName}!`, 'info');
+            if (isWolf && !isRanged) {
+                const hitsLeft = Math.ceil(targetCreature.health / (targetCreature.maxHealth / 10));
+                this.notify(`Hit Wolf for ${damage} with ${weaponName}! ${hitsLeft} hits left`, 'info');
+            } else {
+                this.notify(`Hit ${def.name} for ${damage} with ${weaponName}!`, 'info');
+            }
         }
         this.updateInventoryUI();
         this.updateUI();
@@ -2510,6 +2538,8 @@ class Game {
                 berryTimer: def.eatsBerries ? 10 + Math.random() * 20 : 0,
                 huntCooldown: 0,
                 defendCooldown: 0,
+                knockedOut: false,
+                knockoutTimer: 0,
             });
         }
     }
@@ -2524,14 +2554,27 @@ class Game {
             c.attackCooldown = Math.max(0, c.attackCooldown - dt);
             c.huntCooldown = Math.max(0, c.huntCooldown - dt);
             c.defendCooldown = Math.max(0, c.defendCooldown - dt);
-            const dx = p.x - c.x;
-            const dz = p.z - c.z;
-            const distToPlayer = Math.sqrt(dx * dx + dz * dz);
 
-            // Despawn if too far
-            if (distToPlayer > 60) {
-                this.creatures.splice(i, 1);
-                continue;
+            // Knockout timer for wolves
+            if (c.knockedOut) {
+                c.knockoutTimer -= dt;
+                if (c.knockoutTimer <= 0) {
+                    c.knockedOut = false;
+                    c.aggroed = true;
+                    this.notify('The wolf woke up!', 'warning');
+                } else {
+                    c.state = 'idle';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    c.moving = false;
+                    const mesh = this.creatureMeshes.get(c.id);
+                    if (mesh) {
+                        mesh.position.set(c.x * TILE_SIZE, c.y, c.z * TILE_SIZE);
+                        mesh.rotation.y = c.rotation;
+                        if (mesh.userData.bodyRef) mesh.userData.bodyRef.rotation.z = Math.PI / 2;
+                    }
+                    continue;
+                }
             }
 
             // Hunger timer for neutral creatures that can aggro
@@ -2806,6 +2849,7 @@ class Game {
                 if (mesh.userData.bodyRef) {
                     const bobAmp = isRunning ? 0.08 : 0.04;
                     mesh.userData.bodyRef.position.y = Math.abs(Math.sin(c.walkPhase)) * bobAmp;
+                    mesh.userData.bodyRef.rotation.z = 0;
                 }
                 // Head bob — slight up/down different from body
                 if (mesh.userData.headRef) {
@@ -3294,13 +3338,14 @@ class Game {
         // Update player Y to terrain height + jump offset
         const groundY = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
         // Jump physics
-        if (p.jumpVel !== 0 || p.yOffset > 0) {
+        if (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0) {
             p.yOffset += p.jumpVel * dt;
             p.jumpVel -= 30 * dt; // gravity
             // Track highest point for fall damage
             const currentY = groundY + p.yOffset;
             if (currentY > p.fallStartY) p.fallStartY = currentY;
-            if (p.yOffset <= 0) {
+            if (p.yOffset <= 0 && p.jumpVel < 0) {
+                // Landing
                 p.yOffset = 0;
                 p.jumpVel = 0;
                 // Fall damage
@@ -3350,8 +3395,9 @@ class Game {
         } else {
             // Check for walking off a cliff (ground drops below player)
             if (targetY < p.y - 0.5 && p.jumpVel === 0 && p.yOffset === 0) {
-                // Turn this into a fall - give downward velocity
+                // Turn this into a fall - give downward velocity and small offset
                 p.jumpVel = -2;
+                p.yOffset = -0.01;
                 p.fallStartY = p.y;
             } else {
                 p.y += (targetY - p.y) * Math.min(1, dt * 12);
@@ -3785,22 +3831,6 @@ class Game {
             card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
             if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
             list.appendChild(card);
-        }
-    }
-
-    updateBuildModeUI() {
-        const el = document.getElementById('build-mode-indicator');
-        if (this.buildMode) {
-            el.classList.remove('hidden');
-            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} — Click to place`;
-        } else {
-            el.classList.add('hidden');
-        }
-    }
-}
-
-// --- Start ---
-const game = new Game();
         }
     }
 
