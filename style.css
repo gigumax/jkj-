@@ -995,6 +995,40 @@ kbd {
     touch-action: none;
 }
 
+/* Secondary action buttons (eat, feed, inventory, pause, cancel) */
+#mobile-actions-2 {
+    position: absolute;
+    bottom: 270px;
+    left: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    max-width: 180px;
+}
+.mob-btn-sm {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+}
+.mob-btn-sm:active, .mob-btn-sm.active {
+    background: rgba(139,195,74,0.5);
+    border-color: #8bc34a;
+}
+
 /* Mobile-responsive adjustments */
 @media (max-width: 768px) {
     #hud-top {
@@ -1003,7 +1037,7 @@ kbd {
     .hud-item {
         padding: 2px 6px;
     }
-    #panel-crafting, #panel-build, #panel-tech {
+    #panel-crafting, #panel-build, #panel-tech, #panel-inventory {
         width: 90% !important;
         right: 5% !important;
     }
@@ -1029,5 +1063,40 @@ kbd {
         width: 36px;
         height: 36px;
         font-size: 16px;
+    }
+    .inv-slot {
+        cursor: pointer;
+    }
+    .inv-slot:active {
+        background: rgba(139,195,74,0.3);
+    }
+    .start-content {
+        max-width: 95% !important;
+        padding: 15px !important;
+        font-size: 13px !important;
+    }
+    .start-content h1 {
+        font-size: 1.5em !important;
+    }
+    .how-to-play, .controls-info {
+        font-size: 12px !important;
+    }
+    .htp-section, .control-row {
+        margin-bottom: 6px !important;
+    }
+    #start-screen {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #mobile-controls.active {
+        z-index: 50;
+    }
+    #build-mode-indicator {
+        font-size: 11px;
+        bottom: 100px;
+    }
+    #quest-tracker {
+        font-size: 11px;
+        max-width: 45%;
     }
 }

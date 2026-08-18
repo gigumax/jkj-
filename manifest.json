@@ -1,0 +1,18 @@
+{
+    "name": "Explore & Build 3D",
+    "short_name": "ExploreBuild",
+    "description": "First-person 3D survival game. Gather resources, craft tools, build machines, research technology.",
+    "start_url": "./",
+    "display": "fullscreen",
+    "orientation": "any",
+    "background_color": "#1a2a1a",
+    "theme_color": "#1a2a1a",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 80 L35 30 L50 55 L65 20 L90 80 Z' fill='%234a7c3a' stroke='%232d5a1f' stroke-width='3'/><circle cx='75' cy='25' r='8' fill='%23f4d68a'/></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

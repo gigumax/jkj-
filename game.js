@@ -921,6 +921,18 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.15, 3), bodyMat);
             ear.position.set(s * 0.1, 1.6, 0.8); ear.rotation.z = s * 0.5; g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), eyeMat);
+            eye.position.set(s * 0.08, 1.58, 1.05); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), pupilMat);
+            pupil.position.set(s * 0.08, 1.58, 1.08); g.add(pupil);
+        }
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.02), pupilMat);
+        mouth.position.set(0, 1.48, 1.08); g.add(mouth);
         const antMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
         for (let s = -1; s <= 1; s += 2) {
             const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.6, 4), antMat);
@@ -964,6 +976,18 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 3), bodyMat);
             ear.position.set(s * 0.07, 0.97, 0.5); ear.rotation.z = s * 0.5; g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), eyeMat);
+            eye.position.set(s * 0.06, 0.95, 0.68); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), pupilMat);
+            pupil.position.set(s * 0.06, 0.95, 0.7); g.add(pupil);
+        }
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.015, 0.015), pupilMat);
+        mouth.position.set(0, 0.88, 0.68); g.add(mouth);
         // No antlers - it's a baby
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.03, 0.5, 4), legMat);
@@ -994,6 +1018,21 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 3), bodyMat);
             ear.position.set(s * 0.15, 0.75, 0.6); ear.rotation.z = s * 0.4; g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), eyeMat);
+            eye.position.set(s * 0.1, 0.6, 0.92); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), pupilMat);
+            pupil.position.set(s * 0.1, 0.6, 0.95); g.add(pupil);
+        }
+        // Snout
+        const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.2, 5), bodyMat);
+        snout.position.set(0, 0.48, 0.98); snout.rotation.x = Math.PI / 2; g.add(snout);
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02), pupilMat);
+        mouth.position.set(0, 0.42, 1.05); g.add(mouth);
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.06, 0.5, 4), legMat);
             leg.position.set(s * 0.2, 0.25, f * 0.35); leg.castShadow = true;
@@ -1019,6 +1058,21 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 3), bodyMat);
             ear.position.set(s * 0.12, 0.98, 0.55); g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), eyeMat);
+            eye.position.set(s * 0.08, 0.82, 0.88); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), pupilMat);
+            pupil.position.set(s * 0.08, 0.82, 0.9); g.add(pupil);
+        }
+        // Snout
+        const snout = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.25, 5), bodyMat);
+        snout.position.set(0, 0.7, 0.92); snout.rotation.x = Math.PI / 2; g.add(snout);
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.02), pupilMat);
+        mouth.position.set(0, 0.62, 1.0); g.add(mouth);
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.55, 4), legMat);
             leg.position.set(s * 0.16, 0.28, f * 0.35); leg.castShadow = true;
@@ -1041,6 +1095,21 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bodyMat);
             ear.position.set(s * 0.2, 1.3, 0.7); g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), eyeMat);
+            eye.position.set(s * 0.12, 1.05, 1.1); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), pupilMat);
+            pupil.position.set(s * 0.12, 1.05, 1.13); g.add(pupil);
+        }
+        // Snout
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.12, 5, 4), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
+        snout.position.set(0, 0.92, 1.15); snout.scale.set(1, 0.7, 0.8); g.add(snout);
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.02), pupilMat);
+        mouth.position.set(0, 0.85, 1.18); g.add(mouth);
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.65, 5), legMat);
             leg.position.set(s * 0.28, 0.32, f * 0.45); leg.castShadow = true;
@@ -1061,6 +1130,18 @@ class ModelFactory {
             const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.35, 4), bodyMat);
             ear.position.set(s * 0.07, 0.68, 0.22); ear.castShadow = true; g.add(ear);
         }
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat);
+            eye.position.set(s * 0.06, 0.45, 0.38); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 4), pupilMat);
+            pupil.position.set(s * 0.06, 0.45, 0.4); g.add(pupil);
+        }
+        // Mouth
+        const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.015, 0.015), pupilMat);
+        mouth.position.set(0, 0.38, 0.4); g.add(mouth);
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.18, 3), bodyMat);
             leg.position.set(s * 0.1, 0.09, f * 0.12);
@@ -1079,6 +1160,22 @@ class ModelFactory {
         abdomen.position.set(0, 0.4, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; g.add(abdomen);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), bodyMat);
         head.position.set(0, 0.35, 0.3); g.add(head);
+        // Eyes (8 eyes - 4 pairs)
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+        for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI * 0.6 - Math.PI * 0.3;
+            for (let s = -1; s <= 1; s += 2) {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), eyeMat);
+                eye.position.set(s * 0.06, 0.4 + Math.sin(a) * 0.05, 0.42 + Math.cos(a) * 0.08);
+                g.add(eye);
+            }
+        }
+        // Mouth (fangs)
+        const fangMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+        for (let s = -1; s <= 1; s += 2) {
+            const fang = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.08, 3), fangMat);
+            fang.position.set(s * 0.05, 0.28, 0.48); fang.rotation.x = Math.PI; g.add(fang);
+        }
         for (let i = 0; i < 8; i++) {
             const side = i < 4 ? -1 : 1;
             const idx = i % 4;
@@ -2019,6 +2116,19 @@ class Game {
                 this.notify('⚡ Restored energy by the campfire', 'success');
                 this.updateUI();
             } else { this.notify('Energy already full', 'info'); }
+        } else if (tile.building === 'wood_hut') {
+            if (this.isNight) {
+                if (this.sleeping) {
+                    this.notify('Already sleeping!', 'info');
+                } else {
+                    this.sleeping = true;
+                    this.sleepTimer = 10;
+                    this.notify('😴 Sleeping... Rest until dawn.', 'info');
+                    this.updateUI();
+                }
+            } else {
+                this.notify('You can only sleep at night!', 'warning');
+            }
         } else if (tile.building === 'furnace') {
             for (const recipe of def.recipes) {
                 if (this.player.hasCost(recipe.in)) {
@@ -2305,7 +2415,12 @@ class Game {
         const tile = this.world.getTile(cx, cz);
         if (!tile || !BIOMES[tile.biome].walkable) return;
         // Pick a creature type that fits the biome, weighted by spawnWeight
-        const candidates = Object.entries(CREATURE_TYPES).filter(([_, def]) => def.biomes.includes(tile.biome));
+        let candidates = Object.entries(CREATURE_TYPES).filter(([_, def]) => def.biomes.includes(tile.biome));
+        // At night: bears, spiders, deer, and fawn don't spawn
+        if (this.isNight) {
+            const nocturnalBlocked = ['bear', 'spider', 'deer', 'fawn'];
+            candidates = candidates.filter(([t]) => !nocturnalBlocked.includes(t));
+        }
         if (candidates.length === 0) return;
         const totalWeight = candidates.reduce((sum, [_, d]) => sum + (d.spawnWeight || 1), 0);
         let roll = Math.random() * totalWeight;
@@ -2783,23 +2898,7 @@ class Game {
     }
 
     respawn() {
-        this.player.health = 50;
-        this.player.energy = 50;
-        this.player.x = this.spawnPoint.x;
-        this.player.z = this.spawnPoint.z;
-        this.player.harvesting = null;
-        this.gameRunning = true;
-        document.getElementById('game-over').classList.add('hidden');
-        document.getElementById('crosshair').classList.add('visible');
-        this.notify('😵 You respawned nearby with partial health!', 'warning');
-        this.lastTime = performance.now();
-        requestAnimationFrame((t) => this.loop(t));
-        this.requestPointerLock();
-        if (!this.pointerLocked) {
-            const prompt = document.getElementById('pointer-lock-prompt');
-            prompt.classList.remove('hidden');
-            prompt.classList.add('visible');
-        }
+        this.start();
     }
 
     // --- Notifications ---
@@ -3347,11 +3446,50 @@ class Game {
     }
 
     // --- UI Updates ---
+    updateDayNightLighting() {
+        const t = this.dayTime;
+        // Calculate brightness factor: 1 at midday, 0 at midnight
+        // dayTime: 0=dawn, 0.25=noon, 0.5=dusk, 0.75=midnight, 1=dawn again
+        const sunAngle = t * Math.PI * 2 - Math.PI / 2; // sun goes in a circle
+        const sunHeight = Math.sin(sunAngle); // -1 at midnight, +1 at noon
+        const brightness = Math.max(0, Math.min(1, (sunHeight + 0.3) / 0.8));
+
+        if (this.sun) {
+            this.sun.intensity = 0.1 + brightness * 0.7;
+            this.sun.color.setHex(brightness > 0.3 ? 0xffffff : 0x4a5a8a);
+        }
+        if (this.ambientLight) {
+            this.ambientLight.intensity = 0.15 + brightness * 0.35;
+        }
+        if (this.hemiLight) {
+            this.hemiLight.intensity = 0.1 + brightness * 0.2;
+        }
+        if (this.scene.background) {
+            const dayColor = new THREE.Color(0x87ceeb);
+            const nightColor = new THREE.Color(0x0a0a2a);
+            const c = nightColor.lerp(dayColor, brightness);
+            this.scene.background.copy(c);
+        }
+        if (this.scene.fog) {
+            const dayFog = new THREE.Color(0x87ceeb);
+            const nightFog = new THREE.Color(0x0a0a2a);
+            const c = nightFog.lerp(dayFog, brightness);
+            this.scene.fog.color.copy(c);
+        }
+    }
+
     updateUI() {
         document.getElementById('health-bar').style.width = (this.player.health / this.player.maxHealth * 100) + '%';
         document.getElementById('energy-bar').style.width = (this.player.energy / this.player.maxEnergy * 100) + '%';
         document.getElementById('research-points').textContent = Math.floor(this.researchPoints);
         document.getElementById('power-display').textContent = `${Math.floor(this.powerProduced)} / ${Math.floor(this.powerConsumed)}`;
+        const timeEl = document.getElementById('time-display');
+        if (timeEl) {
+            const phase = this.dayTime < 0.25 ? '🌅 Morning' :
+                          this.dayTime < 0.5 ? '☀️ Day' :
+                          this.dayTime < 0.75 ? '🌙 Night' : '🌙 Late Night';
+            timeEl.textContent = phase;
+        }
         this.updateInventoryUI();
         if (!document.getElementById('panel-crafting').classList.contains('hidden')) this.renderCrafting();
         if (!document.getElementById('panel-build').classList.contains('hidden')) this.renderBuild();

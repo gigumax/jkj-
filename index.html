@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a2a1a">
+    <meta name="description" content="First-person 3D survival game. Gather resources, craft tools, build machines, research technology.">
     <title>Explore & Build — Survival Technology</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 80 L35 30 L50 55 L65 20 L90 80 Z' fill='%234a7c3a' stroke='%232d5a1f' stroke-width='3'/><circle cx='75' cy='25' r='8' fill='%23f4d68a'/></svg>">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
@@ -184,9 +190,18 @@
             <!-- Right action buttons -->
             <div id="mobile-actions">
                 <button class="mob-btn" id="mob-jump">⬆</button>
-                <button class="mob-btn" id="mob-climb">🧗</button>
                 <button class="mob-btn" id="mob-sprint">🏃</button>
+                <button class="mob-btn" id="mob-climb">🧗</button>
+                <button class="mob-btn" id="mob-attack">⚔️</button>
                 <button class="mob-btn" id="mob-interact">✋</button>
+            </div>
+            <!-- Secondary action buttons (left side, above joystick) -->
+            <div id="mobile-actions-2">
+                <button class="mob-btn-sm" id="mob-eat">�</button>
+                <button class="mob-btn-sm" id="mob-feed">🤲</button>
+                <button class="mob-btn-sm" id="mob-inv">🎒</button>
+                <button class="mob-btn-sm" id="mob-pause">⏸</button>
+                <button class="mob-btn-sm" id="mob-cancel">✖</button>
             </div>
             <!-- Look area (right side of screen) -->
             <div id="mobile-look-zone"></div>
@@ -206,6 +221,6 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=13"></script>
+    <script src="game.js?v=14"></script>
 </body>
 </html>
