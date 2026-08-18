@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explore & Build — Survival Technology</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 80 L35 30 L50 55 L65 20 L90 80 Z' fill='%234a7c3a' stroke='%232d5a1f' stroke-width='3'/><circle cx='75' cy='25' r='8' fill='%23f4d68a'/></svg>">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
@@ -41,6 +42,14 @@
         <div id="inventory-bar"></div>
 
         <!-- Side panels -->
+        <div id="panel-inventory" class="side-panel hidden">
+            <div class="panel-header">
+                <h2>🎒 Inventory</h2>
+                <button class="panel-close" data-panel="panel-inventory">✕</button>
+            </div>
+            <div id="inventory-grid"></div>
+        </div>
+
         <div id="panel-crafting" class="side-panel hidden">
             <div class="panel-header">
                 <h2>🔨 Crafting</h2>
@@ -82,7 +91,7 @@
 
         <!-- Bottom controls -->
         <div id="bottom-controls">
-            <button class="ctrl-btn" id="btn-craft" title="Crafting (C)">🔨</button>
+            <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">🔨</button>
             <button class="ctrl-btn" id="btn-build" title="Build (B)">🏗️</button>
             <button class="ctrl-btn" id="btn-tech" title="Technology (T)">🔬</button>
         </div>
@@ -114,7 +123,7 @@
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">2. Craft Tools</div>
-                        <div class="htp-desc">Press <kbd>C</kbd> to open crafting. Make a <b>⛏️ wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
+                        <div class="htp-desc">Press <kbd>Q</kbd> to open crafting. Make a <b>⛏️ wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">3. Build Structures</div>
@@ -138,17 +147,54 @@
                     <h3>🎮 Controls</h3>
                     <div class="control-row"><kbd>W A S D</kbd> <span>Move</span></div>
                     <div class="control-row"><kbd>Shift</kbd> <span>Sprint (uses energy)</span></div>
-                    <div class="control-row"><kbd>Space</kbd> <span>Jump / Hold to climb mountains</span></div>
+                    <div class="control-row"><kbd>Space</kbd> <span>Jump</span></div>
+                    <div class="control-row"><kbd>V</kbd> <span>Hold to climb mountains</span></div>
                     <div class="control-row"><kbd>Mouse</kbd> <span>Look around</span></div>
                     <div class="control-row"><kbd>E / Click</kbd> <span>Harvest / Interact / Place</span></div>
                     <div class="control-row"><kbd>F</kbd> <span>Eat selected food item</span></div>
-                    <div class="control-row"><kbd>C</kbd> <span>Crafting Menu</span></div>
+                    <div class="control-row"><kbd>G</kbd> <span>Feed nearby animal</span></div>
+                    <div class="control-row"><kbd>I</kbd> <span>Inventory (1-9 to browse pages)</span></div>
+                    <div class="control-row"><kbd>Q</kbd> <span>Crafting Menu</span></div>
                     <div class="control-row"><kbd>B</kbd> <span>Build Menu</span></div>
                     <div class="control-row"><kbd>T</kbd> <span>Technology Tree</span></div>
                     <div class="control-row"><kbd>ESC</kbd> <span>Cancel / Close / Release mouse</span></div>
+                    <div class="control-row"><kbd>P</kbd> <span>Pause game</span></div>
                 </div>
                 <button id="start-btn">▶ Start Game</button>
             </div>
+        </div>
+
+        <!-- Pause screen -->
+        <div id="pause-screen" class="hidden">
+            <div class="start-content">
+                <h1>⏸ Paused</h1>
+                <p>Game is paused. Click resume to continue playing.</p>
+                <button id="resume-btn">▶ Resume</button>
+            </div>
+        </div>
+
+        <!-- Mobile controls -->
+        <div id="mobile-controls" class="hidden">
+            <!-- Left joystick -->
+            <div id="joystick-zone">
+                <div id="joystick-base">
+                    <div id="joystick-knob"></div>
+                </div>
+            </div>
+            <!-- Right action buttons -->
+            <div id="mobile-actions">
+                <button class="mob-btn" id="mob-jump">⬆</button>
+                <button class="mob-btn" id="mob-climb">🧗</button>
+                <button class="mob-btn" id="mob-sprint">🏃</button>
+                <button class="mob-btn" id="mob-interact">✋</button>
+            </div>
+            <!-- Look area (right side of screen) -->
+            <div id="mobile-look-zone"></div>
+        </div>
+
+        <!-- Mobile toggle button on start screen -->
+        <div id="mobile-toggle-wrapper">
+            <button id="mobile-toggle">📱 Mobile Mode: Off</button>
         </div>
 
         <!-- Respawn screen -->
@@ -160,6 +206,6 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=2"></script>
+    <script src="game.js?v=13"></script>
 </body>
 </html>

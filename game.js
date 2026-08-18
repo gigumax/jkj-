@@ -7,7 +7,7 @@
 const TILE_SIZE = 4;       // 3D world units per tile
 const WORLD_W = 100;
 const WORLD_H = 100;
-const PLAYER_SPEED = 3;
+const PLAYER_SPEED = 1.5;
 const PLAYER_HEIGHT = 1.8;
 const INTERACT_RANGE = 6;
 
@@ -33,12 +33,13 @@ const RESOURCE_TYPES = {
     cactus_fruit:  { icon: '🌵', name: 'Cactus Fruit', yields: { cactus_fruit: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
     glowing_plant: { icon: '✨', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
     thorn_bush:    { icon: '🌿', name: 'Thorn Bush', yields: { thorn_bush: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
-    stone:   { icon: '🪨', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain'],       hardness: 2 },
+    stone:   { icon: '🪨', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain','grass','forest'], hardness: 1 },
     coal:    { icon: '⚫', name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
-    iron:    { icon: '🔩', name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 3 },
+    iron:    { icon: '🔩', name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 2 },
     copper:  { icon: '🟤', name: 'Copper',  yields: { copper_ore: 3 }, biome: ['mountain'],       hardness: 3 },
     gold:    { icon: '🟡', name: 'Gold',    yields: { gold_ore: 2 },   biome: ['mountain'],       hardness: 4 },
     oil:     { icon: '🛢️', name: 'Oil',     yields: { oil: 2 },        biome: ['desert','snow'],  hardness: 3 },
+    soil:    { icon: '🟫', name: 'Soil',    yields: { soil: 3 },       biome: ['grass','forest'], hardness: 0 },
 };
 
 // Resource respawn times (seconds)
@@ -58,13 +59,14 @@ const RESOURCE_RESPAWN = {
     copper: 90,
     gold: 120,
     oil: 100,
+    soil: 40,
 };
 
 // --- Items ---
 // Edible items have `edible: true` and effects applied only when eaten (press F)
 const ITEMS = {
-    wood:        { icon: '🪵', name: 'Wood' },
-    stone:       { icon: '🪨', name: 'Stone' },
+    wood:        { icon: '🪵', name: 'Wood', attackPower: 3 },
+    stone:       { icon: '🪨', name: 'Stone', attackPower: 4 },
     food:        { icon: '🫐', name: 'Food', edible: true, energy: 15, health: 0 },
     red_mushroom:    { icon: '🍄', name: 'Red Mushroom', edible: true, energy: 10, health: 0 },
     red_berries:     { icon: '🔴', name: 'Red Berries', edible: true, energy: 12, health: 0 },
@@ -81,17 +83,38 @@ const ITEMS = {
     gold_ore:    { icon: '🟡', name: 'Gold Ore' },
     gold_ingot:  { icon: '🟨', name: 'Gold Ingot' },
     oil:         { icon: '🛢️', name: 'Oil' },
-    plank:       { icon: '🟫', name: 'Plank' },
-    brick:       { icon: '🧱', name: 'Brick' },
-    gear:        { icon: '⚙️', name: 'Gear' },
-    circuit:     { icon: '🔌', name: 'Circuit' },
-    battery:     { icon: '🔋', name: 'Battery' },
-    wood_pickaxe:{ icon: '⛏️', name: 'Wooden Pickaxe', tool: 'pickaxe', power: 1 },
-    stone_pickaxe:{icon: '⛏️', name: 'Stone Pickaxe',  tool: 'pickaxe', power: 2 },
-    iron_pickaxe:{ icon: '⛏️', name: 'Iron Pickaxe',   tool: 'pickaxe', power: 3 },
-    wood_axe:    { icon: '🪓', name: 'Wooden Axe',     tool: 'axe',     power: 1 },
-    stone_axe:   { icon: '🪓', name: 'Stone Axe',      tool: 'axe',     power: 2 },
-    iron_axe:    { icon: '🪓', name: 'Iron Axe',       tool: 'axe',     power: 3 },
+    soil:        { icon: '🟫', name: 'Soil', attackPower: 3 },
+    plank:       { icon: '🟫', name: 'Plank', attackPower: 5 },
+    brick:       { icon: '🧱', name: 'Brick', attackPower: 6 },
+    gear:        { icon: '⚙️', name: 'Gear', attackPower: 4 },
+    circuit:     { icon: '🔌', name: 'Circuit', attackPower: 3 },
+    battery:     { icon: '🔋', name: 'Battery', attackPower: 3 },
+    wood_pickaxe:{ icon: '⛏️', name: 'Wooden Pickaxe', tool: 'pickaxe', power: 1, attackPower: 8 },
+    stone_pickaxe:{icon: '⛏️', name: 'Stone Pickaxe',  tool: 'pickaxe', power: 2, attackPower: 12 },
+    iron_pickaxe:{ icon: '⛏️', name: 'Iron Pickaxe',   tool: 'pickaxe', power: 3, attackPower: 18 },
+    wood_axe:    { icon: '🪓', name: 'Wooden Axe',     tool: 'axe',     power: 1, attackPower: 10 },
+    stone_axe:   { icon: '🪓', name: 'Stone Axe',      tool: 'axe',     power: 2, attackPower: 14 },
+    iron_axe:    { icon: '🪓', name: 'Iron Axe',       tool: 'axe',     power: 3, attackPower: 20 },
+    raw_meat:    { icon: '🥩', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
+    cooked_meat: { icon: '🍖', name: 'Cooked Meat', edible: true, energy: 25, health: 5, attackPower: 2 },
+    leather:     { icon: '🟫', name: 'Leather', attackPower: 3 },
+    fang:        { icon: '🦷', name: 'Fang', attackPower: 7 },
+    hunting_gun: { icon: '🔫', name: 'Hunting Gun', tool: 'gun', power: 0, attackPower: 35, ranged: true, range: 30 },
+    spider_web:  { icon: '🕸️', name: 'Spider Web' },
+    fishing_rod: { icon: '🎣', name: 'Fishing Rod', tool: 'fishing' },
+    raw_fish:    { icon: '🐟', name: 'Raw Fish', edible: true, energy: 10, health: -3, attackPower: 2 },
+    cooked_fish: { icon: '🐠', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
+};
+
+// --- Creature types ---
+const CREATURE_TYPES = {
+    deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 9, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true },
+    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 7, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true },
+    boar:    { name: 'Boar',     health: 30, speed: 2.0, damage: 8,  hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 3, leather: 1 }, xp: 4, biomes: ['forest','grass'], spawnWeight: 2 },
+    wolf:    { name: 'Wolf',     health: 25, speed: 4.0, damage: 12, hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 1, leather: 1, fang: 1 }, xp: 5, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true },
+    bear:    { name: 'Bear',     health: 60, speed: 2.2, damage: 25, hostile: false, fleeDist: 0, attackRange: 2.5, drops: { raw_meat: 4, leather: 2, fang: 2 }, xp: 8, biomes: ['mountain'], spawnWeight: 0.15, aggroWhenAttacked: true, hungerChance: 0.3, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true },
+    rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 6, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true },
+    spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true },
 };
 
 // --- Crafting recipes ---
@@ -107,6 +130,10 @@ const RECIPES = [
     { id: 'gear',         output: { gear: 2 },         cost: { iron_ingot: 1 },       tech: 'machinery' },
     { id: 'circuit',      output: { circuit: 1 },      cost: { copper_ingot: 2, gold_ingot: 1 }, tech: 'electronics' },
     { id: 'battery',      output: { battery: 1 },      cost: { copper_ingot: 1, iron_ingot: 1, oil: 1 }, tech: 'electronics' },
+    { id: 'cooked_meat',  output: { cooked_meat: 1 },  cost: { raw_meat: 1, wood: 1 },  tech: null },
+    { id: 'hunting_gun',  output: { hunting_gun: 1 },  cost: { iron_ingot: 2, wood: 1, stone: 1 }, tech: 'iron_tools' },
+    { id: 'fishing_rod',  output: { fishing_rod: 1 },  cost: { spider_web: 1, wood: 2 }, tech: null },
+    { id: 'cooked_fish',  output: { cooked_fish: 1 },  cost: { raw_fish: 1, wood: 1 }, tech: null },
 ];
 
 // --- Buildings ---
@@ -163,6 +190,11 @@ const BUILDINGS = {
         icon: '🤖', name: 'Assembler', cost: { iron_ingot: 8, gear: 5, circuit: 3 }, tech: 'automation',
         desc: 'Automatically crafts items', power: 0, powerUse: 12,
         color: 0xe74c3c, size: { w: 2.5, h: 2.5, d: 2.5 },
+    },
+    wood_hut: {
+        icon: '🛖', name: 'Wood Hut', cost: { plank: 10 }, tech: null,
+        desc: 'Sleep here at night to restore health & energy', power: 0, powerUse: 0,
+        color: 0x8B6B47, size: { w: 3, h: 2.5, d: 3 },
     },
 };
 
@@ -316,35 +348,39 @@ class World {
                 else tile.resource = 'stone';
             } else if (tile.biome === 'forest') {
                 const r2 = this.rand(x, y, 3);
-                if (r2 < 0.45) tile.resource = 'tree';
-                else if (r2 < 0.58) tile.resource = 'bush';
-                else if (r2 < 0.68) tile.resource = 'red_berries';
-                else if (r2 < 0.76) tile.resource = 'red_mushroom';
-                else if (r2 < 0.84) tile.resource = 'purple_mushroom';
-                else if (r2 < 0.90) tile.resource = 'nightshade';
+                if (r2 < 0.55) tile.resource = 'tree';
+                else if (r2 < 0.60) tile.resource = 'bush';
+                else if (r2 < 0.65) tile.resource = 'red_berries';
+                else if (r2 < 0.70) tile.resource = 'red_mushroom';
+                else if (r2 < 0.74) tile.resource = 'purple_mushroom';
+                else if (r2 < 0.77) tile.resource = 'nightshade';
+                else if (r2 < 0.82) tile.resource = 'stone';
+                else if (r2 < 0.88) tile.resource = 'soil';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'grass') {
                 const r2 = this.rand(x, y, 3);
-                if (r2 < 0.50) tile.resource = 'tree';
-                else if (r2 < 0.65) tile.resource = 'bush';
-                else if (r2 < 0.75) tile.resource = 'red_berries';
-                else if (r2 < 0.82) tile.resource = 'red_mushroom';
-                else if (r2 < 0.88) tile.resource = 'purple_mushroom';
-                else if (r2 < 0.93) tile.resource = 'nightshade';
+                if (r2 < 0.55) tile.resource = 'tree';
+                else if (r2 < 0.60) tile.resource = 'bush';
+                else if (r2 < 0.66) tile.resource = 'red_berries';
+                else if (r2 < 0.71) tile.resource = 'red_mushroom';
+                else if (r2 < 0.75) tile.resource = 'purple_mushroom';
+                else if (r2 < 0.78) tile.resource = 'nightshade';
+                else if (r2 < 0.85) tile.resource = 'stone';
+                else if (r2 < 0.92) tile.resource = 'soil';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'sand') {
                 const r2 = this.rand(x, y, 3);
-                if (r2 < 0.40) tile.resource = 'tree';
-                else if (r2 < 0.60) tile.resource = 'red_berries';
-                else if (r2 < 0.75) tile.resource = 'cactus_fruit';
-                else if (r2 < 0.88) tile.resource = 'thorn_bush';
+                if (r2 < 0.55) tile.resource = 'tree';
+                else if (r2 < 0.68) tile.resource = 'red_berries';
+                else if (r2 < 0.78) tile.resource = 'cactus_fruit';
+                else if (r2 < 0.85) tile.resource = 'thorn_bush';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'desert') {
                 const r2 = this.rand(x, y, 3);
-                if (r2 < 0.30) tile.resource = 'tree';
-                else if (r2 < 0.50) tile.resource = 'cactus_fruit';
-                else if (r2 < 0.65) tile.resource = 'thorn_bush';
-                else if (r2 < 0.72) tile.resource = 'oil';
+                if (r2 < 0.45) tile.resource = 'tree';
+                else if (r2 < 0.58) tile.resource = 'cactus_fruit';
+                else if (r2 < 0.68) tile.resource = 'thorn_bush';
+                else if (r2 < 0.75) tile.resource = 'oil';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'snow') {
                 const r2 = this.rand(x, y, 3);
@@ -393,6 +429,13 @@ class World {
         if (t.biome === 'snow') return 8 + elev * 22;
         if (t.biome === 'desert') return 0.8 + elev * 3;
         return baseHeight * 3;
+    }
+    // Average height at the center of a tile (between 4 corners)
+    getTileCenterHeight(tx, ty) {
+        return (this.getTileHeight(tx, ty) +
+                this.getTileHeight(tx + 1, ty) +
+                this.getTileHeight(tx, ty + 1) +
+                this.getTileHeight(tx + 1, ty + 1)) / 4;
     }
 
     queueRespawn(tx, ty, resourceType) {
@@ -465,26 +508,142 @@ class Player {
 //  3D Model Factory — creates Three.js meshes for game objects
 // ============================================================
 class ModelFactory {
-    static createTree() {
+    static createTree(seed) {
+        // Deterministic pseudo-random from seed
+        const rng = (salt) => {
+            const s = Math.sin(seed * 127.1 + salt * 311.7) * 43758.5453;
+            return s - Math.floor(s);
+        };
+
+        // Pick a species based on biome context (caller can override via seed bias)
+        const speciesRoll = rng(1);
+        const sizeRoll = rng(2); // 0..1 for size variation
+        const sizeScale = 0.65 + sizeRoll * 0.8; // 0.65x to 1.45x
+
+        // Species: oak, pine, birch, palm, dead
+        let species;
+        if (speciesRoll < 0.30) species = 'oak';
+        else if (speciesRoll < 0.55) species = 'pine';
+        else if (speciesRoll < 0.75) species = 'birch';
+        else if (speciesRoll < 0.88) species = 'palm';
+        else species = 'dead';
+
         const group = new THREE.Group();
-        // Trunk
-        const trunkGeo = new THREE.CylinderGeometry(0.3, 0.4, 2.5, 6);
-        const trunkMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
-        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-        trunk.position.y = 1.25;
-        trunk.castShadow = true;
-        group.add(trunk);
-        // Leaves (3 cones stacked)
-        const leafMat = new THREE.MeshLambertMaterial({ color: 0x2d6b1f });
-        for (let i = 0; i < 3; i++) {
-            const r = 1.8 - i * 0.4;
-            const h = 1.8;
-            const coneGeo = new THREE.ConeGeometry(r, h, 7);
-            const cone = new THREE.Mesh(coneGeo, leafMat);
-            cone.position.y = 2.8 + i * 1.0;
-            cone.castShadow = true;
-            group.add(cone);
+
+        if (species === 'oak') {
+            // Classic broadleaf: thick trunk, 3 stacked cones, medium green
+            const trunkH = 2.5 * sizeScale;
+            const trunkGeo = new THREE.CylinderGeometry(0.3 * sizeScale, 0.4 * sizeScale, trunkH, 6);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH / 2;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const leafMat = new THREE.MeshLambertMaterial({ color: 0x2d6b1f });
+            for (let i = 0; i < 3; i++) {
+                const r = (1.8 - i * 0.4) * sizeScale;
+                const h = 1.8 * sizeScale;
+                const coneGeo = new THREE.ConeGeometry(r, h, 7);
+                const cone = new THREE.Mesh(coneGeo, leafMat);
+                cone.position.y = trunkH + 0.3 + i * 1.0 * sizeScale;
+                cone.castShadow = true;
+                group.add(cone);
+            }
+        } else if (species === 'pine') {
+            // Tall narrow conifer: thin trunk, many tight cones, dark green
+            const trunkH = 3.5 * sizeScale;
+            const trunkGeo = new THREE.CylinderGeometry(0.22 * sizeScale, 0.3 * sizeScale, trunkH, 6);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a3a20 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH / 2;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const leafMat = new THREE.MeshLambertMaterial({ color: 0x1a4d10 });
+            const numCones = 5;
+            for (let i = 0; i < numCones; i++) {
+                const r = (1.2 - i * 0.18) * sizeScale;
+                const h = 1.4 * sizeScale;
+                const coneGeo = new THREE.ConeGeometry(r, h, 6);
+                const cone = new THREE.Mesh(coneGeo, leafMat);
+                cone.position.y = trunkH + i * 0.7 * sizeScale;
+                cone.castShadow = true;
+                group.add(cone);
+            }
+        } else if (species === 'birch') {
+            // Slender tree: thin white-ish trunk, small sparse canopy, light green-yellow
+            const trunkH = 3.0 * sizeScale;
+            const trunkGeo = new THREE.CylinderGeometry(0.18 * sizeScale, 0.25 * sizeScale, trunkH, 5);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0xd0d0c0 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH / 2;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const leafMat = new THREE.MeshLambertMaterial({ color: 0x8aa840 });
+            // Fewer, smaller leaf clusters
+            for (let i = 0; i < 2; i++) {
+                const r = (1.0 - i * 0.2) * sizeScale;
+                const h = 1.2 * sizeScale;
+                const coneGeo = new THREE.ConeGeometry(r, h, 6);
+                const cone = new THREE.Mesh(coneGeo, leafMat);
+                cone.position.y = trunkH + 0.2 + i * 0.8 * sizeScale;
+                cone.castShadow = true;
+                group.add(cone);
+            }
+        } else if (species === 'palm') {
+            // Palm: tall thin trunk, fan-like leaves at top
+            const trunkH = 3.5 * sizeScale;
+            const trunkGeo = new THREE.CylinderGeometry(0.2 * sizeScale, 0.28 * sizeScale, trunkH, 5);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8b7355 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH / 2;
+            trunk.rotation.z = (rng(3) - 0.5) * 0.15;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const leafMat = new THREE.MeshLambertMaterial({ color: 0x4a8c2a, side: THREE.DoubleSide });
+            const numFronds = 6;
+            for (let i = 0; i < numFronds; i++) {
+                const frondGeo = new THREE.ConeGeometry(0.15 * sizeScale, 1.8 * sizeScale, 4);
+                const frond = new THREE.Mesh(frondGeo, leafMat);
+                const angle = (i / numFronds) * Math.PI * 2;
+                frond.position.set(
+                    Math.cos(angle) * 0.5 * sizeScale,
+                    trunkH + 0.2,
+                    Math.sin(angle) * 0.5 * sizeScale
+                );
+                frond.rotation.z = Math.cos(angle) * 0.6;
+                frond.rotation.x = Math.sin(angle) * 0.6;
+                frond.castShadow = true;
+                group.add(frond);
+            }
+        } else {
+            // Dead/bare tree: trunk + bare branches, no leaves
+            const trunkH = 2.8 * sizeScale;
+            const trunkGeo = new THREE.CylinderGeometry(0.2 * sizeScale, 0.35 * sizeScale, trunkH, 5);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a3a2a });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = trunkH / 2;
+            trunk.castShadow = true;
+            group.add(trunk);
+            const branchMat = new THREE.MeshLambertMaterial({ color: 0x4a3a2a });
+            const numBranches = 4 + Math.floor(rng(4) * 3);
+            for (let i = 0; i < numBranches; i++) {
+                const len = (0.8 + rng(10 + i) * 0.6) * sizeScale;
+                const branchGeo = new THREE.CylinderGeometry(0.06 * sizeScale, 0.1 * sizeScale, len, 4);
+                const branch = new THREE.Mesh(branchGeo, branchMat);
+                const angle = (i / numBranches) * Math.PI * 2 + rng(20 + i) * 0.5;
+                const tilt = 0.5 + rng(30 + i) * 0.4;
+                branch.position.set(
+                    Math.cos(angle) * 0.3 * sizeScale,
+                    trunkH * 0.7 + rng(40 + i) * trunkH * 0.25,
+                    Math.sin(angle) * 0.3 * sizeScale
+                );
+                branch.rotation.z = Math.cos(angle) * tilt;
+                branch.rotation.x = Math.sin(angle) * tilt;
+                branch.castShadow = true;
+                group.add(branch);
+            }
         }
+
         return group;
     }
 
@@ -526,6 +685,18 @@ class ModelFactory {
             small.castShadow = true;
             group.add(small);
         }
+        return group;
+    }
+
+    static createSoil() {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: 0x6b4226, flatShading: true });
+        const mound = new THREE.Mesh(new THREE.SphereGeometry(0.6, 6, 5), mat);
+        mound.position.y = 0.2; mound.scale.set(1.2, 0.5, 1.2); mound.castShadow = true;
+        group.add(mound);
+        const lump = new THREE.Mesh(new THREE.SphereGeometry(0.3, 5, 4), mat);
+        lump.position.set(0.3, 0.15, 0.2); lump.scale.set(1, 0.6, 1); lump.castShadow = true;
+        group.add(lump);
         return group;
     }
 
@@ -571,9 +742,9 @@ class ModelFactory {
         return group;
     }
 
-    static createResource(type) {
+    static createResource(type, tx, ty) {
         switch(type) {
-            case 'tree': return this.createTree();
+            case 'tree': return this.createTree(tx * 73856093 ^ ty * 19349663);
             case 'bush': return this.createBush();
             case 'red_mushroom': return this.createMushroom(0xe74c3c, 0xfff8e7);
             case 'purple_mushroom': return this.createMushroom(0x9b59b6, 0xfff8e7);
@@ -583,6 +754,7 @@ class ModelFactory {
             case 'glowing_plant': return this.createGlowingPlant();
             case 'thorn_bush': return this.createThornBush();
             case 'stone': return this.createRock(0x95a5a6);
+            case 'soil': return this.createSoil();
             case 'coal': return this.createOreVein(0x1a1a1a);
             case 'iron': return this.createOreVein(0xc08050);
             case 'copper': return this.createOreVein(0xb87333);
@@ -716,6 +888,211 @@ class ModelFactory {
             }
         }
         return group;
+    }
+
+    // --- Creature models ---
+    static createCreature(type) {
+        switch(type) {
+            case 'deer':   return this.createDeer();
+            case 'fawn':   return this.createFawn();
+            case 'boar':   return this.createBoar();
+            case 'wolf':   return this.createWolf();
+            case 'bear':   { const m = this.createBear(); m.scale.set(1.8, 1.8, 1.8); return m; }
+            case 'rabbit': return this.createRabbit();
+            case 'spider': { const m = this.createSpider(); m.scale.set(0.4, 0.4, 0.4); return m; }
+            default: return new THREE.Group();
+        }
+    }
+
+    static createDeer() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x9b7653 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x6b5535 });
+        const bellyMat = new THREE.MeshLambertMaterial({ color: 0xc4a484 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 1.5, 8), bodyMat);
+        body.position.y = 0.9; body.rotation.x = Math.PI / 2; body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bellyMat);
+        belly.position.set(0, 0.8, 0); belly.scale.set(1, 0.6, 1.3); g.add(belly);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, 0.7, 6), bodyMat);
+        neck.position.set(0, 1.25, 0.55); neck.rotation.x = -0.6; neck.castShadow = true; g.add(neck);
+        const head = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, 0.5, 6), bodyMat);
+        head.position.set(0, 1.55, 0.85); head.rotation.x = Math.PI / 2 - 0.3; head.castShadow = true; head.userData.isHead = true; g.add(head);
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.15, 3), bodyMat);
+            ear.position.set(s * 0.1, 1.6, 0.8); ear.rotation.z = s * 0.5; g.add(ear);
+        }
+        const antMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
+        for (let s = -1; s <= 1; s += 2) {
+            const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.6, 4), antMat);
+            ant.position.set(s * 0.12, 1.85, 0.75); ant.rotation.x = -0.2; ant.castShadow = true; g.add(ant);
+            const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.25, 3), antMat);
+            branch.position.set(s * 0.22, 1.95, 0.75); branch.rotation.z = s * 1.2; g.add(branch);
+        }
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.85, 5), legMat);
+            leg.position.set(s * 0.25, 0.42, f * 0.45); leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bellyMat);
+        tail.position.set(0, 1.0, -0.78); tail.scale.set(0.8, 0.8, 1.5); tail.userData.isTail = true; g.add(tail);
+        return g;
+    }
+
+    static createFawn() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xc9a96e });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x9b7e54 });
+        const bellyMat = new THREE.MeshLambertMaterial({ color: 0xe0cda0 });
+        const spotMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 0.9, 7), bodyMat);
+        body.position.y = 0.55; body.rotation.x = Math.PI / 2; body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.26, 6, 5), bellyMat);
+        belly.position.set(0, 0.48, 0); belly.scale.set(1, 0.6, 1.2); g.add(belly);
+        // White spots on back
+        for (let i = 0; i < 5; i++) {
+            const spot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), spotMat);
+            const a = (i / 5) * Math.PI * 2;
+            spot.position.set(Math.cos(a) * 0.22, 0.62, Math.sin(a) * 0.3);
+            spot.scale.set(1, 0.3, 1);
+            g.add(spot);
+        }
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.4, 5), bodyMat);
+        neck.position.set(0, 0.75, 0.35); neck.rotation.x = -0.5; neck.castShadow = true; g.add(neck);
+        const head = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.3, 5), bodyMat);
+        head.position.set(0, 0.92, 0.52); head.rotation.x = Math.PI / 2 - 0.3; head.castShadow = true; head.userData.isHead = true; g.add(head);
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 3), bodyMat);
+            ear.position.set(s * 0.07, 0.97, 0.5); ear.rotation.z = s * 0.5; g.add(ear);
+        }
+        // No antlers - it's a baby
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.03, 0.5, 4), legMat);
+            leg.position.set(s * 0.16, 0.25, f * 0.28); leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.06, 4, 4), bellyMat);
+        tail.position.set(0, 0.6, -0.48); tail.userData.isTail = true; g.add(tail);
+        return g;
+    }
+
+    static createBoar() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a3c30 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x2e251a });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 1.2, 7), bodyMat);
+        body.position.y = 0.6; body.rotation.x = Math.PI / 2; body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const hump = new THREE.Mesh(new THREE.SphereGeometry(0.35, 6, 5), bodyMat);
+        hump.position.set(0, 0.75, 0.3); hump.scale.set(0.9, 0.6, 0.8); g.add(hump);
+        const head = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.5, 6), bodyMat);
+        head.position.set(0, 0.55, 0.7); head.rotation.x = Math.PI / 2 - 0.2; head.castShadow = true; head.userData.isHead = true; g.add(head);
+        const tuskMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+        for (let s = -1; s <= 1; s += 2) {
+            const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.15, 4), tuskMat);
+            tusk.position.set(s * 0.1, 0.38, 0.95); tusk.rotation.x = Math.PI; g.add(tusk);
+        }
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 3), bodyMat);
+            ear.position.set(s * 0.15, 0.75, 0.6); ear.rotation.z = s * 0.4; g.add(ear);
+        }
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.06, 0.5, 4), legMat);
+            leg.position.set(s * 0.2, 0.25, f * 0.35); leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.02, 0.2, 3), bodyMat);
+        tail.position.set(0, 0.65, -0.65); tail.rotation.x = 0.8; tail.userData.isTail = true; g.add(tail);
+        return g;
+    }
+
+    static createWolf() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6a6a6a });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+        const bellyMat = new THREE.MeshLambertMaterial({ color: 0x8a8a8a });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.2, 7), bodyMat);
+        body.position.y = 0.65; body.rotation.x = Math.PI / 2; body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.25, 6, 5), bellyMat);
+        belly.position.set(0, 0.55, 0); belly.scale.set(0.9, 0.5, 1.2); g.add(belly);
+        const head = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.5, 6), bodyMat);
+        head.position.set(0, 0.78, 0.65); head.rotation.x = Math.PI / 2 - 0.15; head.castShadow = true; head.userData.isHead = true; g.add(head);
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 3), bodyMat);
+            ear.position.set(s * 0.12, 0.98, 0.55); g.add(ear);
+        }
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.55, 4), legMat);
+            leg.position.set(s * 0.16, 0.28, f * 0.35); leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.55, 5), bodyMat);
+        tail.position.set(0, 0.7, -0.65); tail.rotation.x = 0.5; tail.castShadow = true; tail.userData.isTail = true; g.add(tail);
+        return g;
+    }
+
+    static createBear() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a3a28 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x3a2a18 });
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.55, 8, 7), bodyMat);
+        body.position.set(0, 0.85, 0); body.scale.set(1, 0.85, 1.5); body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 7, 6), bodyMat);
+        head.position.set(0, 1.0, 0.8); head.castShadow = true; head.userData.isHead = true; g.add(head);
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bodyMat);
+            ear.position.set(s * 0.2, 1.3, 0.7); g.add(ear);
+        }
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.65, 5), legMat);
+            leg.position.set(s * 0.28, 0.32, f * 0.45); leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        return g;
+    }
+
+    static createRabbit() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xb0b0b0 });
+        const bellyMat = new THREE.MeshLambertMaterial({ color: 0xd0d0d0 });
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 6), bodyMat);
+        body.position.set(0, 0.3, 0); body.scale.set(1, 0.85, 1.3); body.castShadow = true; body.userData.isBody = true; g.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 5), bodyMat);
+        head.position.set(0, 0.42, 0.25); head.userData.isHead = true; g.add(head);
+        for (let s = -1; s <= 1; s += 2) {
+            const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.35, 4), bodyMat);
+            ear.position.set(s * 0.07, 0.68, 0.22); ear.castShadow = true; g.add(ear);
+        }
+        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.18, 3), bodyMat);
+            leg.position.set(s * 0.1, 0.09, f * 0.12);
+            leg.userData.isLeg = true; g.add(leg);
+        }
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 4), bellyMat);
+        tail.position.set(0, 0.32, -0.22); tail.userData.isTail = true; g.add(tail);
+        return g;
+    }
+
+    static createSpider() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x0a0a1a });
+        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 7, 6), bodyMat);
+        abdomen.position.set(0, 0.4, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; g.add(abdomen);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), bodyMat);
+        head.position.set(0, 0.35, 0.3); g.add(head);
+        for (let i = 0; i < 8; i++) {
+            const side = i < 4 ? -1 : 1;
+            const idx = i % 4;
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.015, 0.65, 3), legMat);
+            leg.position.set(side * 0.15, 0.3, -0.05 + idx * 0.12);
+            leg.rotation.z = side * 0.8;
+            leg.castShadow = true;
+            leg.userData.isLeg = true; g.add(leg);
+            const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.01, 0.4, 3), legMat);
+            lowerLeg.position.set(side * 0.35, 0.05, -0.05 + idx * 0.12);
+            lowerLeg.rotation.z = side * 0.3;
+            g.add(lowerLeg);
+        }
+        return g;
     }
 
     static createBuilding(type) {
@@ -937,12 +1314,30 @@ class Game {
         this.tickAccumulator = 0;
         this.meshUpdateAccumulator = 0;
         this.time = 0;
+        this.dayTime = 0; // 0..1 cycle (0=dawn, 0.25=noon, 0.5=dusk, 0.75=midnight)
+        this.dayLength = 120; // seconds per full day/night cycle
+        this.isNight = false;
+        this.sleeping = false;
         this.resourceMeshes = new Map(); // "x,y" -> mesh
         this.buildingMeshes = new Map();
         this.buildingPositions = new Set(); // "x,y" for efficient tick
         this.buildPreview = null;
         this.currentQuestIndex = 0;
         this.spawnPoint = { x: 0, z: 0 };
+        this.creatures = []; // active creature objects
+        this.creatureMeshes = new Map(); // id -> mesh
+        this.creatureSpawnAccumulator = 0;
+        this.creatureMeshAccumulator = 0;
+        this.attackCooldown = 0;
+        this.maxCreatures = 15;
+        this.inventoryPage = 0;
+
+        // Pause & mobile
+        this.paused = false;
+        this.mobileMode = false;
+        this.joystick = { active: false, dx: 0, dz: 0, startX: 0, startY: 0, touchId: null };
+        this.lookTouch = { active: false, lastX: 0, lastY: 0, touchId: null };
+        this.discoveredFoods = new Set(); // item keys the player has eaten at least once
 
         this.setupInput();
         this.setupUI();
@@ -965,6 +1360,7 @@ class Game {
         // Lighting
         const ambient = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambient);
+        this.ambientLight = ambient;
 
         const sun = new THREE.DirectionalLight(0xffffff, 0.8);
         sun.position.set(50, 80, 30);
@@ -983,6 +1379,7 @@ class Game {
         // Hemisphere light for nicer ambient
         const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a5a1f, 0.3);
         this.scene.add(hemi);
+        this.hemiLight = hemi;
 
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -1070,10 +1467,10 @@ class Game {
     }
 
     addResourceMesh(tx, ty, resourceType) {
-        const mesh = ModelFactory.createResource(resourceType);
+        const mesh = ModelFactory.createResource(resourceType, tx, ty);
         const wx = tx * TILE_SIZE + TILE_SIZE / 2;
         const wz = ty * TILE_SIZE + TILE_SIZE / 2;
-        const wy = this.world.getTileHeight(tx, ty);
+        const wy = this.world.getTileCenterHeight(tx, ty);
         mesh.position.set(wx, wy, wz);
         mesh.userData = { type: 'resource', tx, ty, resourceType };
         mesh.traverse(c => { if (c.isMesh) { c.castShadow = true; c.userData = mesh.userData; }});
@@ -1125,7 +1522,7 @@ class Game {
         const mesh = ModelFactory.createBuilding(buildingType);
         const wx = tx * TILE_SIZE + TILE_SIZE / 2;
         const wz = ty * TILE_SIZE + TILE_SIZE / 2;
-        const wy = this.world.getTileHeight(tx, ty);
+        const wy = this.world.getTileCenterHeight(tx, ty);
         mesh.position.set(wx, wy, wz);
         mesh.userData = { type: 'building', tx, ty, buildingType };
         mesh.traverse(c => { if (c.isMesh) c.userData = mesh.userData; });
@@ -1153,8 +1550,18 @@ class Game {
     // --- Start game ---
     start() {
       try {
-        this.world = new World(Math.floor(Math.random() * 1000000));
-        // Find spawn
+        document.getElementById('start-screen').classList.add('hidden');
+        const seed = Math.floor(Math.random() * 1000000);
+        this.initWorldWithSeed(seed);
+      } catch (err) {
+        console.error('Game start error:', err);
+        alert('Error starting game: ' + err.message + '\n\n' + err.stack);
+        this.gameRunning = false;
+      }
+    }
+
+    initWorldWithSeed(seed) {
+        this.world = new World(seed);
         let sx = WORLD_W / 2, sy = WORLD_H / 2;
         for (let r = 0; r < 50; r++) {
             let found = false;
@@ -1185,16 +1592,15 @@ class Game {
         if (!this.scene) {
             this.initThree();
         } else {
-            // Clear scene
             while (this.scene.children.length > 0) {
-                const obj = this.scene.children[0];
-                this.scene.remove(obj);
+                this.scene.remove(this.scene.children[0]);
             }
             this.resourceMeshes.clear();
             this.buildingMeshes.clear();
             this.buildingPositions.clear();
-            // Re-add lights
-            this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            this.scene.add(ambient);
+            this.ambientLight = ambient;
             const sun = new THREE.DirectionalLight(0xffffff, 0.8);
             sun.position.set(50, 80, 30);
             sun.castShadow = true;
@@ -1208,14 +1614,15 @@ class Game {
             this.scene.add(sun);
             this.scene.add(sun.target);
             this.sun = sun;
-            this.scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a1f, 0.3));
+            const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a5a1f, 0.3);
+            this.scene.add(hemi);
+            this.hemiLight = hemi;
         }
 
         this.buildTerrain();
         this.buildResources();
         this.buildPlayer();
 
-        document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-over').classList.add('hidden');
         document.getElementById('crosshair').classList.add('visible');
 
@@ -1223,19 +1630,13 @@ class Game {
         this.updateQuestUI();
         this.lastTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
-        this.notify('🌍 Welcome to the 3D world! Explore, gather, build, and research.', 'info');
-        this.requestPointerLock();
-        // Show prompt if pointer lock didn't engage
-        if (!this.pointerLocked) {
+        this.notify('🌍 Welcome to the 3D world!', 'info');
+        if (!this.mobileMode) this.requestPointerLock();
+        if (!this.pointerLocked && !this.mobileMode) {
             const prompt = document.getElementById('pointer-lock-prompt');
             prompt.classList.remove('hidden');
             prompt.classList.add('visible');
         }
-      } catch (err) {
-        console.error('Game start error:', err);
-        alert('Error starting game: ' + err.message + '\n\n' + err.stack);
-        this.gameRunning = false;
-      }
     }
 
     // --- Pointer lock ---
@@ -1262,7 +1663,8 @@ class Game {
     anyPanelOpen() {
         return !document.getElementById('panel-crafting').classList.contains('hidden') ||
                !document.getElementById('panel-build').classList.contains('hidden') ||
-               !document.getElementById('panel-tech').classList.contains('hidden');
+               !document.getElementById('panel-tech').classList.contains('hidden') ||
+               !document.getElementById('panel-inventory').classList.contains('hidden');
     }
 
     // --- Input ---
@@ -1276,18 +1678,28 @@ class Game {
                 }
                 this.closePanels();
             }
-            if (e.key.toLowerCase() === 'c' && this.gameRunning) this.togglePanel('panel-crafting');
+            if (e.key.toLowerCase() === 'q' && this.gameRunning) this.togglePanel('panel-crafting');
             if (e.key.toLowerCase() === 'b' && this.gameRunning) this.togglePanel('panel-build');
             if (e.key.toLowerCase() === 't' && this.gameRunning) this.togglePanel('panel-tech');
+            if (e.key.toLowerCase() === 'i' && this.gameRunning) this.togglePanel('panel-inventory');
             if (e.key.toLowerCase() === 'e' && this.gameRunning) this.interact();
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
+            if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
+            if (e.key.toLowerCase() === 'p' && this.gameRunning) this.togglePause();
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
                 this.player.jumpVel = 12;
             }
             const num = parseInt(e.key);
             if (num >= 1 && num <= 9 && this.gameRunning) {
-                this.player.selectedSlot = num - 1;
-                this.updateInventoryUI();
+                const invOpen = !document.getElementById('panel-inventory').classList.contains('hidden');
+                if (invOpen) {
+                    // Navigate inventory pages, not hotbar
+                    this.inventoryPage = num - 1;
+                    this.renderInventoryGrid();
+                } else {
+                    this.player.selectedSlot = num - 1;
+                    this.updateInventoryUI();
+                }
             }
         });
         window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
@@ -1324,6 +1736,8 @@ class Game {
             if (e.button === 0) { // left click
                 if (this.buildMode) {
                     this.placeBuilding();
+                } else if (this.attackCreature()) {
+                    // hit a creature, don't do normal interact
                 } else {
                     this.interact();
                 }
@@ -1341,11 +1755,15 @@ class Game {
     setupUI() {
         document.getElementById('start-btn').addEventListener('click', () => this.start());
         document.getElementById('restart-btn').addEventListener('click', () => this.respawn());
+        document.getElementById('resume-btn').addEventListener('click', () => this.togglePause());
+        document.getElementById('mobile-toggle').addEventListener('click', () => this.toggleMobileMode());
+        this.setupMobileControls();
         document.getElementById('btn-craft').addEventListener('click', () => this.togglePanel('panel-crafting'));
         document.getElementById('btn-build').addEventListener('click', () => this.togglePanel('panel-build'));
         document.getElementById('btn-tech').addEventListener('click', () => this.togglePanel('panel-tech'));
         document.querySelectorAll('.panel-close').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 document.getElementById(btn.dataset.panel).classList.add('hidden');
                 document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
                 this.requestPointerLock();
@@ -1356,17 +1774,27 @@ class Game {
     togglePanel(id) {
         const panel = document.getElementById(id);
         const isHidden = panel.classList.contains('hidden');
-        this.closePanels();
+        // Close all panels but don't re-lock pointer if we're opening another
+        document.querySelectorAll('.side-panel').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
         if (isHidden) {
             panel.classList.remove('hidden');
             this.updatePanelContent(id);
-            // Exit pointer lock when opening panel
-            if (this.pointerLocked) document.exitPointerLock();
-        }
-        if (!isHidden) {
             if (id === 'panel-crafting') document.getElementById('btn-craft').classList.add('active');
             if (id === 'panel-build') document.getElementById('btn-build').classList.add('active');
             if (id === 'panel-tech') document.getElementById('btn-tech').classList.add('active');
+            // Exit pointer lock when opening panel
+            if (this.pointerLocked) document.exitPointerLock();
+        } else {
+            // Panel was open and is now closing — re-request pointer lock
+            if (this.gameRunning) {
+                this.requestPointerLock();
+                if (!this.pointerLocked) {
+                    const prompt = document.getElementById('pointer-lock-prompt');
+                    prompt.classList.remove('hidden');
+                    prompt.classList.add('visible');
+                }
+            }
         }
     }
 
@@ -1388,6 +1816,7 @@ class Game {
         if (id === 'panel-crafting') this.renderCrafting();
         if (id === 'panel-build') this.renderBuild();
         if (id === 'panel-tech') this.renderTech();
+        if (id === 'panel-inventory') this.renderInventoryGrid();
     }
 
     // --- Raycasting for interaction ---
@@ -1435,6 +1864,15 @@ class Game {
             this.interactWithBuilding(target.tx, target.ty, tile);
             return;
         }
+        // Fishing: looking at water with fishing rod selected
+        if (tile.biome === 'water') {
+            const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
+            const entry = items[this.player.selectedSlot];
+            if (entry && entry[0] === 'fishing_rod') {
+                this.startFishing(target.tx, target.ty);
+                return;
+            }
+        }
         if (tile.resource) {
             const resDef = RESOURCE_TYPES[tile.resource];
             if (resDef.forage) {
@@ -1450,7 +1888,8 @@ class Game {
         // Picking up a plant is always safe - effects only apply when eaten
         for (const [item, amt] of Object.entries(resDef.yields)) {
             this.player.addItem(item, amt);
-            this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
+            const displayName = this.getFoodDisplayName(item);
+            this.notify(`+${amt} ${displayName}`, 'success');
         }
         tile.resource = null;
         tile.resourceAmount = 0;
@@ -1471,6 +1910,13 @@ class Game {
     }
 
     // --- Eating ---
+    getFoodDisplayName(itemKey) {
+        const def = ITEMS[itemKey];
+        if (!def) return itemKey;
+        if (def.edible && !this.discoveredFoods.has(itemKey)) return 'Mysterious Food';
+        return def.name;
+    }
+
     eatSelectedItem() {
         const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
         const entry = items[this.player.selectedSlot];
@@ -1479,6 +1925,8 @@ class Game {
         const def = ITEMS[itemKey];
         if (!def || !def.edible) { this.notify(`Can't eat ${def?.name || itemKey}!`, 'warning'); return; }
         this.player.removeItem(itemKey, 1);
+        const wasUndiscovered = !this.discoveredFoods.has(itemKey);
+        this.discoveredFoods.add(itemKey);
         if (def.energy > 0 || def.health > 0) {
             this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + Math.max(0, def.energy));
             this.player.health = Math.min(this.player.maxHealth, this.player.health + Math.max(0, def.health));
@@ -1496,10 +1944,36 @@ class Game {
         } else {
             this.notify(`🍽️ Ate ${def.name}: +${def.energy} energy`, 'success');
         }
+        if (wasUndiscovered) {
+            this.notify(`📖 You discovered: ${def.name}!`, 'info');
+        }
         this.updateInventoryUI();
         this.updateUI();
     }
 
+
+    startFishing(tx, ty) {
+        const baseTime = 3 + Math.random() * 4;
+        this.player.harvesting = { tx, ty, progress: 0, total: baseTime, resource: null, fishing: true };
+        this.notify('Casting line...', 'info');
+    }
+
+    completeFishing() {
+        const h = this.player.harvesting;
+        if (Math.random() < 0.75) {
+            const amt = 1 + Math.floor(Math.random() * 2);
+            this.player.addItem('raw_fish', amt);
+            this.notify(`+${amt} Raw Fish`, 'success');
+        } else {
+            this.notify('The fish got away!', 'info');
+        }
+        this.player.energy = Math.max(0, this.player.energy - 2);
+        this.player.harvesting = null;
+        this.researchPoints += 0.3;
+        this.updateInventoryUI();
+        this.updateUI();
+        this.checkQuests();
+    }
 
     startHarvest(tx, ty, tile) {
         const resDef = RESOURCE_TYPES[tile.resource];
@@ -1522,7 +1996,8 @@ class Game {
         const resDef = RESOURCE_TYPES[h.resource];
         for (const [item, amt] of Object.entries(resDef.yields)) {
             this.player.addItem(item, amt);
-            this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
+            const displayName = this.getFoodDisplayName(item);
+            this.notify(`+${amt} ${displayName}`, 'success');
         }
         tile.resource = null;
         tile.resourceAmount = 0;
@@ -1688,6 +2163,548 @@ class Game {
         }
     }
 
+    // --- Creatures ---
+    feedCreature() {
+        const p = this.player;
+        const slots = Object.keys(p.inventory).filter(k => ITEMS[k]?.edible);
+        if (slots.length === 0) {
+            this.notify('No food to feed!', 'warning');
+            return false;
+        }
+        for (let i = this.creatures.length - 1; i >= 0; i--) {
+            const c = this.creatures[i];
+            const def = CREATURE_TYPES[c.type];
+            if (!def.canBeFed) continue;
+            const dx = c.x - p.x;
+            const dz = c.z - p.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < 3) {
+                // Feed the first edible item in inventory
+                const itemKey = slots[0];
+                p.removeItem(itemKey, 1);
+                const itemName = ITEMS[itemKey]?.name || itemKey;
+                this.notify(`Fed ${def.name} ${itemName}`, 'success');
+                this.updateInventoryUI();
+                // Rare chance to start following
+                if (!c.following && Math.random() < (def.followChance || 0.05)) {
+                    c.following = true;
+                    c.fleeDist = 0;
+                    this.notify(`The ${def.name} seems to like you! It will follow you.`, 'success');
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    attackCreature() {
+        const p = this.player;
+        const items = Object.entries(p.inventory).filter(([_, c]) => c > 0);
+        const entry = items[p.selectedSlot];
+        let damage = 2;
+        let weaponName = 'bare hands';
+        let attackRange = 3;
+        let itemDef = null;
+        if (entry) {
+            const [itemKey] = entry;
+            itemDef = ITEMS[itemKey];
+            damage = itemDef?.attackPower || 2;
+            weaponName = itemDef?.name || itemKey;
+            if (itemDef?.ranged) attackRange = itemDef.range || 30;
+        }
+
+        // --- Raycast for headshot detection ---
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
+        const creatureMeshList = [...this.creatureMeshes.values()];
+        const intersects = raycaster.intersectObjects(creatureMeshList, true);
+
+        let aimedCreature = null;
+        let aimedHitY = 0;
+        if (intersects.length > 0) {
+            const hit = intersects[0];
+            for (const c of this.creatures) {
+                const mesh = this.creatureMeshes.get(c.id);
+                if (!mesh) continue;
+                let node = hit.object;
+                while (node) { if (node === mesh) { aimedCreature = c; aimedHitY = hit.point.y; break; } node = node.parent; }
+                if (aimedCreature) break;
+            }
+        }
+
+        let targetCreature = null;
+        let isHeadshot = false;
+
+        if (aimedCreature) {
+            const dx = aimedCreature.x - p.x;
+            const dz = aimedCreature.z - p.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < attackRange) {
+                targetCreature = aimedCreature;
+                const creatureWorldY = aimedCreature.y;
+                const creatureHeight = this.getCreatureHeight(aimedCreature.type);
+                const headThreshold = creatureWorldY + creatureHeight * 0.65;
+                isHeadshot = aimedHitY >= headThreshold;
+            }
+        }
+
+        if (!targetCreature) {
+            for (let i = this.creatures.length - 1; i >= 0; i--) {
+                const c = this.creatures[i];
+                const dx = c.x - p.x;
+                const dz = c.z - p.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < attackRange) { targetCreature = c; break; }
+            }
+        }
+
+        if (!targetCreature) return false;
+
+        const def = CREATURE_TYPES[targetCreature.type];
+        if (def.aggroWhenAttacked) targetCreature.aggroed = true;
+        if (targetCreature.onWeb) targetCreature.onWeb = false;
+
+        if (isHeadshot) {
+            damage = targetCreature.health;
+            this.notify(`HEADSHOT! ${def.name} killed instantly!`, 'success');
+        }
+
+        targetCreature.health -= damage;
+
+        if (targetCreature.health <= 0) {
+            for (const [item, amt] of Object.entries(targetCreature.drops)) {
+                p.addItem(item, amt);
+                this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
+            }
+            this.researchPoints += targetCreature.xp;
+            if (!isHeadshot) this.notify(`Killed ${def.name}! +${targetCreature.xp} RP`, 'success');
+            const idx = this.creatures.indexOf(targetCreature);
+            if (idx >= 0) this.creatures.splice(idx, 1);
+            const mesh = this.creatureMeshes.get(targetCreature.id);
+            if (mesh) { this.scene.remove(mesh); this.creatureMeshes.delete(targetCreature.id); }
+        } else {
+            this.notify(`Hit ${def.name} for ${damage} with ${weaponName}!`, 'info');
+        }
+        this.updateInventoryUI();
+        this.updateUI();
+        return true;
+    }
+
+    getCreatureHeight(type) {
+        const heights = { deer: 2.0, fawn: 1.2, boar: 1.0, wolf: 1.1, bear: 1.8, rabbit: 0.7, spider: 0.8 };
+        return heights[type] || 1.5;
+    }
+
+    spawnCreature() {
+        const p = this.player;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 15 + Math.random() * 20;
+        const cx = Math.floor(p.x + Math.cos(angle) * dist);
+        const cz = Math.floor(p.z + Math.sin(angle) * dist);
+        if (cx < 1 || cx >= WORLD_W - 1 || cz < 1 || cz >= WORLD_H - 1) return;
+        const tile = this.world.getTile(cx, cz);
+        if (!tile || !BIOMES[tile.biome].walkable) return;
+        // Pick a creature type that fits the biome, weighted by spawnWeight
+        const candidates = Object.entries(CREATURE_TYPES).filter(([_, def]) => def.biomes.includes(tile.biome));
+        if (candidates.length === 0) return;
+        const totalWeight = candidates.reduce((sum, [_, d]) => sum + (d.spawnWeight || 1), 0);
+        let roll = Math.random() * totalWeight;
+        let type, def;
+        for (const [t, d] of candidates) {
+            roll -= (d.spawnWeight || 1);
+            if (roll <= 0) { type = t; def = d; break; }
+        }
+        if (!type) { type = candidates[0][0]; def = candidates[0][1]; }
+        const h = this.world.getTileHeight(cx, cz);
+        // Pack spawning for wolves
+        const packSize = def.packSpawn ? 3 + Math.floor(Math.random() * 3) : 1;
+        for (let pi = 0; pi < packSize && this.creatures.length < this.maxCreatures; pi++) {
+            const px = cx + (Math.random() - 0.5) * 4;
+            const pz = cz + (Math.random() - 0.5) * 4;
+            const ptile = this.world.getTile(Math.floor(px), Math.floor(pz));
+            if (!ptile || !BIOMES[ptile.biome].walkable) continue;
+            const ph = this.world.getTileHeight(Math.floor(px), Math.floor(pz));
+            this.creatures.push({
+                id: Math.random().toString(36).slice(2),
+                type, x: px + 0.5, z: pz + 0.5, y: ph,
+                rotation: Math.random() * Math.PI * 2,
+                health: def.health, maxHealth: def.health,
+                speed: def.speed, damage: def.damage,
+                hostile: def.hostile, fleeDist: def.fleeDist,
+                attackRange: def.attackRange, drops: def.drops, xp: def.xp,
+                state: 'idle', stateTimer: 0,
+                targetX: px + 0.5, targetZ: pz + 0.5,
+                attackCooldown: 0,
+                walkPhase: 0,
+                aggroed: false,
+                hungerTimer: 20 + Math.random() * 40,
+                following: false,
+                pounced: false,
+                pounceTimer: 0,
+                onWeb: def.onWeb || false,
+                gender: (type === 'deer') ? (Math.random() < 0.5 ? 'male' : 'female') : null,
+                berryTimer: def.eatsBerries ? 10 + Math.random() * 20 : 0,
+                huntCooldown: 0,
+                defendCooldown: 0,
+            });
+        }
+    }
+
+    updateCreatures(dt) {
+        const p = this.player;
+        this.attackCooldown = Math.max(0, this.attackCooldown - dt);
+        for (let i = this.creatures.length - 1; i >= 0; i--) {
+            const c = this.creatures[i];
+            const def = CREATURE_TYPES[c.type];
+            c.stateTimer -= dt;
+            c.attackCooldown = Math.max(0, c.attackCooldown - dt);
+            c.huntCooldown = Math.max(0, c.huntCooldown - dt);
+            c.defendCooldown = Math.max(0, c.defendCooldown - dt);
+            const dx = p.x - c.x;
+            const dz = p.z - c.z;
+            const distToPlayer = Math.sqrt(dx * dx + dz * dz);
+
+            // Despawn if too far
+            if (distToPlayer > 60) {
+                this.creatures.splice(i, 1);
+                continue;
+            }
+
+            // Hunger timer for neutral creatures that can aggro
+            if (def.hungerChance && !c.aggroed) {
+                c.hungerTimer -= dt;
+                if (c.hungerTimer <= 0 && Math.random() < def.hungerChance) {
+                    c.aggroed = true;
+                    c.hungerTimer = 30 + Math.random() * 30;
+                } else if (c.hungerTimer <= 0) {
+                    c.hungerTimer = 30 + Math.random() * 30;
+                }
+            }
+
+            // --- Bear eating berries ---
+            if (def.eatsBerries && !c.aggroed && !c.following) {
+                c.berryTimer -= dt;
+                if (c.berryTimer <= 0) {
+                    const ctx = Math.floor(c.x), ctz = Math.floor(c.z);
+                    let foundBerry = false;
+                    for (let sy = -4; sy <= 4 && !foundBerry; sy++) {
+                        for (let sx = -4; sx <= 4 && !foundBerry; sx++) {
+                            const t = this.world.getTile(ctx + sx, ctz + sy);
+                            if (t && t.resource && (t.resource === 'bush' || t.resource === 'red_berries')) {
+                                const wx = ctx + sx + 0.5;
+                                const wz = ctz + sy + 0.5;
+                                const bd = Math.sqrt((wx - c.x) ** 2 + (wz - c.z) ** 2);
+                                if (bd < 2) {
+                                    t.resource = null;
+                                    t.resourceAmount = 0;
+                                    this.removeResourceMesh(ctx + sx, ctz + sy);
+                                    this.world.queueRespawn(ctx + sx, ctz + sy, 'bush');
+                                    c.berryTimer = 25 + Math.random() * 20;
+                                    foundBerry = true;
+                                } else {
+                                    c.state = 'seek_berries';
+                                    c.targetX = wx;
+                                    c.targetZ = wz;
+                                    c.stateTimer = 5;
+                                    foundBerry = true;
+                                }
+                            }
+                        }
+                    }
+                    if (!foundBerry) c.berryTimer = 5 + Math.random() * 10;
+                }
+            }
+
+            const isAggro = c.hostile || c.aggroed;
+
+            // --- Predator-prey AI ---
+            let preyTarget = null;
+            let predatorThreat = null;
+            let wolfToFight = null;
+
+            if (def.huntsPrey && c.huntCooldown <= 0 && !c.aggroed && !c.following) {
+                for (const other of this.creatures) {
+                    if (other === c) continue;
+                    const odef = CREATURE_TYPES[other.type];
+                    if (!odef.isPrey) continue;
+                    const odx = other.x - c.x;
+                    const odz = other.z - c.z;
+                    const odist = Math.sqrt(odx * odx + odz * odz);
+                    if (odist < 15) {
+                        if (!preyTarget || odist < Math.sqrt((preyTarget.x - c.x) ** 2 + (preyTarget.z - c.z) ** 2)) {
+                            preyTarget = other;
+                        }
+                    }
+                }
+            }
+
+            if (def.isPrey) {
+                for (const other of this.creatures) {
+                    const odef = CREATURE_TYPES[other.type];
+                    if (!odef.isPredator) continue;
+                    const odx = c.x - other.x;
+                    const odz = c.z - other.z;
+                    const odist = Math.sqrt(odx * odx + odz * odz);
+                    if (odist < 10) {
+                        if (!predatorThreat || odist < Math.sqrt((c.x - predatorThreat.x) ** 2 + (c.z - predatorThreat.z) ** 2)) {
+                            predatorThreat = other;
+                        }
+                    }
+                }
+            }
+
+            // Male deer defend against wolves
+            if (c.type === 'deer' && c.gender === 'male' && def.canFightWolf && c.defendCooldown <= 0) {
+                for (const other of this.creatures) {
+                    if (other.type !== 'wolf') continue;
+                    const odx = other.x - c.x;
+                    const odz = other.z - c.z;
+                    const odist = Math.sqrt(odx * odx + odz * odz);
+                    if (odist < 8) { wolfToFight = other; break; }
+                }
+            }
+
+            // Spider on web stays put and doesn't attack
+            if (c.onWeb) {
+                c.state = 'idle';
+                c.targetX = c.x;
+                c.targetZ = c.z;
+                if (distToPlayer < 1.5) {
+                    c.onWeb = false;
+                    c.aggroed = true;
+                    this.notify('You broke the spider web!', 'warning');
+                }
+            } else if (c.following) {
+                const followDist = 4;
+                if (distToPlayer > followDist) {
+                    c.state = 'follow';
+                    c.targetX = p.x - (dx / distToPlayer) * followDist;
+                    c.targetZ = p.z - (dz / distToPlayer) * followDist;
+                } else {
+                    c.state = 'idle';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                }
+            } else if (isAggro && distToPlayer < 12) {
+                c.state = 'chase';
+                c.targetX = p.x;
+                c.targetZ = p.z;
+            } else if (wolfToFight) {
+                // Male deer charges at wolf to defend
+                c.state = 'defend';
+                const wdx = wolfToFight.x - c.x;
+                const wdz = wolfToFight.z - c.z;
+                const wdist = Math.sqrt(wdx * wdx + wdz * wdz);
+                if (wdist < 2 && c.attackCooldown <= 0) {
+                    wolfToFight.health -= 8;
+                    c.attackCooldown = 1.5;
+                    c.defendCooldown = 8;
+                    if (wolfToFight.health <= 0) {
+                        const widx = this.creatures.indexOf(wolfToFight);
+                        if (widx >= 0) {
+                            for (const [item, amt] of Object.entries(wolfToFight.drops)) {
+                                p.addItem(item, amt);
+                            }
+                            this.researchPoints += wolfToFight.xp;
+                            this.creatures.splice(widx, 1);
+                            const wmesh = this.creatureMeshes.get(wolfToFight.id);
+                            if (wmesh) { this.scene.remove(wmesh); this.creatureMeshes.delete(wolfToFight.id); }
+                        }
+                    }
+                } else {
+                    c.targetX = wolfToFight.x;
+                    c.targetZ = wolfToFight.z;
+                }
+            } else if (preyTarget && !c.aggroed) {
+                // Predator hunting prey
+                c.state = 'hunt';
+                c.targetX = preyTarget.x;
+                c.targetZ = preyTarget.z;
+                const pdx = preyTarget.x - c.x;
+                const pdz = preyTarget.z - c.z;
+                const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+                if (pdist < c.attackRange && c.attackCooldown <= 0) {
+                    preyTarget.health -= c.damage * 0.6;
+                    c.attackCooldown = 1.5;
+                    c.huntCooldown = 3;
+                    if (preyTarget.health <= 0) {
+                        const pidx = this.creatures.indexOf(preyTarget);
+                        if (pidx >= 0) {
+                            for (const [item, amt] of Object.entries(preyTarget.drops)) {
+                                p.addItem(item, Math.max(1, Math.floor(amt * 0.5)));
+                            }
+                            this.creatures.splice(pidx, 1);
+                            const pmesh = this.creatureMeshes.get(preyTarget.id);
+                            if (pmesh) { this.scene.remove(pmesh); this.creatureMeshes.delete(preyTarget.id); }
+                        }
+                    }
+                }
+            } else if (predatorThreat && def.isPrey && !c.following) {
+                // Prey flees from predator
+                c.state = 'flee_predator';
+                const pdx = c.x - predatorThreat.x;
+                const pdz = c.z - predatorThreat.z;
+                c.targetX = c.x + pdx * 2;
+                c.targetZ = c.z + pdz * 2;
+                c.stateTimer = 2;
+            } else if (!isAggro && c.fleeDist > 0 && distToPlayer < c.fleeDist) {
+                c.state = 'flee';
+                c.targetX = c.x - dx * 3;
+                c.targetZ = c.z - dz * 3;
+                c.stateTimer = 2;
+            } else if (c.stateTimer <= 0 && c.state !== 'seek_berries') {
+                c.state = 'wander';
+                c.targetX = c.x + (Math.random() - 0.5) * 6;
+                c.targetZ = c.z + (Math.random() - 0.5) * 6;
+                c.stateTimer = 3 + Math.random() * 4;
+            }
+
+            // Pounce timer countdown
+            if (c.pounced) {
+                c.pounceTimer -= dt;
+                p.energy = Math.max(0, p.energy - dt * 5);
+                const struggling = this.keys['w'] || this.keys['a'] || this.keys['s'] || this.keys['d'] || this.keys[' '];
+                if (struggling) {
+                    p.energy = Math.max(0, p.energy - dt * 8);
+                    c.pounceTimer -= dt * 2;
+                }
+                if (c.pounceTimer <= 0) {
+                    c.pounced = false;
+                    c.attackCooldown = 3;
+                    this.notify('You broke free from the wolf!', 'info');
+                }
+            }
+
+            // Move toward target (skip if pounced)
+            if (c.pounced) {
+                c.x = p.x;
+                c.z = p.z;
+                c.y = p.y;
+            } else {
+            const tdx = c.targetX - c.x;
+            const tdz = c.targetZ - c.z;
+            const tdist = Math.sqrt(tdx * tdx + tdz * tdz);
+            if (tdist > 0.1) {
+                let speedMult = 1;
+                if (c.state === 'flee' || c.state === 'flee_predator') speedMult = 1.6;
+                else if (c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') speedMult = 1.3;
+                const speed = c.speed * dt * speedMult;
+                const nx = c.x + (tdx / tdist) * speed;
+                const nz = c.z + (tdz / tdist) * speed;
+                const tile = this.world.getTile(Math.floor(nx), Math.floor(nz));
+                if (tile && BIOMES[tile.biome].walkable) {
+                    c.x = nx;
+                    c.z = nz;
+                    c.y = this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
+                    c.rotation = Math.atan2(tdx, tdz);
+                    // Walk phase frequency depends on speed state
+                    const phaseSpeed = (c.state === 'flee' || c.state === 'flee_predator' || c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') ? 14 : 7;
+                    c.walkPhase += dt * phaseSpeed;
+                    c.moving = true;
+                } else {
+                    c.moving = false;
+                }
+            } else {
+                c.moving = false;
+            }
+            }
+
+            // Attack player
+            if (isAggro && distToPlayer < c.attackRange && c.attackCooldown <= 0 && !c.pounced) {
+                if (c.type === 'wolf') {
+                    c.pounced = true;
+                    c.pounceTimer = 3;
+                    p.health = Math.max(0, p.health - c.damage);
+                    this.notify(`Wolf pounced on you! Struggle (WASD/Space) to break free!`, 'warning');
+                } else {
+                    c.attackCooldown = 1.5;
+                    p.health = Math.max(0, p.health - c.damage);
+                    this.notify(`${def.name} hit you for ${c.damage} damage!`, 'warning');
+                }
+                this.updateUI();
+            }
+
+            // Update mesh if loaded
+            const mesh = this.creatureMeshes.get(c.id);
+            if (mesh) {
+                mesh.position.set(c.x * TILE_SIZE, c.y, c.z * TILE_SIZE);
+                mesh.rotation.y = c.rotation;
+                // Leg walk animation — amplitude and speed depend on state
+                const legs = mesh.userData.legs;
+                const isRunning = c.state === 'flee' || c.state === 'flee_predator' || c.state === 'chase' || c.state === 'hunt' || c.state === 'defend';
+                const legAmp = isRunning ? 0.55 : 0.25;
+                if (legs) {
+                    for (let li = 0; li < legs.length; li++) {
+                        legs[li].rotation.x = Math.sin(c.walkPhase + li * Math.PI / 2) * legAmp;
+                    }
+                }
+                // Body bob — vertical oscillation while moving
+                if (mesh.userData.bodyRef) {
+                    const bobAmp = isRunning ? 0.08 : 0.04;
+                    mesh.userData.bodyRef.position.y = Math.abs(Math.sin(c.walkPhase)) * bobAmp;
+                }
+                // Head bob — slight up/down different from body
+                if (mesh.userData.headRef) {
+                    mesh.userData.headRef.rotation.x = Math.sin(c.walkPhase * 0.5) * 0.08;
+                }
+                // Tail wag
+                if (mesh.userData.tailRef) {
+                    mesh.userData.tailRef.rotation.z = Math.sin(c.walkPhase * 0.7) * 0.3;
+                }
+            }
+        }
+    }
+
+    updateCreatureMeshes() {
+        const p = this.player;
+        const RENDER_DIST = 35;
+        const loadedIds = new Set();
+        for (const c of this.creatures) {
+            const dx = c.x - p.x;
+            const dz = c.z - p.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist > RENDER_DIST) continue;
+            loadedIds.add(c.id);
+            if (!this.creatureMeshes.has(c.id)) {
+                const mesh = ModelFactory.createCreature(c.type);
+                mesh.traverse(child => { if (child.isMesh) child.castShadow = true; });
+                mesh.position.set(c.x * TILE_SIZE, c.y, c.z * TILE_SIZE);
+                mesh.rotation.y = c.rotation;
+                // Store legs for animation
+                const legs = [];
+                mesh.traverse(child => {
+                    if (child.userData.isLeg) legs.push(child);
+                });
+                mesh.userData.legs = legs;
+                // Add web for spiders on web
+                if (c.onWeb) {
+                    const web = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.8, 8, 6),
+                        new THREE.MeshLambertMaterial({ color: 0xdddddd, transparent: true, opacity: 0.3 })
+                    );
+                    web.position.y = 0.1;
+                    mesh.add(web);
+                    mesh.userData.web = web;
+                }
+                this.scene.add(mesh);
+                this.creatureMeshes.set(c.id, mesh);
+            } else {
+                // Update web visibility
+                const mesh = this.creatureMeshes.get(c.id);
+                if (mesh.userData.web) {
+                    mesh.userData.web.visible = c.onWeb;
+                }
+            }
+        }
+        // Unload distant creatures
+        for (const [id, mesh] of this.creatureMeshes) {
+            if (!loadedIds.has(id)) {
+                this.scene.remove(mesh);
+                this.creatureMeshes.delete(id);
+            }
+        }
+    }
+
     // --- Tech ---
     researchTech(techId) {
         const tech = TECH_TREE.find(t => t.id === techId);
@@ -1794,23 +2811,167 @@ class Game {
         setTimeout(() => el.remove(), 3500);
     }
 
+    // --- Pause ---
+    togglePause() {
+        this.paused = !this.paused;
+        const pauseScreen = document.getElementById('pause-screen');
+        if (this.paused) {
+            pauseScreen.classList.remove('hidden');
+            if (this.pointerLocked) document.exitPointerLock();
+            this.keys = {};
+        } else {
+            pauseScreen.classList.add('hidden');
+            this.lastTime = performance.now();
+            if (!this.mobileMode) this.requestPointerLock();
+        }
+    }
+
+    // --- Mobile mode ---
+    toggleMobileMode() {
+        this.mobileMode = !this.mobileMode;
+        const btn = document.getElementById('mobile-toggle');
+        const controls = document.getElementById('mobile-controls');
+        if (this.mobileMode) {
+            btn.textContent = '📱 Mobile Mode: On';
+            btn.classList.add('active');
+            controls.classList.remove('hidden');
+            controls.classList.add('active');
+        } else {
+            btn.textContent = '📱 Mobile Mode: Off';
+            btn.classList.remove('active');
+            controls.classList.remove('active');
+            controls.classList.add('hidden');
+        }
+    }
+
+    setupMobileControls() {
+        const joystickZone = document.getElementById('joystick-zone');
+        const knob = document.getElementById('joystick-knob');
+        const lookZone = document.getElementById('mobile-look-zone');
+
+        // Joystick for movement
+        joystickZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            this.joystick.active = true;
+            this.joystick.touchId = t.identifier;
+            this.joystick.startX = t.clientX;
+            this.joystick.startY = t.clientY;
+        }, { passive: false });
+
+        joystickZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                if (t.identifier !== this.joystick.touchId) continue;
+                const dx = t.clientX - this.joystick.startX;
+                const dy = t.clientY - this.joystick.startY;
+                const maxDist = 50;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const clampedDist = Math.min(dist, maxDist);
+                const angle = Math.atan2(dy, dx);
+                const kx = Math.cos(angle) * clampedDist;
+                const ky = Math.sin(angle) * clampedDist;
+                knob.style.left = (35 + kx) + 'px';
+                knob.style.top = (35 + ky) + 'px';
+                this.joystick.dx = kx / maxDist;
+                this.joystick.dz = ky / maxDist;
+            }
+        }, { passive: false });
+
+        joystickZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.joystick.active = false;
+            this.joystick.dx = 0;
+            this.joystick.dz = 0;
+            this.joystick.touchId = null;
+            knob.style.left = '35px';
+            knob.style.top = '35px';
+        }, { passive: false });
+
+        // Look zone for camera rotation
+        lookZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            this.lookTouch.active = true;
+            this.lookTouch.touchId = t.identifier;
+            this.lookTouch.lastX = t.clientX;
+            this.lookTouch.lastY = t.clientY;
+        }, { passive: false });
+
+        lookZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                if (t.identifier !== this.lookTouch.touchId) continue;
+                const dx = t.clientX - this.lookTouch.lastX;
+                const dy = t.clientY - this.lookTouch.lastY;
+                this.cameraRotation.yaw -= dx * 0.005;
+                this.cameraRotation.pitch -= dy * 0.005;
+                this.cameraRotation.pitch = Math.max(-1.4, Math.min(1.4, this.cameraRotation.pitch));
+                this.lookTouch.lastX = t.clientX;
+                this.lookTouch.lastY = t.clientY;
+            }
+        }, { passive: false });
+
+        lookZone.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.lookTouch.active = false;
+            this.lookTouch.touchId = null;
+        }, { passive: false });
+
+        // Action buttons
+        const setupBtn = (id, key, isHold) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+                if (isHold) {
+                    this.keys[key] = true;
+                } else {
+                    if (key === 'jump') {
+                        if (this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0)
+                            this.player.jumpVel = 12;
+                    } else if (key === 'interact') {
+                        if (this.gameRunning) {
+                            if (this.buildMode) this.placeBuilding();
+                            else this.interact();
+                        }
+                    }
+                }
+            }, { passive: false });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (isHold) this.keys[key] = false;
+            }, { passive: false });
+        };
+
+        setupBtn('mob-jump', 'jump', false);
+        setupBtn('mob-climb', 'v', true);
+        setupBtn('mob-sprint', 'shift', true);
+        setupBtn('mob-interact', 'interact', false);
+    }
+
     // --- Main loop ---
     loop(time) {
         if (!this.gameRunning) return;
         const dt = Math.min((time - this.lastTime) / 1000, 0.1);
         this.lastTime = time;
-        this.time += dt;
-        try {
-            this.update(dt);
-            this.render();
-        } catch (err) {
-            console.error('Game loop error:', err);
+        if (!this.paused) {
+            try {
+                this.update(dt);
+            } catch (err) {
+                console.error('Game loop error:', err);
+            }
         }
+        this.render();
         requestAnimationFrame((t) => this.loop(t));
     }
 
     update(dt) {
         const p = this.player;
+
+        // Check if player is pounced by a wolf
+        const isPounced = this.creatures.some(c => c.pounced);
 
         // Movement (WASD relative to camera yaw)
         const yaw = this.cameraRotation.yaw;
@@ -1822,17 +2983,35 @@ class Game {
         const rightZ = -Math.sin(yaw);
 
         let dx = 0, dz = 0;
+        if (isPounced) {
+            // Player is pinned - can't move normally, struggling handled in updateCreatures
+        } else {
         if (this.keys['w'] || this.keys['arrowup']) { dx += fwdX; dz += fwdZ; }
         if (this.keys['s'] || this.keys['arrowdown']) { dx -= fwdX; dz -= fwdZ; }
         if (this.keys['a'] || this.keys['arrowleft']) { dx -= rightX; dz -= rightZ; }
         if (this.keys['d'] || this.keys['arrowright']) { dx += rightX; dz += rightZ; }
 
+        // Mobile joystick input
+        if (this.mobileMode && this.joystick.active) {
+            dx += fwdX * (-this.joystick.dz) + rightX * this.joystick.dx;
+            dz += fwdZ * (-this.joystick.dz) + rightZ * this.joystick.dx;
+        }
+        } // end else (not pounced)
+
         // Sprinting
-        const isSprinting = (this.keys['shift'] || this.keys['shiftleft']) && (dx !== 0 || dz !== 0) && p.energy > 0;
+        const isSprinting = !isPounced && (this.keys['shift'] || this.keys['shiftleft']) && (dx !== 0 || dz !== 0) && p.energy > 0;
         // Swimming
         const ptx = Math.floor(p.x), pty = Math.floor(p.z);
         const currentTile = this.world.getTile(ptx, pty);
         const isSwimming = currentTile && currentTile.biome === 'water';
+
+        const CLIMBABLE_BIOMES = ['mountain', 'snow'];
+        const isHoldingClimb = this.keys['v'];
+        const curBiomeClimbable = currentTile && CLIMBABLE_BIOMES.includes(currentTile.biome);
+        let isClimbing = false;
+        if (isHoldingClimb && curBiomeClimbable) {
+            isClimbing = true;
+        }
 
         if (dx !== 0 || dz !== 0) {
             const len = Math.sqrt(dx*dx + dz*dz);
@@ -1840,21 +3019,13 @@ class Game {
             let speed = PLAYER_SPEED * dt;
             if (isSprinting && !isSwimming) speed *= 1.8;
             if (isSwimming) speed *= 0.5; // slower in water
-            // Climbing: hold Space against mountain/snow terrain to scale steep slopes
-            const CLIMBABLE_BIOMES = ['mountain', 'snow'];
-            const isHoldingClimb = this.keys[' '] || this.keys['space'];
-            const curBiomeClimbable = currentTile && CLIMBABLE_BIOMES.includes(currentTile.biome);
-            let isClimbing = false;
-            if (isHoldingClimb && curBiomeClimbable) {
-                isClimbing = true;
-                speed *= 0.5; // climbing is slower than walking
-            }
+            if (isClimbing) speed *= 0.5; // climbing is slower than walking
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
             const curH = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
             const MAX_STEP = 2.5;
-            const MAX_CLIMB = 40;
+            const MAX_CLIMB = 100;
             const canStep = (nx, nz) => {
                 if (!this.world.isWalkable(nx, nz)) return false;
                 const targetTile = this.world.getTile(nx, nz);
@@ -1871,7 +3042,7 @@ class Game {
             if (p.harvesting) p.harvesting = null;
             p.isClimbing = isClimbing;
         } else {
-            p.isClimbing = false;
+            p.isClimbing = isClimbing;
         }
 
         // Movement energy costs
@@ -1881,6 +3052,8 @@ class Game {
             p.energy = Math.max(0, p.energy - dt * 2); // running costs 2/s
         } else if (dx !== 0 || dz !== 0) {
             p.energy = Math.max(0, p.energy - dt * 0.5); // walking costs 0.5/s
+        } else if (!isSwimming && !p.isClimbing) {
+            p.energy = Math.max(0, p.energy - dt * 0.3); // idle drains 0.3/s
         }
         // Swimming drains energy even when idle
         if (isSwimming) {
@@ -1904,6 +3077,29 @@ class Game {
             if (p.yOffset <= 0) {
                 p.yOffset = 0;
                 p.jumpVel = 0;
+                // Just landed - check for stepping on small creatures
+                for (let i = this.creatures.length - 1; i >= 0; i--) {
+                    const c = this.creatures[i];
+                    const def = CREATURE_TYPES[c.type];
+                    if (def.health > 15) continue; // only small creatures can be stepped on
+                    const cdx = c.x - p.x;
+                    const cdz = c.z - p.z;
+                    const cdist = Math.sqrt(cdx * cdx + cdz * cdz);
+                    if (cdist < 1.0) {
+                        // Stepped on it!
+                        for (const [item, amt] of Object.entries(c.drops)) {
+                            p.addItem(item, amt);
+                            this.notify(`+${amt} ${ITEMS[item]?.name || item}`, 'success');
+                        }
+                        this.researchPoints += c.xp;
+                        this.notify(`Stepped on ${def.name}! +${c.xp} RP`, 'success');
+                        this.creatures.splice(i, 1);
+                        const mesh = this.creatureMeshes.get(c.id);
+                        if (mesh) { this.scene.remove(mesh); this.creatureMeshes.delete(c.id); }
+                        this.updateInventoryUI();
+                        this.updateUI();
+                    }
+                }
             }
         }
         // Smooth Y toward ground height (no snapping when walking slopes)
@@ -1943,10 +3139,13 @@ class Game {
             this.sun.target.updateMatrixWorld();
         }
 
-        // Harvesting
+        // Harvesting / Fishing
         if (p.harvesting) {
             p.harvesting.progress += dt;
-            if (p.harvesting.progress >= p.harvesting.total) this.completeHarvest();
+            if (p.harvesting.progress >= p.harvesting.total) {
+                if (p.harvesting.fishing) this.completeFishing();
+                else this.completeHarvest();
+            }
             this.updateHarvestUI();
         } else {
             document.getElementById('harvest-progress').classList.add('hidden');
@@ -1973,6 +3172,23 @@ class Game {
             this.updateUI();
         }
 
+        // Creature spawning
+        this.creatureSpawnAccumulator += dt;
+        if (this.creatureSpawnAccumulator >= 2.0 && this.creatures.length < this.maxCreatures) {
+            this.creatureSpawnAccumulator = 0;
+            this.spawnCreature();
+        }
+
+        // Creature updates
+        this.updateCreatures(dt);
+
+        // Creature mesh loading/unloading
+        this.creatureMeshAccumulator += dt;
+        if (this.creatureMeshAccumulator >= 0.3) {
+            this.creatureMeshAccumulator = 0;
+            this.updateCreatureMeshes();
+        }
+
         // Campfire regen
         for (let dy = -2; dy <= 2; dy++) {
             for (let dx = -2; dx <= 2; dx++) {
@@ -1987,6 +3203,31 @@ class Game {
         // Energy drain
         p.energy = Math.max(0, p.energy - dt * 0.3);
         if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 2);
+
+        // Day/night cycle
+        this.dayTime = (this.dayTime + dt / this.dayLength) % 1;
+        const wasNight = this.isNight;
+        this.isNight = this.dayTime > 0.5 && this.dayTime < 0.95;
+        if (this.isNight && !wasNight) {
+            this.notify('🌙 Night falls! Find a Wood Hut to sleep.', 'warning');
+        } else if (!this.isNight && wasNight) {
+            this.notify('🌅 Dawn breaks. Stay safe!', 'info');
+        }
+        this.updateDayNightLighting();
+
+        // Sleeping in wood hut at night
+        if (this.sleeping) {
+            this.sleepTimer -= dt;
+            p.health = Math.min(p.maxHealth, p.health + dt * 15);
+            p.energy = Math.min(p.maxEnergy, p.energy + dt * 20);
+            if (this.sleepTimer <= 0 || !this.isNight) {
+                this.sleeping = false;
+                this.notify('😴 You wake up feeling refreshed!', 'success');
+                this.updateUI();
+            }
+            this.updateUI();
+        }
+
         if (p.health <= 0) {
             this.gameRunning = false;
             document.getElementById('game-over').classList.remove('hidden');
@@ -2047,7 +3288,7 @@ class Game {
             );
             this.scene.add(this.buildPreview);
         }
-        const wy = this.world.getTileHeight(tx, ty);
+        const wy = this.world.getTileCenterHeight(tx, ty);
         this.buildPreview.position.set(tx * TILE_SIZE + TILE_SIZE/2, wy + 0.05, ty * TILE_SIZE + TILE_SIZE/2);
         this.buildPreview.visible = true;
         this.buildPreview.material.color.setHex(canBuild ? 0x00ff00 : 0xff0000);
@@ -2064,7 +3305,10 @@ class Game {
         if (!tile) { el.classList.add('hidden'); return; }
         if (tile.resource && !this.player.harvesting && !this.buildMode) {
             const resDef = RESOURCE_TYPES[tile.resource];
-            el.innerHTML = `<kbd>E / Click</kbd> Harvest ${resDef.icon} ${resDef.name}`;
+            const yieldKey = resDef.yields ? Object.keys(resDef.yields)[0] : null;
+            const isMystery = yieldKey && ITEMS[yieldKey]?.edible && !this.discoveredFoods.has(yieldKey);
+            const displayName = isMystery ? 'Mysterious Food' : resDef.name;
+            el.innerHTML = `<kbd>E / Click</kbd> Harvest ${resDef.icon} ${displayName}`;
             el.classList.remove('hidden');
         } else if (tile.building && !this.buildMode) {
             const def = BUILDINGS[tile.building];
@@ -2081,10 +3325,19 @@ class Game {
         const el = document.getElementById('harvest-progress');
         const fill = document.getElementById('harvest-progress-fill');
         const label = document.getElementById('harvest-label');
+        fill.style.width = `${(h.progress / h.total) * 100}%`;
+        if (h.fishing) {
+            label.textContent = `Fishing...`;
+            el.classList.remove('hidden');
+            return;
+        }
         const resDef = RESOURCE_TYPES[h.resource];
         const pct = (h.progress / h.total) * 100;
         fill.style.width = pct + '%';
-        label.textContent = `Harvesting ${resDef.name}...`;
+        const yieldKey = resDef.yields ? Object.keys(resDef.yields)[0] : null;
+        const isMystery = yieldKey && ITEMS[yieldKey]?.edible && !this.discoveredFoods.has(yieldKey);
+        const displayName = isMystery ? 'Mysterious Food' : resDef.name;
+        label.textContent = `Harvesting ${displayName}...`;
         el.classList.remove('hidden');
     }
 
@@ -2103,20 +3356,70 @@ class Game {
         if (!document.getElementById('panel-crafting').classList.contains('hidden')) this.renderCrafting();
         if (!document.getElementById('panel-build').classList.contains('hidden')) this.renderBuild();
         if (!document.getElementById('panel-tech').classList.contains('hidden')) this.renderTech();
+        if (!document.getElementById('panel-inventory').classList.contains('hidden')) this.renderInventoryGrid();
     }
 
     updateInventoryUI() {
         const bar = document.getElementById('inventory-bar');
         bar.innerHTML = '';
-        const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
+        const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0).slice(0, 9);
         items.forEach(([item, count], i) => {
             const def = ITEMS[item];
+            const isUndiscoveredFood = def?.edible && !this.discoveredFoods.has(item);
+            const icon = def?.icon || '?';
+            const name = isUndiscoveredFood ? 'Mysterious Food' : (def?.name || item);
             const slot = document.createElement('div');
             slot.className = 'inv-slot' + (i === this.player.selectedSlot ? ' selected' : '');
-            slot.innerHTML = `<span class="inv-slot-key">${i + 1}</span><span class="inv-slot-icon">${def?.icon || '❓'}</span><span class="inv-slot-count">${count}</span>`;
-            slot.title = def?.name || item;
+            slot.innerHTML = `<span class="inv-slot-key">${i + 1}</span><span class="inv-slot-icon">${icon}</span><span class="inv-slot-count">${count}</span>`;
+            slot.title = name;
             bar.appendChild(slot);
         });
+    }
+
+    renderInventoryGrid() {
+        const grid = document.getElementById('inventory-grid');
+        grid.innerHTML = '';
+        const items = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
+        const perPage = 9;
+        const totalPages = Math.max(1, Math.ceil(items.length / perPage));
+        if (this.inventoryPage >= totalPages) this.inventoryPage = totalPages - 1;
+        const start = this.inventoryPage * perPage;
+        const pageItems = items.slice(start, start + perPage);
+
+        const pageLabel = document.createElement('div');
+        pageLabel.style.cssText = 'text-align:center;color:#aaa;font-size:12px;margin-bottom:8px;';
+        pageLabel.textContent = `Page ${this.inventoryPage + 1} / ${totalPages} — Press 1-9 to switch pages`;
+        grid.appendChild(pageLabel);
+
+        if (pageItems.length === 0) {
+            grid.innerHTML += '<p style="color:#888;text-align:center;padding:20px;">Inventory is empty</p>';
+            return;
+        }
+
+        const gridDiv = document.createElement('div');
+        gridDiv.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;';
+        for (const [item, count] of pageItems) {
+            const def = ITEMS[item];
+            const isUndiscoveredFood = def?.edible && !this.discoveredFoods.has(item);
+            const icon = def?.icon || '?';
+            const name = isUndiscoveredFood ? 'Mysterious Food' : (def?.name || item);
+            const cell = document.createElement('div');
+            cell.style.cssText = 'background:rgba(255,255,255,0.08);border-radius:8px;padding:8px;text-align:center;cursor:pointer;';
+            cell.innerHTML = `<div style="font-size:24px;">${icon}</div><div style="font-size:11px;color:#ccc;margin-top:4px;">${name}</div><div style="font-size:10px;color:#888;">x${count}</div>`;
+            cell.title = name;
+            cell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Select this item in the hotbar
+                const allItems = Object.entries(this.player.inventory).filter(([_, c]) => c > 0);
+                const idx = allItems.findIndex(([k]) => k === item);
+                if (idx >= 0 && idx < 9) {
+                    this.player.selectedSlot = idx;
+                    this.updateInventoryUI();
+                }
+            });
+            gridDiv.appendChild(cell);
+        }
+        grid.appendChild(gridDiv);
     }
 
     renderCrafting() {
@@ -2133,7 +3436,7 @@ class Game {
                 return `<span class="cost-item${has ? '' : ' lacking'}">${ITEMS[item]?.icon || ''} ${amt}</span>`;
             }).join('');
             card.innerHTML = `<div class="recipe-header"><span class="recipe-icon">${ITEMS[Object.keys(recipe.output)[0]]?.icon || '🔨'}</span><span class="recipe-name">${outItems}</span></div><div class="recipe-cost">Cost: ${costItems}</div>`;
-            card.addEventListener('click', () => this.craft(recipe.id));
+            card.addEventListener('click', (e) => { e.stopPropagation(); this.craft(recipe.id); });
             list.appendChild(card);
         }
         if (list.children.length === 0) list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No recipes available. Research technology to unlock more!</p>';
@@ -2153,7 +3456,8 @@ class Game {
             }).join('');
             const powerInfo = def.power > 0 ? ` ⚡+${def.power}` : (def.powerUse > 0 ? ` ⚡-${def.powerUse}` : '');
             card.innerHTML = `<div class="build-header"><span class="build-icon">${def.icon}</span><span class="build-name">${def.name}${powerInfo}</span></div><div style="font-size:11px;color:#999;margin-bottom:4px;">${def.desc}</div><div class="build-cost">Cost: ${costItems}</div>`;
-            card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.buildMode = id;
                 this.updateBuildModeUI();
                 document.getElementById('panel-build').classList.add('hidden');
@@ -2179,7 +3483,7 @@ class Game {
             else status = '<span class="tech-status" style="color:#888;">🔒 Locked</span>';
             const prereqText = tech.prereq.length > 0 ? `<div class="tech-prereq">Requires: ${tech.prereq.map(p => TECH_TREE.find(t=>t.id===p)?.name).join(', ')}</div>` : '';
             card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
-            if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', () => this.researchTech(tech.id)); }
+            if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
             list.appendChild(card);
         }
     }
