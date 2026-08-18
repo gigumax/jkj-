@@ -307,7 +307,7 @@ class World {
                 else if (e > 0.72) biome = 'mountain';
                 else if (m > 0.55) biome = 'forest';
                 else biome = 'grass';
-                const tile = { biome, resource: null, resourceAmount: 0, building: null, buildingData: null, elevation: e };
+                const tile = { biome, resource: null, resourceAmount: 0, building: null, buildingData: null, elevation: e, digDepth: 0 };
                 this.maybeSpawnResource(tile, x, y);
                 this.tiles[y][x] = tile;
             }
@@ -421,14 +421,18 @@ class World {
         const baseHeight = BIOMES[t.biome].height;
         const elev = t.elevation; // 0..1 from Perlin noise
         // Water is below sea level, mountains get tall
-        if (t.biome === 'water') return -2;
-        if (t.biome === 'sand') return 0.5 + elev * 2;
-        if (t.biome === 'grass') return 1 + elev * 4;
-        if (t.biome === 'forest') return 1.5 + elev * 5;
-        if (t.biome === 'mountain') return 4 + elev * 18;
-        if (t.biome === 'snow') return 8 + elev * 22;
-        if (t.biome === 'desert') return 0.8 + elev * 3;
-        return baseHeight * 3;
+        let h;
+        if (t.biome === 'water') h = -2;
+        else if (t.biome === 'sand') h = 0.5 + elev * 2;
+        else if (t.biome === 'grass') h = 1 + elev * 4;
+        else if (t.biome === 'forest') h = 1.5 + elev * 5;
+        else if (t.biome === 'mountain') h = 4 + elev * 18;
+        else if (t.biome === 'snow') h = 8 + elev * 22;
+        else if (t.biome === 'desert') h = 0.8 + elev * 3;
+        else h = baseHeight * 3;
+        // Apply dig depth
+        h -= (t.digDepth || 0);
+        return h;
     }
     // Average height at the center of a tile (between 4 corners)
     getTileCenterHeight(tx, ty) {
@@ -478,6 +482,7 @@ class Player {
         this.jumpVel = 0;
         this.yOffset = 0; // height above terrain from jumping
         this.isClimbing = false;
+        this.fallStartY = 0; // tracks highest point during a fall for fall damage
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -1157,9 +1162,9 @@ class ModelFactory {
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
         const legMat = new THREE.MeshLambertMaterial({ color: 0x0a0a1a });
         const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 7, 6), bodyMat);
-        abdomen.position.set(0, 0.4, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; g.add(abdomen);
+        abdomen.position.set(0, 0.4, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; abdomen.userData.isBody = true; g.add(abdomen);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), bodyMat);
-        head.position.set(0, 0.35, 0.3); g.add(head);
+        head.position.set(0, 0.35, 0.3); head.userData.isHead = true; g.add(head);
         // Eyes (8 eyes - 4 pairs)
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
         for (let i = 0; i < 4; i++) {
@@ -1782,6 +1787,7 @@ class Game {
             if (e.key.toLowerCase() === 'e' && this.gameRunning) this.interact();
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
+            if (e.key.toLowerCase() === 'c' && this.gameRunning) this.dig();
             if (e.key.toLowerCase() === 'p' && this.gameRunning) this.togglePause();
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
                 this.player.jumpVel = 12;
@@ -1943,6 +1949,49 @@ class Game {
             return { tx, ty, type: 'terrain', distance: terrainHit[0].distance };
         }
         return null;
+    }
+
+    // --- Digging ---
+    dig() {
+        if (this.player.harvesting) return;
+        if (this.player.energy < 3) { this.notify('Too tired to dig!', 'warning'); return; }
+        const target = this.getTargetTile();
+        if (!target) return;
+        if (target.distance > INTERACT_RANGE) { this.notify('Too far away!', 'warning'); return; }
+        const tile = this.world.getTile(target.tx, target.ty);
+        if (!tile) return;
+        if (tile.biome === 'water') { this.notify("Can't dig underwater!", 'warning'); return; }
+        if (tile.building) { this.notify("Can't dig under a building!", 'warning'); return; }
+        if ((tile.digDepth || 0) >= 5) { this.notify('Hole is too deep!', 'warning'); return; }
+
+        tile.digDepth = (tile.digDepth || 0) + 1;
+        this.player.addItem('soil', 2);
+        this.player.energy = Math.max(0, this.player.energy - 3);
+        this.researchPoints += 0.2;
+        this.notify('Dug soil! +2 Soil', 'success');
+
+        // Update terrain mesh at this vertex and neighbors
+        this.updateTerrainAt(target.tx, target.ty);
+        this.updateInventoryUI();
+        this.updateUI();
+    }
+
+    updateTerrainAt(tx, ty) {
+        const terrain = this.terrainMesh;
+        if (!terrain) return;
+        const geo = terrain.geometry;
+        const positions = geo.attributes.position;
+        // Update the vertex and its 4 neighbors for smooth holes
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const vx = tx + dx, vy = ty + dy;
+                if (vx < 0 || vx >= WORLD_W || vy < 0 || vy >= WORLD_H) continue;
+                const vIdx = vy * WORLD_W + vx;
+                positions.setY(vIdx, this.world.getTileHeight(vx, vy));
+            }
+        }
+        positions.needsUpdate = true;
+        geo.computeVertexNormals();
     }
 
     // --- Interaction ---
@@ -2787,10 +2836,17 @@ class Game {
                 mesh.rotation.y = c.rotation;
                 // Store legs for animation
                 const legs = [];
+                let bodyRef = null, headRef = null, tailRef = null;
                 mesh.traverse(child => {
                     if (child.userData.isLeg) legs.push(child);
+                    if (child.userData.isBody) bodyRef = child;
+                    if (child.userData.isHead) headRef = child;
+                    if (child.userData.isTail) tailRef = child;
                 });
                 mesh.userData.legs = legs;
+                mesh.userData.bodyRef = bodyRef;
+                mesh.userData.headRef = headRef;
+                mesh.userData.tailRef = tailRef;
                 // Add web for spiders on web
                 if (c.onWeb) {
                     const web = new THREE.Mesh(
@@ -3241,9 +3297,21 @@ class Game {
         if (p.jumpVel !== 0 || p.yOffset > 0) {
             p.yOffset += p.jumpVel * dt;
             p.jumpVel -= 30 * dt; // gravity
+            // Track highest point for fall damage
+            const currentY = groundY + p.yOffset;
+            if (currentY > p.fallStartY) p.fallStartY = currentY;
             if (p.yOffset <= 0) {
                 p.yOffset = 0;
                 p.jumpVel = 0;
+                // Fall damage
+                const fallDist = p.fallStartY - groundY;
+                if (fallDist > 8) {
+                    const dmg = Math.floor((fallDist - 8) * 3);
+                    p.health = Math.max(0, p.health - dmg);
+                    this.notify(`Fall damage! -${dmg} HP`, 'warning');
+                    if (p.health <= 0) { this.respawn(); return; }
+                }
+                p.fallStartY = groundY;
                 // Just landed - check for stepping on small creatures
                 for (let i = this.creatures.length - 1; i >= 0; i--) {
                     const c = this.creatures[i];
@@ -3280,7 +3348,14 @@ class Game {
             const step = Math.sign(delta) * Math.min(Math.abs(delta), CLIMB_RISE_SPEED * dt);
             p.y += step;
         } else {
-            p.y += (targetY - p.y) * Math.min(1, dt * 12);
+            // Check for walking off a cliff (ground drops below player)
+            if (targetY < p.y - 0.5 && p.jumpVel === 0 && p.yOffset === 0) {
+                // Turn this into a fall - give downward velocity
+                p.jumpVel = -2;
+                p.fallStartY = p.y;
+            } else {
+                p.y += (targetY - p.y) * Math.min(1, dt * 12);
+            }
         }
 
         // Update player mesh (hidden in FPV but kept for shadows)
@@ -3292,12 +3367,31 @@ class Game {
         const camYaw = this.cameraRotation.yaw;
         const camPitch = this.cameraRotation.pitch;
         const eyeHeight = PLAYER_HEIGHT;
-        this.camera.position.set(p.x * TILE_SIZE, p.y + eyeHeight, p.z * TILE_SIZE);
-        // Look direction from yaw + pitch
-        const lookX = p.x * TILE_SIZE - Math.sin(camYaw) * Math.cos(camPitch);
-        const lookY = p.y + eyeHeight + Math.sin(camPitch);
-        const lookZ = p.z * TILE_SIZE - Math.cos(camYaw) * Math.cos(camPitch);
-        this.camera.lookAt(lookX, lookY, lookZ);
+
+        // Check if pounced by a wolf — camera drops to ground, looks up at wolf
+        const pouncingWolf = this.creatures.find(c => c.pounced && c.type === 'wolf');
+        if (pouncingWolf) {
+            // Camera drops to near-ground level (head jerked back)
+            const groundCamY = p.y + 0.3;
+            const wolfWorldX = pouncingWolf.x * TILE_SIZE;
+            const wolfWorldZ = pouncingWolf.z * TILE_SIZE;
+            const wolfWorldY = pouncingWolf.y + 1.0; // wolf face height
+            // Smoothly lower camera
+            this.camera.position.set(
+                p.x * TILE_SIZE,
+                this.camera.position.y + (groundCamY - this.camera.position.y) * Math.min(1, dt * 8),
+                p.z * TILE_SIZE
+            );
+            // Force look at the wolf's face
+            this.camera.lookAt(wolfWorldX, wolfWorldY, wolfWorldZ);
+        } else {
+            this.camera.position.set(p.x * TILE_SIZE, p.y + eyeHeight, p.z * TILE_SIZE);
+            // Look direction from yaw + pitch
+            const lookX = p.x * TILE_SIZE - Math.sin(camYaw) * Math.cos(camPitch);
+            const lookY = p.y + eyeHeight + Math.sin(camPitch);
+            const lookZ = p.z * TILE_SIZE - Math.cos(camYaw) * Math.cos(camPitch);
+            this.camera.lookAt(lookX, lookY, lookZ);
+        }
 
         // Move sun with player for consistent shadows
         if (this.sun) {
@@ -3691,6 +3785,22 @@ class Game {
             card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
             if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
             list.appendChild(card);
+        }
+    }
+
+    updateBuildModeUI() {
+        const el = document.getElementById('build-mode-indicator');
+        if (this.buildMode) {
+            el.classList.remove('hidden');
+            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} — Click to place`;
+        } else {
+            el.classList.add('hidden');
+        }
+    }
+}
+
+// --- Start ---
+const game = new Game();
         }
     }
 

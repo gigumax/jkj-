@@ -1031,6 +1031,12 @@ kbd {
 
 /* Mobile-responsive adjustments */
 @media (max-width: 768px) {
+    body {
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior: none;
+    }
     #hud-top {
         font-size: 11px;
     }
