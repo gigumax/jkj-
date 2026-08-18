@@ -68,7 +68,7 @@ const ITEMS = {
     wood:        { icon: '🪵', name: 'Wood', attackPower: 3 },
     stone:       { icon: '🪨', name: 'Stone', attackPower: 4 },
     food:        { icon: '🫐', name: 'Food', edible: true, energy: 15, health: 0 },
-    red_mushroom:    { icon: '🍄', name: 'Red Mushroom', edible: true, energy: 10, health: 0 },
+    red_mushroom:    { icon: '🍄', name: 'Red Mushroom', edible: true, energy: 20, health: 0 },
     red_berries:     { icon: '🔴', name: 'Red Berries', edible: true, energy: 12, health: 0 },
     cactus_fruit:    { icon: '🌵', name: 'Cactus Fruit', edible: true, energy: 12, health: 0 },
     glowing_plant:   { icon: '✨', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
@@ -2926,20 +2926,28 @@ class Game {
     }
 
     // --- Mobile mode ---
+    static detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            || (navigator.maxTouchPoints > 0 && window.innerWidth <= 900);
+    }
+
     toggleMobileMode() {
         this.mobileMode = !this.mobileMode;
         const btn = document.getElementById('mobile-toggle');
         const controls = document.getElementById('mobile-controls');
+        const mobInfo = document.getElementById('mobile-controls-info');
         if (this.mobileMode) {
             btn.textContent = '📱 Mobile Mode: On';
             btn.classList.add('active');
             controls.classList.remove('hidden');
             controls.classList.add('active');
+            if (mobInfo) mobInfo.style.display = '';
         } else {
             btn.textContent = '📱 Mobile Mode: Off';
             btn.classList.remove('active');
             controls.classList.remove('active');
             controls.classList.add('hidden');
+            if (mobInfo) mobInfo.style.display = 'none';
         }
     }
 
@@ -2987,7 +2995,8 @@ class Game {
             knob.style.top = '35px';
         }, { passive: false });
 
-        // Look zone for camera rotation
+        // Look zone for camera rotation + tap to interact/attack
+        let lookStartX = 0, lookStartY = 0, lookMoved = false;
         lookZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.changedTouches[0];
@@ -2995,6 +3004,9 @@ class Game {
             this.lookTouch.touchId = t.identifier;
             this.lookTouch.lastX = t.clientX;
             this.lookTouch.lastY = t.clientY;
+            lookStartX = t.clientX;
+            lookStartY = t.clientY;
+            lookMoved = false;
         }, { passive: false });
 
         lookZone.addEventListener('touchmove', (e) => {
@@ -3008,46 +3020,102 @@ class Game {
                 this.cameraRotation.pitch = Math.max(-1.4, Math.min(1.4, this.cameraRotation.pitch));
                 this.lookTouch.lastX = t.clientX;
                 this.lookTouch.lastY = t.clientY;
+                if (Math.abs(t.clientX - lookStartX) > 10 || Math.abs(t.clientY - lookStartY) > 10) lookMoved = true;
             }
         }, { passive: false });
 
         lookZone.addEventListener('touchend', (e) => {
             e.preventDefault();
+            // Tap (no significant move) = interact/attack
+            if (!lookMoved && this.gameRunning) {
+                if (this.buildMode) {
+                    this.placeBuilding();
+                } else if (this.attackCreature()) {
+                    // hit a creature
+                } else {
+                    this.interact();
+                }
+            }
             this.lookTouch.active = false;
             this.lookTouch.touchId = null;
         }, { passive: false });
 
-        // Action buttons
-        const setupBtn = (id, key, isHold) => {
+        // Action buttons — hold buttons set key state, tap buttons trigger actions
+        const setupHoldBtn = (id, key) => {
             const btn = document.getElementById(id);
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 btn.classList.add('active');
-                if (isHold) {
-                    this.keys[key] = true;
-                } else {
-                    if (key === 'jump') {
-                        if (this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0)
-                            this.player.jumpVel = 12;
-                    } else if (key === 'interact') {
-                        if (this.gameRunning) {
-                            if (this.buildMode) this.placeBuilding();
-                            else this.interact();
-                        }
-                    }
-                }
+                this.keys[key] = true;
             }, { passive: false });
             btn.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 btn.classList.remove('active');
-                if (isHold) this.keys[key] = false;
+                this.keys[key] = false;
             }, { passive: false });
         };
 
-        setupBtn('mob-jump', 'jump', false);
-        setupBtn('mob-climb', 'v', true);
-        setupBtn('mob-sprint', 'shift', true);
-        setupBtn('mob-interact', 'interact', false);
+        const setupTapBtn = (id, fn) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                btn.classList.add('active');
+            }, { passive: false });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.classList.remove('active');
+                if (this.gameRunning) fn.call(this);
+            }, { passive: false });
+        };
+
+        setupTapBtn('mob-jump', () => {
+            if (this.player.yOffset === 0 && this.player.jumpVel === 0)
+                this.player.jumpVel = 12;
+        });
+        setupHoldBtn('mob-climb', 'v');
+        setupHoldBtn('mob-sprint', 'shift');
+        setupTapBtn('mob-attack', () => {
+            if (this.buildMode) this.placeBuilding();
+            else this.attackCreature();
+        });
+        setupTapBtn('mob-interact', () => {
+            if (this.buildMode) this.placeBuilding();
+            else this.interact();
+        });
+        setupTapBtn('mob-eat', () => this.eatSelectedItem());
+        setupTapBtn('mob-feed', () => this.feedCreature());
+        setupTapBtn('mob-inv', () => this.togglePanel('panel-inventory'));
+        setupTapBtn('mob-pause', () => this.togglePause());
+        setupTapBtn('mob-cancel', () => {
+            if (this.buildMode) { this.buildMode = null; this.notify('Build cancelled', 'info'); }
+            else this.closePanels();
+        });
+
+        // Inventory slot tap selection
+        const invBar = document.getElementById('inventory-bar');
+        invBar.addEventListener('click', (e) => {
+            const slot = e.target.closest('.inv-slot');
+            if (!slot) return;
+            const slots = [...invBar.querySelectorAll('.inv-slot')];
+            const idx = slots.indexOf(slot);
+            if (idx >= 0) {
+                this.player.selectedSlot = idx;
+                this.updateInventoryUI();
+            }
+        });
+
+        // Auto-detect mobile on load
+        if (Game.detectMobile()) {
+            this.mobileMode = true;
+            const btn = document.getElementById('mobile-toggle');
+            const controls = document.getElementById('mobile-controls');
+            btn.textContent = '📱 Mobile Mode: On';
+            btn.classList.add('active');
+            controls.classList.remove('hidden');
+            controls.classList.add('active');
+            const mobInfo = document.getElementById('mobile-controls-info');
+            if (mobInfo) mobInfo.style.display = '';
+        }
     }
 
     // --- Main loop ---
