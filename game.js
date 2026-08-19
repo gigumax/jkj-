@@ -1752,6 +1752,10 @@ class Game {
     }
 
     initWorldWithSeed(seed) {
+        this.exitHut();
+        this.inHut = false;
+        this.hutTile = null;
+        this.hutInteriorGroup = null;
         this.world = new World(seed);
         let sx = WORLD_W / 2, sy = WORLD_H / 2;
         for (let r = 0; r < 50; r++) {
@@ -4037,6 +4041,7 @@ class Game {
         if (isPounced) {
             // Player is pinned - can't move normally, struggling handled in updateCreatures
         } else {
+        if (!this.inHut) {
         if (this.keys['w'] || this.keys['arrowup']) { dx += fwdX; dz += fwdZ; }
         if (this.keys['s'] || this.keys['arrowdown']) { dx -= fwdX; dz -= fwdZ; }
         if (this.keys['a'] || this.keys['arrowleft']) { dx -= rightX; dz -= rightZ; }
@@ -4046,6 +4051,7 @@ class Game {
         if (this.mobileMode && this.joystick.active) {
             dx += fwdX * (-this.joystick.dz) + rightX * this.joystick.dx;
             dz += fwdZ * (-this.joystick.dz) + rightZ * this.joystick.dx;
+        }
         }
         } // end else (not pounced)
 
@@ -4190,7 +4196,13 @@ class Game {
 
         // Check if pounced by a wolf  camera drops to ground, looks up at wolf
         const pouncingWolf = this.creatures.find(c => c.pounced && c.type === 'wolf');
-        if (pouncingWolf) {
+        if (this.inHut) {
+            this.camera.position.copy(this.hutCameraPos);
+            const lookX = this.hutCameraPos.x - Math.sin(camYaw) * Math.cos(camPitch);
+            const lookY = this.hutCameraPos.y + Math.sin(camPitch);
+            const lookZ = this.hutCameraPos.z - Math.cos(camYaw) * Math.cos(camPitch);
+            this.camera.lookAt(lookX, lookY, lookZ);
+        } else if (pouncingWolf) {
             // Camera drops to near-ground level (head jerked back)
             const groundCamY = p.y + 0.3;
             const wolfWorldX = pouncingWolf.x * TILE_SIZE;
