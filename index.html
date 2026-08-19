@@ -45,6 +45,18 @@
             <div class="hud-item" id="hud-time">
                 <span id="time-display">🌅 Morning</span>
             </div>
+            <div class="hud-item" id="hud-hunger">
+                <span class="hud-icon">🍖</span>
+                <div class="hud-bar"><div class="hud-bar-fill" id="hunger-bar"></div></div>
+            </div>
+            <div class="hud-item" id="hud-thirst">
+                <span class="hud-icon">💧</span>
+                <div class="hud-bar"><div class="hud-bar-fill" id="thirst-bar"></div></div>
+            </div>
+            <div class="hud-item" id="hud-temp">
+                <span class="hud-icon">🌡️</span>
+                <span id="temp-display">20°C</span>
+            </div>
         </div>
 
         <!-- Inventory bar at bottom -->
@@ -159,11 +171,11 @@
                     <div class="control-row"><kbd>Space</kbd> <span>Jump</span></div>
                     <div class="control-row"><kbd>V</kbd> <span>Hold to climb mountains</span></div>
                     <div class="control-row"><kbd>Mouse</kbd> <span>Look around</span></div>
-                    <div class="control-row"><kbd>E / Click</kbd> <span>Harvest / Interact / Place</span></div>
+                    <div class="control-row"><kbd>I / Click</kbd> <span>Harvest / Interact / Place</span></div>
                     <div class="control-row"><kbd>F</kbd> <span>Eat selected food item</span></div>
                     <div class="control-row"><kbd>G</kbd> <span>Feed nearby animal</span></div>
                     <div class="control-row"><kbd>C</kbd> <span>Dig soil (makes a hole)</span></div>
-                    <div class="control-row"><kbd>I</kbd> <span>Inventory (1-9 to browse pages)</span></div>
+                    <div class="control-row"><kbd>E</kbd> <span>Inventory (1-9 to browse pages)</span></div>
                     <div class="control-row"><kbd>Q</kbd> <span>Crafting Menu</span></div>
                     <div class="control-row"><kbd>B</kbd> <span>Build Menu</span></div>
                     <div class="control-row"><kbd>T</kbd> <span>Technology Tree</span></div>
@@ -242,7 +254,7 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=15"></script>
+    <script src="game.js?v=17"></script>
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });

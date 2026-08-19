@@ -14,12 +14,12 @@ const INTERACT_RANGE = 6;
 // --- Biome types ---
 const BIOMES = {
     water:    { color: 0x1a5276, name: 'Water',    walkable: false, height: -0.5 },
-    sand:     { color: 0xf4d68a, name: 'Beach',    walkable: true,  height: 0.2 },
-    grass:    { color: 0x4a7c3a, name: 'Grass',    walkable: true,  height: 0.5 },
-    forest:   { color: 0x2d5a1f, name: 'Forest',   walkable: true,  height: 0.6 },
-    mountain: { color: 0x7f8c8d, name: 'Mountain', walkable: true,  height: 1.5 },
-    snow:     { color: 0xd5dbdb, name: 'Snow',     walkable: true,  height: 1.8 },
-    desert:   { color: 0xe6c878, name: 'Desert',   walkable: true,  height: 0.3 },
+    sand:     { color: 0xe8d5a0, name: 'Beach',    walkable: true,  height: 0.2 },
+    grass:    { color: 0x5a8c3a, name: 'Grass',    walkable: true,  height: 0.5 },
+    forest:   { color: 0x2d4a1a, name: 'Forest',   walkable: true,  height: 0.6 },
+    mountain: { color: 0x8a8a8a, name: 'Mountain', walkable: true,  height: 1.5 },
+    snow:     { color: 0xe8e8e8, name: 'Snow',     walkable: true,  height: 1.8 },
+    desert:   { color: 0xd4a858, name: 'Desert',   walkable: true,  height: 0.3 },
 };
 
 // --- Resource types ---
@@ -39,7 +39,8 @@ const RESOURCE_TYPES = {
     copper:  { icon: '🟤', name: 'Copper',  yields: { copper_ore: 3 }, biome: ['mountain'],       hardness: 3 },
     gold:    { icon: '🟡', name: 'Gold',    yields: { gold_ore: 2 },   biome: ['mountain'],       hardness: 4 },
     oil:     { icon: '🛢️', name: 'Oil',     yields: { oil: 2 },        biome: ['desert','snow'],  hardness: 3 },
-    soil:    { icon: '🟫', name: 'Soil',    yields: { soil: 3 },       biome: ['grass','forest'], hardness: 0 },
+    soil:         { icon: '🟫', name: 'Soil', yields: { soil: 2 }, biome: ['forest','grass'], hardness: 0 },
+    grass:        { icon: '🌱', name: 'Grass', yields: { grass: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
 };
 
 // Resource respawn times (seconds)
@@ -60,6 +61,7 @@ const RESOURCE_RESPAWN = {
     gold: 120,
     oil: 100,
     soil: 40,
+    grass: 30,
 };
 
 // --- Items ---
@@ -83,8 +85,9 @@ const ITEMS = {
     gold_ore:    { icon: '🟡', name: 'Gold Ore' },
     gold_ingot:  { icon: '🟨', name: 'Gold Ingot' },
     oil:         { icon: '🛢️', name: 'Oil' },
-    soil:        { icon: '🟫', name: 'Soil', attackPower: 3 },
-    plank:       { icon: '🟫', name: 'Plank', attackPower: 5 },
+    soil:         { icon: '🟫', name: 'Soil', attackPower: 3 },
+    grass:        { icon: '🌱', name: 'Grass', attackPower: 1 },
+    leather:     { icon: '🟫', name: 'Leather', attackPower: 3 },
     brick:       { icon: '🧱', name: 'Brick', attackPower: 6 },
     gear:        { icon: '⚙️', name: 'Gear', attackPower: 4 },
     circuit:     { icon: '🔌', name: 'Circuit', attackPower: 3 },
@@ -108,8 +111,8 @@ const ITEMS = {
 
 // --- Creature types ---
 const CREATURE_TYPES = {
-    deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 9, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true },
-    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 7, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true },
+    deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true },
+    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true },
     boar:    { name: 'Boar',     health: 30, speed: 2.0, damage: 8,  hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 3, leather: 1 }, xp: 4, biomes: ['forest','grass'], spawnWeight: 2 },
     wolf:    { name: 'Wolf',     health: 25, speed: 4.0, damage: 12, hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 1, leather: 1, fang: 1 }, xp: 5, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true },
     bear:    { name: 'Bear',     health: 60, speed: 2.2, damage: 25, hostile: false, fleeDist: 0, attackRange: 2.5, drops: { raw_meat: 4, leather: 2, fang: 2 }, xp: 8, biomes: ['mountain'], spawnWeight: 0.15, aggroWhenAttacked: true, hungerChance: 0.3, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true },
@@ -356,6 +359,7 @@ class World {
                 else if (r2 < 0.77) tile.resource = 'nightshade';
                 else if (r2 < 0.82) tile.resource = 'stone';
                 else if (r2 < 0.88) tile.resource = 'soil';
+                else if (r2 < 0.94) tile.resource = 'grass';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'grass') {
                 const r2 = this.rand(x, y, 3);
@@ -367,6 +371,7 @@ class World {
                 else if (r2 < 0.78) tile.resource = 'nightshade';
                 else if (r2 < 0.85) tile.resource = 'stone';
                 else if (r2 < 0.92) tile.resource = 'soil';
+                else if (r2 < 0.97) tile.resource = 'grass';
                 else tile.resource = 'tree';
             } else if (tile.biome === 'sand') {
                 const r2 = this.rand(x, y, 3);
@@ -475,14 +480,17 @@ class Player {
         this.y = 0;
         this.health = 100; this.maxHealth = 100;
         this.energy = 100; this.maxEnergy = 100;
+        this.hunger = 100; this.maxHunger = 100;
+        this.thirst = 100; this.maxThirst = 100;
+        this.temperature = 20; // comfortable temp ~20°C
         this.rotation = 0;
         this.inventory = {};
         this.selectedSlot = 0;
         this.harvesting = null;
         this.jumpVel = 0;
-        this.yOffset = 0; // height above terrain from jumping
+        this.yOffset = 0;
         this.isClimbing = false;
-        this.fallStartY = 0; // tracks highest point during a fall for fall damage
+        this.fallStartY = 0;
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -705,6 +713,20 @@ class ModelFactory {
         return group;
     }
 
+    static createGrass() {
+        const group = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: 0x4a8c2a, side: THREE.DoubleSide });
+        for (let i = 0; i < 8; i++) {
+            const blade = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.4 + Math.random() * 0.2, 3), mat);
+            blade.position.set((Math.random() - 0.5) * 0.7, 0.2, (Math.random() - 0.5) * 0.7);
+            blade.rotation.z = (Math.random() - 0.5) * 0.3;
+            blade.rotation.x = (Math.random() - 0.5) * 0.3;
+            blade.castShadow = true;
+            group.add(blade);
+        }
+        return group;
+    }
+
     static createOreVein(color) {
         const group = new THREE.Group();
         const baseMat = new THREE.MeshLambertMaterial({ color: 0x555555, flatShading: true });
@@ -760,6 +782,7 @@ class ModelFactory {
             case 'thorn_bush': return this.createThornBush();
             case 'stone': return this.createRock(0x95a5a6);
             case 'soil': return this.createSoil();
+            case 'grass': return this.createGrass();
             case 'coal': return this.createOreVein(0x1a1a1a);
             case 'iron': return this.createOreVein(0xc08050);
             case 'copper': return this.createOreVein(0xb87333);
@@ -1449,15 +1472,18 @@ class Game {
     initThree() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x87ceeb);
-        this.scene.fog = new THREE.Fog(0x87ceeb, 40, 140);
+        this.scene.fog = new THREE.FogExp2(0x87ceeb, 0.008);
 
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 600);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 600);
 
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.1;
 
         // Lighting
         const ambient = new THREE.AmbientLight(0xffffff, 0.5);
@@ -1525,7 +1551,10 @@ class Game {
         // Water plane at y=0
         const waterGeo = new THREE.PlaneGeometry(WORLD_W * TILE_SIZE * 8, WORLD_H * TILE_SIZE * 8);
         waterGeo.rotateX(-Math.PI / 2);
-        const waterMat = new THREE.MeshLambertMaterial({ color: 0x1a5276, transparent: true, opacity: 0.7 });
+        const waterMat = new THREE.MeshPhongMaterial({
+            color: 0x1a5276, transparent: true, opacity: 0.75,
+            shininess: 80, specular: 0x3a7a9a,
+        });
         const water = new THREE.Mesh(waterGeo, waterMat);
         water.position.y = 0;
         this.scene.add(water);
@@ -1783,8 +1812,8 @@ class Game {
             if (e.key.toLowerCase() === 'q' && this.gameRunning) this.togglePanel('panel-crafting');
             if (e.key.toLowerCase() === 'b' && this.gameRunning) this.togglePanel('panel-build');
             if (e.key.toLowerCase() === 't' && this.gameRunning) this.togglePanel('panel-tech');
-            if (e.key.toLowerCase() === 'i' && this.gameRunning) this.togglePanel('panel-inventory');
-            if (e.key.toLowerCase() === 'e' && this.gameRunning) this.interact();
+            if (e.key.toLowerCase() === 'i' && this.gameRunning) this.interact();
+            if (e.key.toLowerCase() === 'e' && this.gameRunning) this.togglePanel('panel-inventory');
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
             if (e.key.toLowerCase() === 'c' && this.gameRunning) this.dig();
@@ -2076,6 +2105,9 @@ class Game {
         if (def.energy > 0 || def.health > 0) {
             this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + Math.max(0, def.energy));
             this.player.health = Math.min(this.player.maxHealth, this.player.health + Math.max(0, def.health));
+            // Eating restores hunger
+            const hungerRestore = def.energy > 0 ? Math.min(30, def.energy * 1.2) : 10;
+            this.player.hunger = Math.min(this.player.maxHunger, this.player.hunger + hungerRestore);
         }
         if (def.health < 0) {
             this.player.health = Math.max(0, this.player.health + def.health);
@@ -2536,10 +2568,16 @@ class Game {
                 onWeb: def.onWeb || false,
                 gender: (type === 'deer') ? (Math.random() < 0.5 ? 'male' : 'female') : null,
                 berryTimer: def.eatsBerries ? 10 + Math.random() * 20 : 0,
+                grazeTimer: def.eatsGrass ? 10 + Math.random() * 15 : 0,
+                grazing: false,
                 huntCooldown: 0,
                 defendCooldown: 0,
                 knockedOut: false,
                 knockoutTimer: 0,
+                sleeping: false,
+                sleepTimer: 0,
+                howlTimer: 15 + Math.random() * 30,
+                alertness: 0,
             });
         }
     }
@@ -2574,6 +2612,117 @@ class Game {
                         if (mesh.userData.bodyRef) mesh.userData.bodyRef.rotation.z = Math.PI / 2;
                     }
                     continue;
+                }
+            }
+
+            // --- Sleeping at night for non-hostile creatures ---
+            if (!def.hostile && !c.aggroed && !c.following && c.type !== 'spider') {
+                if (this.isNight && !c.sleeping && c.stateTimer <= 0 && Math.random() < 0.3) {
+                    c.sleeping = true;
+                    c.sleepTimer = 15 + Math.random() * 25;
+                    c.state = 'sleep';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                }
+                if (c.sleeping) {
+                    c.sleepTimer -= dt;
+                    c.state = 'sleep';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    // Wake up if player gets close or takes damage
+                    if (distToPlayer < 5 || c.health < c.maxHealth) {
+                        c.sleeping = false;
+                        c.stateTimer = 2;
+                    }
+                    if (c.sleepTimer <= 0 || !this.isNight) {
+                        c.sleeping = false;
+                        c.stateTimer = 2;
+                    }
+                }
+            }
+
+            // --- Wolf pack howling at night ---
+            if (c.type === 'wolf' && !c.pounced) {
+                c.howlTimer -= dt;
+                if (c.howlTimer <= 0) {
+                    c.howlTimer = 20 + Math.random() * 40;
+                    if (this.isNight && distToPlayer < 40) {
+                        this.notify('🐺 You hear a wolf howling in the distance...', 'warning');
+                        // Nearby wolves become alert
+                        for (const other of this.creatures) {
+                            if (other.type === 'wolf' && other !== c) {
+                                const odx = other.x - c.x;
+                                const odz = other.z - c.z;
+                                if (Math.sqrt(odx*odx + odz*odz) < 20) {
+                                    other.aggroed = true;
+                                    other.alertness = 10;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Skip AI if sleeping
+            if (c.sleeping) {
+                const mesh = this.creatureMeshes.get(c.id);
+                if (mesh) {
+                    mesh.position.set(c.x * TILE_SIZE, c.y, c.z * TILE_SIZE);
+                    if (mesh.userData.bodyRef) mesh.userData.bodyRef.rotation.z = Math.PI / 2;
+                }
+                continue;
+            }
+
+            // --- Deer grazing ---
+            if (def.eatsGrass && !c.aggroed && !c.following) {
+                c.grazeTimer -= dt;
+                if (c.grazing) {
+                    // Currently grazing - stay still
+                    c.state = 'graze';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    c.moving = false;
+                    if (c.grazeTimer <= 0) {
+                        c.grazing = false;
+                        c.grazeTimer = 15 + Math.random() * 20;
+                        // Consume a grass resource if standing on one
+                        const ctx = Math.floor(c.x), ctz = Math.floor(c.z);
+                        const ct = this.world.getTile(ctx, ctz);
+                        if (ct && ct.resource === 'grass') {
+                            ct.resource = null;
+                            ct.resourceAmount = 0;
+                            this.removeResourceMesh(ctx, ctz);
+                            this.world.queueRespawn(ctx, ctz, 'grass');
+                        }
+                    }
+                } else if (c.grazeTimer <= 0) {
+                    // Look for grass nearby to graze on
+                    const ctx = Math.floor(c.x), ctz = Math.floor(c.z);
+                    let foundGrass = false;
+                    for (let sy = -3; sy <= 3 && !foundGrass; sy++) {
+                        for (let sx = -3; sx <= 3 && !foundGrass; sx++) {
+                            const t = this.world.getTile(ctx + sx, ctz + sy);
+                            if (t && t.resource === 'grass') {
+                                const wx = ctx + sx + 0.5;
+                                const wz = ctz + sy + 0.5;
+                                const gd = Math.sqrt((wx - c.x) ** 2 + (wz - c.z) ** 2);
+                                if (gd < 1.5) {
+                                    // Close enough - start grazing
+                                    c.grazing = true;
+                                    c.grazeTimer = 5 + Math.random() * 5;
+                                    foundGrass = true;
+                                } else {
+                                    // Walk toward grass
+                                    c.state = 'seek_grass';
+                                    c.targetX = wx;
+                                    c.targetZ = wz;
+                                    c.stateTimer = 5;
+                                    foundGrass = true;
+                                }
+                            }
+                        }
+                    }
+                    if (!foundGrass) c.grazeTimer = 5 + Math.random() * 10;
                 }
             }
 
@@ -2640,6 +2789,17 @@ class Game {
                     if (odist < 15) {
                         if (!preyTarget || odist < Math.sqrt((preyTarget.x - c.x) ** 2 + (preyTarget.z - c.z) ** 2)) {
                             preyTarget = other;
+                        }
+                    }
+                }
+                // Pack hunting: alert nearby wolves to join the chase
+                if (preyTarget && c.type === 'wolf') {
+                    for (const other of this.creatures) {
+                        if (other === c || other.type !== 'wolf') continue;
+                        if (other.aggroed || other.pounced) continue;
+                        const odx = other.x - c.x, odz = other.z - c.z;
+                        if (Math.sqrt(odx*odx + odz*odz) < 15) {
+                            other.huntCooldown = 0;
                         }
                     }
                 }
@@ -2747,19 +2907,55 @@ class Game {
                     }
                 }
             } else if (predatorThreat && def.isPrey && !c.following) {
-                // Prey flees from predator
+                // Prey flees from predator — zigzag for realistic escape
                 c.state = 'flee_predator';
                 const pdx = c.x - predatorThreat.x;
                 const pdz = c.z - predatorThreat.z;
-                c.targetX = c.x + pdx * 2;
-                c.targetZ = c.z + pdz * 2;
+                const pAng = Math.atan2(pdz, pdx);
+                const zigzag = Math.sin(this.time * 3 + c.id.charCodeAt(0)) * 0.5;
+                const fleeAng = pAng + zigzag;
+                c.targetX = c.x + Math.cos(fleeAng) * 8;
+                c.targetZ = c.z + Math.sin(fleeAng) * 8;
                 c.stateTimer = 2;
+                // Alert nearby same-species herd members
+                for (const other of this.creatures) {
+                    if (other === c || other.type !== c.type) continue;
+                    const odx = other.x - c.x, odz = other.z - c.z;
+                    if (Math.sqrt(odx*odx + odz*odz) < 12) {
+                        other.state = 'flee_predator';
+                        other.targetX = other.x + Math.cos(fleeAng) * 6;
+                        other.targetZ = other.z + Math.sin(fleeAng) * 6;
+                        other.stateTimer = 2;
+                    }
+                }
+            } else if (def.eatsGrass && !c.aggroed && !c.following && distToPlayer < 15) {
+                // Deer/fawn: check if player has grass selected in hotbar
+                const items = Object.entries(p.inventory).filter(([_, cnt]) => cnt > 0);
+                const entry = items[p.selectedSlot];
+                if (entry && entry[0] === 'grass') {
+                    // Approach the player
+                    c.state = 'approach';
+                    const followDist = 2.5;
+                    if (distToPlayer > followDist) {
+                        c.targetX = p.x - (dx / distToPlayer) * followDist;
+                        c.targetZ = p.z - (dz / distToPlayer) * followDist;
+                    } else {
+                        c.state = 'idle';
+                        c.targetX = c.x;
+                        c.targetZ = c.z;
+                    }
+                } else if (c.stateTimer <= 0 && c.state !== 'seek_grass' && c.state !== 'graze') {
+                    c.state = 'wander';
+                    c.targetX = c.x + (Math.random() - 0.5) * 6;
+                    c.targetZ = c.z + (Math.random() - 0.5) * 6;
+                    c.stateTimer = 3 + Math.random() * 4;
+                }
             } else if (!isAggro && c.fleeDist > 0 && distToPlayer < c.fleeDist) {
                 c.state = 'flee';
                 c.targetX = c.x - dx * 3;
                 c.targetZ = c.z - dz * 3;
                 c.stateTimer = 2;
-            } else if (c.stateTimer <= 0 && c.state !== 'seek_berries') {
+            } else if (c.stateTimer <= 0 && c.state !== 'seek_berries' && c.state !== 'seek_grass' && c.state !== 'graze') {
                 c.state = 'wander';
                 c.targetX = c.x + (Math.random() - 0.5) * 6;
                 c.targetZ = c.z + (Math.random() - 0.5) * 6;
@@ -2851,9 +3047,14 @@ class Game {
                     mesh.userData.bodyRef.position.y = Math.abs(Math.sin(c.walkPhase)) * bobAmp;
                     mesh.userData.bodyRef.rotation.z = 0;
                 }
-                // Head bob — slight up/down different from body
+                // Head bob — slight up/down different from body, or lowered when grazing
                 if (mesh.userData.headRef) {
-                    mesh.userData.headRef.rotation.x = Math.sin(c.walkPhase * 0.5) * 0.08;
+                    if (c.state === 'graze') {
+                        // Lower head to ground
+                        mesh.userData.headRef.rotation.x = 1.4;
+                    } else {
+                        mesh.userData.headRef.rotation.x = Math.sin(c.walkPhase * 0.5) * 0.08;
+                    }
                 }
                 // Tail wag
                 if (mesh.userData.tailRef) {
@@ -3496,20 +3697,39 @@ class Game {
             this.updateCreatureMeshes();
         }
 
-        // Campfire regen
+        // --- Survival mechanics ---
+        // Energy drain
+        p.energy = Math.max(0, p.energy - dt * 0.3);
+        // Hunger decays slowly
+        p.hunger = Math.max(0, p.hunger - dt * 0.4);
+        // Thirst decays faster, especially in hot biomes
+        const pTile = this.world.getTile(Math.floor(p.x), Math.floor(p.z));
+        const pBiome = pTile ? pTile.biome : 'grass';
+        let thirstRate = 0.5;
+        if (pBiome === 'desert') thirstRate = 1.5;
+        else if (pBiome === 'snow' || pBiome === 'sand') thirstRate = 0.8;
+        p.thirst = Math.max(0, p.thirst - dt * thirstRate);
+        // Temperature moves toward biome target
+        const biomeTemp = { desert: 40, sand: 30, snow: -10, mountain: 5, water: 10, grass: 20, forest: 18 };
+        const targetTemp = (biomeTemp[pBiome] || 20) + (this.isNight ? -8 : 0);
+        p.temperature += (targetTemp - p.temperature) * dt * 0.1;
+        // Health effects from survival stats
+        if (p.hunger <= 0) p.health = Math.max(0, p.health - dt * 1.5);
+        if (p.thirst <= 0) p.health = Math.max(0, p.health - dt * 2);
+        if (p.temperature < 0) p.health = Math.max(0, p.health - dt * Math.abs(p.temperature) * 0.1);
+        if (p.temperature > 35) p.health = Math.max(0, p.health - dt * (p.temperature - 35) * 0.15);
+        if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 2);
+        // Campfire regen + warmth
         for (let dy = -2; dy <= 2; dy++) {
             for (let dx = -2; dx <= 2; dx++) {
                 const t = this.world.getTile(ptx + dx, pty + dy);
                 if (t && t.building === 'campfire') {
                     p.energy = Math.min(p.maxEnergy, p.energy + dt * 5);
                     p.health = Math.min(p.maxHealth, p.health + dt * 2);
+                    p.temperature += dt * 3;
                 }
             }
         }
-
-        // Energy drain
-        p.energy = Math.max(0, p.energy - dt * 0.3);
-        if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 2);
 
         // Day/night cycle
         this.dayTime = (this.dayTime + dt / this.dayLength) % 1;
@@ -3656,33 +3876,61 @@ class Game {
     // --- UI Updates ---
     updateDayNightLighting() {
         const t = this.dayTime;
-        // Calculate brightness factor: 1 at midday, 0 at midnight
-        // dayTime: 0=dawn, 0.25=noon, 0.5=dusk, 0.75=midnight, 1=dawn again
-        const sunAngle = t * Math.PI * 2 - Math.PI / 2; // sun goes in a circle
-        const sunHeight = Math.sin(sunAngle); // -1 at midnight, +1 at noon
+        const sunAngle = t * Math.PI * 2 - Math.PI / 2;
+        const sunHeight = Math.sin(sunAngle);
         const brightness = Math.max(0, Math.min(1, (sunHeight + 0.3) / 0.8));
 
+        // Dawn/dusk orange tint factor
+        const dawnDusk = Math.max(0, 1 - Math.abs(sunHeight) * 3);
+        const isDawn = t < 0.25 || t > 0.75;
+
         if (this.sun) {
-            this.sun.intensity = 0.1 + brightness * 0.7;
-            this.sun.color.setHex(brightness > 0.3 ? 0xffffff : 0x4a5a8a);
+            this.sun.intensity = 0.08 + brightness * 0.75;
+            // Warm orange at dawn/dusk, white at noon, cool blue at night
+            const dayCol = new THREE.Color(0xfff5e0);
+            const nightCol = new THREE.Color(0x3a4a7a);
+            const duskCol = new THREE.Color(0xff8c42);
+            let sunCol = nightCol.lerp(dayCol, brightness);
+            sunCol.lerp(duskCol, dawnDusk * 0.5);
+            this.sun.color.copy(sunCol);
+            // Move sun position across sky
+            const p = this.player;
+            if (p) {
+                this.sun.position.set(
+                    p.x * TILE_SIZE + Math.cos(sunAngle) * 100,
+                    Math.max(5, sunHeight * 100),
+                    p.z * TILE_SIZE + Math.sin(sunAngle) * 60
+                );
+            }
         }
         if (this.ambientLight) {
-            this.ambientLight.intensity = 0.15 + brightness * 0.35;
+            this.ambientLight.intensity = 0.12 + brightness * 0.38;
         }
         if (this.hemiLight) {
-            this.hemiLight.intensity = 0.1 + brightness * 0.2;
+            this.hemiLight.intensity = 0.08 + brightness * 0.22;
+            // Warm sky color at dusk
+            const skyCol = new THREE.Color(0x87ceeb).lerp(new THREE.Color(0xff6a3a), dawnDusk * 0.4);
+            this.hemiLight.color.copy(skyCol);
         }
         if (this.scene.background) {
             const dayColor = new THREE.Color(0x87ceeb);
-            const nightColor = new THREE.Color(0x0a0a2a);
-            const c = nightColor.lerp(dayColor, brightness);
+            const nightColor = new THREE.Color(0x080820);
+            const duskColor = new THREE.Color(0xe85a2a);
+            let c = nightColor.lerp(dayColor, brightness);
+            c.lerp(duskColor, dawnDusk * 0.45);
             this.scene.background.copy(c);
         }
         if (this.scene.fog) {
             const dayFog = new THREE.Color(0x87ceeb);
-            const nightFog = new THREE.Color(0x0a0a2a);
-            const c = nightFog.lerp(dayFog, brightness);
+            const nightFog = new THREE.Color(0x080820);
+            const duskFog = new THREE.Color(0xc04a20);
+            let c = nightFog.lerp(dayFog, brightness);
+            c.lerp(duskFog, dawnDusk * 0.4);
             this.scene.fog.color.copy(c);
+            // Denser fog at night
+            if (this.scene.fog.density !== undefined) {
+                this.scene.fog.density = 0.006 + (1 - brightness) * 0.006;
+            }
         }
     }
 
@@ -3697,6 +3945,16 @@ class Game {
                           this.dayTime < 0.5 ? '☀️ Day' :
                           this.dayTime < 0.75 ? '🌙 Night' : '🌙 Late Night';
             timeEl.textContent = phase;
+        }
+        const hungerBar = document.getElementById('hunger-bar');
+        if (hungerBar) hungerBar.style.width = (this.player.hunger / this.player.maxHunger * 100) + '%';
+        const thirstBar = document.getElementById('thirst-bar');
+        if (thirstBar) thirstBar.style.width = (this.player.thirst / this.player.maxThirst * 100) + '%';
+        const tempEl = document.getElementById('temp-display');
+        if (tempEl) {
+            const t = Math.round(this.player.temperature);
+            tempEl.textContent = `${t}°C`;
+            tempEl.style.color = t < 0 ? '#3498db' : t > 35 ? '#e74c3c' : '#2ecc71';
         }
         this.updateInventoryUI();
         if (!document.getElementById('panel-crafting').classList.contains('hidden')) this.renderCrafting();
@@ -3812,6 +4070,41 @@ class Game {
             });
             list.appendChild(card);
         }
+        if (list.children.length === 0) list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No buildings available. Research technology to unlock more!</p>';
+    }
+
+    renderTech() {
+        const list = document.getElementById('tech-list');
+        list.innerHTML = '';
+        for (const tech of TECH_TREE) {
+            const completed = this.completedTech.has(tech.id);
+            const available = this.isTechAvailable(tech.id);
+            const card = document.createElement('div');
+            card.className = 'tech-card' + (completed ? ' completed' : '') + (available ? ' available' : (!completed ? ' locked' : ''));
+            let status;
+            if (completed) status = '<span class="tech-status" style="color:#2ecc71;">✓ Done</span>';
+            else if (available) status = `<span class="tech-status" style="color:#f1c40f;">${tech.cost} RP</span>`;
+            else status = '<span class="tech-status" style="color:#888;">🔒 Locked</span>';
+            const prereqText = tech.prereq.length > 0 ? `<div class="tech-prereq">Requires: ${tech.prereq.map(p => TECH_TREE.find(t=>t.id===p)?.name).join(', ')}</div>` : '';
+            card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
+            if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
+            list.appendChild(card);
+        }
+    }
+
+    updateBuildModeUI() {
+        const el = document.getElementById('build-mode-indicator');
+        if (this.buildMode) {
+            el.classList.remove('hidden');
+            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} — Click to place`;
+        } else {
+            el.classList.add('hidden');
+        }
+    }
+}
+
+// --- Start ---
+const game = new Game();
         if (list.children.length === 0) list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No buildings available. Research technology to unlock more!</p>';
     }
 
