@@ -112,9 +112,8 @@ const ITEMS = {
 const CREATURE_TYPES = {
     deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true },
     fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true },
-    boar:    { name: 'Boar',     health: 30, speed: 2.0, damage: 8,  hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 3, leather: 1 }, xp: 4, biomes: ['forest','grass'], spawnWeight: 2 },
-    wolf:    { name: 'Wolf',     health: 25, speed: 4.0, damage: 12, hostile: true,  fleeDist: 0, attackRange: 1.8, drops: { raw_meat: 1, leather: 1, fang: 1 }, xp: 5, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true },
-    bear:    { name: 'Bear',     health: 60, speed: 2.2, damage: 25, hostile: false, fleeDist: 0, attackRange: 2.5, drops: { raw_meat: 4, leather: 2, fang: 2 }, xp: 8, biomes: ['mountain'], spawnWeight: 0.15, aggroWhenAttacked: true, hungerChance: 0.3, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true },
+    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: true,  fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true },
+    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 0.15, aggroWhenAttacked: true, hungerChance: 0.3, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true },
     rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 6, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true },
     spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true },
 };
@@ -922,7 +921,6 @@ class ModelFactory {
         switch(type) {
             case 'deer':   return this.createDeer();
             case 'fawn':   return this.createFawn();
-            case 'boar':   return this.createBoar();
             case 'wolf':   return this.createWolf();
             case 'bear':   { const m = this.createBear(); m.scale.set(1.8, 1.8, 1.8); return m; }
             case 'rabbit': return this.createRabbit();
@@ -2566,7 +2564,7 @@ class Game {
     }
 
     getCreatureHeight(type) {
-        const heights = { deer: 2.0, fawn: 1.2, boar: 1.0, wolf: 1.1, bear: 1.8, rabbit: 0.7, spider: 0.8 };
+        const heights = { deer: 2.0, fawn: 1.2, wolf: 1.1, bear: 1.8, rabbit: 0.7, spider: 0.8 };
         return heights[type] || 1.5;
     }
 
