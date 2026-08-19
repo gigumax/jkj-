@@ -1442,6 +1442,9 @@ class Game {
         this.dayLength = 120; // seconds per full day/night cycle
         this.isNight = false;
         this.sleeping = false;
+        this.weather = 'clear'; // 'clear', 'rain', 'snow', 'fog'
+        this.weatherTimer = 30 + Math.random() * 60; // weather changes over time
+        this.weatherParticles = null;
         this.resourceMeshes = new Map(); // "x,y" -> mesh
         this.buildingMeshes = new Map();
         this.buildingPositions = new Set(); // "x,y" for efficient tick
@@ -1749,6 +1752,16 @@ class Game {
             this.hemiLight = hemi;
         }
 
+        // Reset weather state
+        this.weather = 'clear';
+        this.weatherTimer = 30 + Math.random() * 60;
+        if (this.weatherParticles) {
+            this.scene.remove(this.weatherParticles);
+            this.weatherParticles.geometry.dispose();
+            this.weatherParticles.material.dispose();
+            this.weatherParticles = null;
+        }
+
         this.buildTerrain();
         this.buildResources();
         this.buildPlayer();
@@ -1816,6 +1829,7 @@ class Game {
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
             if (e.key.toLowerCase() === 'c' && this.gameRunning) this.dig();
+            if (e.key.toLowerCase() === 'r' && this.gameRunning) this.drinkWater();
             if (e.key.toLowerCase() === 'p' && this.gameRunning) this.togglePause();
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
                 this.player.jumpVel = 12;
@@ -2020,6 +2034,27 @@ class Game {
         }
         positions.needsUpdate = true;
         geo.computeVertexNormals();
+    }
+
+    // --- Drinking ---
+    drinkWater() {
+        const p = this.player;
+        if (p.thirst >= p.maxThirst - 5) { this.notify('Not thirsty!', 'info'); return; }
+        const ptx = Math.floor(p.x), pty = Math.floor(p.z);
+        // Check for adjacent water tiles
+        for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+                const t = this.world.getTile(ptx + dx, pty + dy);
+                if (t && t.biome === 'water') {
+                    p.thirst = Math.min(p.maxThirst, p.thirst + 40);
+                    p.energy = Math.min(p.maxEnergy, p.energy + 5);
+                    this.notify('💧 Drank water! +40 Thirst', 'success');
+                    this.updateUI();
+                    return;
+                }
+            }
+        }
+        this.notify('No water nearby! Find a lake or river.', 'warning');
     }
 
     // --- Interaction ---
@@ -3748,6 +3783,66 @@ class Game {
         }
         this.updateDayNightLighting();
 
+        // --- Weather system ---
+        this.weatherTimer -= dt;
+        if (this.weatherTimer <= 0) {
+            const oldWeather = this.weather;
+            const pBiome2 = pTile ? pTile.biome : 'grass';
+            const r = Math.random();
+            if (pBiome2 === 'desert' || pBiome2 === 'sand') {
+                this.weather = r < 0.6 ? 'clear' : r < 0.85 ? 'fog' : 'rain';
+            } else if (pBiome2 === 'snow' || pBiome2 === 'mountain') {
+                this.weather = r < 0.4 ? 'clear' : r < 0.8 ? 'snow' : 'fog';
+            } else {
+                this.weather = r < 0.5 ? 'clear' : r < 0.8 ? 'rain' : r < 0.92 ? 'fog' : 'clear';
+            }
+            this.weatherTimer = 40 + Math.random() * 80;
+            if (this.weather !== oldWeather) {
+                const names = { clear: '☀️ Skies clear up', rain: '🌧️ It starts raining', snow: '❄️ Snow begins to fall', fog: '🌫️ Fog rolls in' };
+                this.notify(names[this.weather] || 'Weather changes', 'info');
+                this.updateWeatherParticles();
+            }
+        }
+        // Weather effects on player
+        if (this.weather === 'rain') {
+            p.thirst = Math.min(p.maxThirst, p.thirst + dt * 2); // rain hydrates
+            p.temperature -= dt * 0.5; // rain cools you
+            p.energy = Math.max(0, p.energy - dt * 0.2); // rain is tiring
+        } else if (this.weather === 'snow') {
+            p.temperature -= dt * 1.5; // snow is very cold
+            p.energy = Math.max(0, p.energy - dt * 0.3);
+        } else if (this.weather === 'fog') {
+            // Fog reduces visibility (handled in lighting)
+        }
+        // Update weather particles
+        if (this.weatherParticles) {
+            const positions = this.weatherParticles.geometry.attributes.position;
+            const camX = this.camera.position.x, camZ = this.camera.position.z;
+            for (let i = 0; i < positions.count; i++) {
+                let y = positions.getY(i);
+                let x = positions.getX(i);
+                let z = positions.getZ(i);
+                if (this.weather === 'rain') {
+                    y -= dt * 30;
+                    if (y < this.camera.position.y - 15) {
+                        y = this.camera.position.y + 15;
+                        x = camX + (Math.random() - 0.5) * 40;
+                        z = camZ + (Math.random() - 0.5) * 40;
+                    }
+                } else if (this.weather === 'snow') {
+                    y -= dt * 3;
+                    x += Math.sin(this.time * 2 + i) * dt * 0.5;
+                    if (y < this.camera.position.y - 10) {
+                        y = this.camera.position.y + 10;
+                        x = camX + (Math.random() - 0.5) * 30;
+                        z = camZ + (Math.random() - 0.5) * 30;
+                    }
+                }
+                positions.setXYZ(i, x, y, z);
+            }
+            positions.needsUpdate = true;
+        }
+
         // Sleeping in wood hut at night
         if (this.sleeping) {
             this.sleepTimer -= dt;
@@ -3933,11 +4028,47 @@ class Game {
             let c = nightFog.lerp(dayFog, brightness);
             c.lerp(duskFog, dawnDusk * 0.4);
             this.scene.fog.color.copy(c);
-            // Denser fog at night
+            // Denser fog at night, even denser in fog weather
             if (this.scene.fog.density !== undefined) {
-                this.scene.fog.density = 0.006 + (1 - brightness) * 0.006;
+                let density = 0.006 + (1 - brightness) * 0.006;
+                if (this.weather === 'fog') density *= 3;
+                else if (this.weather === 'rain') density *= 1.5;
+                else if (this.weather === 'snow') density *= 1.3;
+                this.scene.fog.density = density;
             }
         }
+    }
+
+    updateWeatherParticles() {
+        // Remove old particles
+        if (this.weatherParticles) {
+            this.scene.remove(this.weatherParticles);
+            this.weatherParticles.geometry.dispose();
+            this.weatherParticles.material.dispose();
+            this.weatherParticles = null;
+        }
+        if (this.weather !== 'rain' && this.weather !== 'snow') return;
+
+        const count = this.weather === 'rain' ? 800 : 500;
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const camX = this.camera.position.x, camZ = this.camera.position.z;
+        const camY = this.camera.position.y;
+        for (let i = 0; i < count; i++) {
+            positions[i * 3] = camX + (Math.random() - 0.5) * 40;
+            positions[i * 3 + 1] = camY + (Math.random() - 0.5) * 25;
+            positions[i * 3 + 2] = camZ + (Math.random() - 0.5) * 40;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({
+            color: this.weather === 'rain' ? 0x8899bb : 0xffffff,
+            size: this.weather === 'rain' ? 0.15 : 0.25,
+            transparent: true,
+            opacity: this.weather === 'rain' ? 0.6 : 0.8,
+            depthWrite: false
+        });
+        this.weatherParticles = new THREE.Points(geo, mat);
+        this.scene.add(this.weatherParticles);
     }
 
     updateUI() {

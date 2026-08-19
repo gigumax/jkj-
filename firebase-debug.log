@@ -1,0 +1,37 @@
+[debug] [2026-08-19T00:37:03.723Z] ----------------------------------------------------------------------
+[debug] [2026-08-19T00:37:03.746Z] Command:       /Users/jeremiahtran/.local/bin/firebase /Users/jeremiahtran/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase deploy --project explore-build-3d
+[debug] [2026-08-19T00:37:03.748Z] CLI Version:   15.26.0
+[debug] [2026-08-19T00:37:03.749Z] Platform:      darwin
+[debug] [2026-08-19T00:37:03.749Z] Node Version:  v20.18.2
+[debug] [2026-08-19T00:37:03.751Z] Detected Agent: unknown
+[debug] [2026-08-19T00:37:03.754Z] Time:          Tue Aug 18 2026 17:37:03 GMT-0700 (Pacific Daylight Time)
+[debug] [2026-08-19T00:37:03.755Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-19T00:37:06.854Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-19T00:37:06.859Z] > authorizing via signed-in user (jjdajungle@gmail.com)
+[debug] [2026-08-19T00:37:06.860Z] [iam] checking project explore-build-3d for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-08-19T00:37:06.871Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:06.872Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:06.876Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/explore-build-3d:testIamPermissions [none]
+[debug] [2026-08-19T00:37:06.878Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/explore-build-3d:testIamPermissions  x-goog-user-project=explore-build-3d
+[debug] [2026-08-19T00:37:06.880Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/explore-build-3d:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-08-19T00:37:08.226Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/explore-build-3d:testIamPermissions 200
+[debug] [2026-08-19T00:37:08.230Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/explore-build-3d:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-08-19T00:37:08.234Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:08.235Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:08.236Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/explore-build-3d [none]
+[debug] [2026-08-19T00:37:08.948Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/explore-build-3d 200
+[debug] [2026-08-19T00:37:08.949Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/explore-build-3d {"projectId":"explore-build-3d","projectNumber":"476462257328","displayName":"Explore Build 3D","name":"projects/explore-build-3d","resources":{"hostingSite":"explore-build-3d"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_fe8414cf-8f70-495a-a7b4-fca5082e0ca4"}
+[info] 
+[info] === Deploying to 'explore-build-3d'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-08-19T00:37:08.962Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:08.963Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:08.966Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/explore-build-3d/sites/explore-build-3d [none]
+[debug] [2026-08-19T00:37:10.553Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/explore-build-3d/sites/explore-build-3d 200
+[debug] [2026-08-19T00:37:10.554Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/explore-build-3d/sites/explore-build-3d {"name":"projects/explore-build-3d/sites/explore-build-3d","defaultUrl":"https://explore-build-3d.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-08-19T00:37:10.559Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:10.559Z] Checked if tokens are valid: true, expires at: 1787103327829
+[debug] [2026-08-19T00:37:10.560Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/explore-build-3d/versions [none]
+[debug] [2026-08-19T00:37:10.560Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/explore-build-3d/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
