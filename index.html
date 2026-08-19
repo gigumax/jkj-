@@ -268,7 +268,7 @@
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });
 
         // Clear old service worker / cache once to load fresh custom SVG sprites
-        const SW_VERSION = 'v6';
+        const SW_VERSION = 'v7';
         if (localStorage.getItem('sw-version') !== SW_VERSION) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(regs => {
@@ -281,12 +281,14 @@
                 });
             }
             localStorage.setItem('sw-version', SW_VERSION);
-            location.reload();
+            const url = new URL(location.href);
+            url.searchParams.set('nocache', SW_VERSION);
+            location.replace(url.href);
         }
 
         // Register service worker for PWA (if supported)
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js?v=6').catch(() => {});
+            navigator.serviceWorker.register('sw.js?v=' + SW_VERSION).catch(() => {});
         }
     </script>
 </body>
