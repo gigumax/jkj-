@@ -2243,38 +2243,124 @@ class Game {
     }
 
 
-    // --- Hut Interior ---
+    // --- Hut Interior (3D first-person) ---
+    buildHutInterior() {
+        const group = new THREE.Group();
+        group.name = 'hutInterior';
+
+        // Floor
+        const floorMat = new THREE.MeshLambertMaterial({ color: 0x6b4423 });
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        group.add(floor);
+
+        // Bed (back-left corner)
+        const bedFrame = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.25, 2.0), new THREE.MeshLambertMaterial({ color: 0x5a3a20 }));
+        bedFrame.position.set(-0.6, 0.125, -0.7);
+        bedFrame.userData.isHutBed = true;
+        group.add(bedFrame);
+        const mattress = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 1.8), new THREE.MeshLambertMaterial({ color: 0xd0d0d0 }));
+        mattress.position.set(-0.6, 0.31, -0.7);
+        mattress.userData.isHutBed = true;
+        group.add(mattress);
+        const blanket = new THREE.Mesh(new THREE.BoxGeometry(0.97, 0.14, 1.0), new THREE.MeshLambertMaterial({ color: 0x8B4513 }));
+        blanket.position.set(-0.6, 0.34, -0.4);
+        blanket.userData.isHutBed = true;
+        group.add(blanket);
+        const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.3), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+        pillow.position.set(-0.6, 0.35, -1.25);
+        pillow.userData.isHutBed = true;
+        group.add(pillow);
+
+        // Campfire spot (right side, hidden until placed)
+        const fireRing = ModelFactory.createBuilding('campfire');
+        fireRing.scale.set(0.7, 0.7, 0.7);
+        fireRing.position.set(0.7, 0, 0.7);
+        fireRing.name = 'hutCampfire';
+        fireRing.userData.isHutCampfire = true;
+        fireRing.visible = false;
+        group.add(fireRing);
+
+        // Place-campfire prompt box
+        const boxMat = new THREE.MeshLambertMaterial({ color: 0x4a2f1a, transparent: true, opacity: 0.5 });
+        const emptySpot = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.8), boxMat);
+        emptySpot.position.set(0.7, 0.025, 0.7);
+        emptySpot.name = 'hutCampfireEmpty';
+        emptySpot.userData.isHutCampfireEmpty = true;
+        group.add(emptySpot);
+
+        // Warm point light (visible when campfire placed)
+        const light = new THREE.PointLight(0xffaa44, 0, 8);
+        light.position.set(0.7, 1, 0.7);
+        light.name = 'hutCampfireLight';
+        group.add(light);
+
+        this.scene.add(group);
+        this.hutInteriorGroup = group;
+    }
+
+    interactWithHutInterior() {
+        // Raycast against hut interior objects
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
+        const hits = raycaster.intersectObject(this.hutInteriorGroup, true);
+        if (hits.length === 0) return;
+        const hit = hits[0].object;
+        if (hit.userData.isHutBed) {
+            this.startSleep();
+        } else if (hit.userData.isHutCampfireEmpty) {
+            this.placeCampfireInHut();
+        } else if (hit.userData.isHutCampfire) {
+            this.notify('The campfire crackles warmly.', 'info');
+        }
+    }
+
     enterHut(tx, ty) {
         this.inHut = true;
         this.hutTile = { tx, ty };
         if (this.pointerLocked) document.exitPointerLock();
-        document.getElementById('hut-interior').classList.remove('hidden');
-        document.getElementById('crosshair').classList.remove('visible');
-        // Check if campfire is already placed inside
+
+        // Build 3D interior if not already
+        if (!this.hutInteriorGroup) this.buildHutInterior();
+
+        // Position the interior group over the hut in the world
+        const wx = tx * TILE_SIZE + TILE_SIZE / 2;
+        const wz = ty * TILE_SIZE + TILE_SIZE / 2;
+        const wy = this.world.getTileCenterHeight(tx, ty);
+        this.hutInteriorGroup.position.set(wx, wy, wz);
+        this.hutInteriorGroup.visible = true;
+
+        // Update campfire visibility based on save state
         const tile = this.world.getTile(tx, ty);
-        const hasCampfire = tile.hutCampfire === true;
-        if (hasCampfire) {
-            document.getElementById('campfire-empty').classList.add('hidden');
-            document.getElementById('campfire-lit').classList.remove('hidden');
-        } else {
-            document.getElementById('campfire-empty').classList.remove('hidden');
-            document.getElementById('campfire-lit').classList.add('hidden');
+        const fire = this.hutInteriorGroup.getObjectByName('hutCampfire');
+        const empty = this.hutInteriorGroup.getObjectByName('hutCampfireEmpty');
+        const light = this.hutInteriorGroup.getObjectByName('hutCampfireLight');
+        if (fire && empty && light) {
+            fire.visible = !!tile.hutCampfire;
+            empty.visible = !tile.hutCampfire;
+            light.intensity = tile.hutCampfire ? 1.2 : 0;
         }
-        // Update hint based on time
-        const hint = document.getElementById('hut-hint');
+
+        // Move camera to inside the hut, facing the bed
+        this.hutCameraPos = new THREE.Vector3(wx, wy + 1.4, wz + 1.2);
+        this.camera.position.copy(this.hutCameraPos);
+
+        // Show crosshair and hint
+        document.getElementById('crosshair').classList.add('visible');
         if (this.isNight) {
-            hint.textContent = 'Click the bed to sleep through the night. Press I or ESC to exit.';
+            this.notify('Look at the bed and press I / Click to sleep. Press I / ESC to leave.', 'info');
         } else {
-            hint.textContent = 'You can only sleep at night. Press I or ESC to exit.';
+            this.notify('You are inside the hut. Look at the empty spot to place a campfire. Press I / ESC to leave.', 'info');
         }
     }
 
     exitHut() {
+        if (!this.inHut) return;
         this.inHut = false;
         this.hutTile = null;
-        document.getElementById('hut-interior').classList.add('hidden');
+        if (this.hutInteriorGroup) this.hutInteriorGroup.visible = false;
         if (this.gameRunning) {
-            document.getElementById('crosshair').classList.add('visible');
             this.requestPointerLock();
         }
     }
@@ -2290,8 +2376,11 @@ class Game {
             this.player.removeItem('wood', 5);
             this.player.removeItem('stone', 3);
             tile.hutCampfire = true;
-            document.getElementById('campfire-empty').classList.add('hidden');
-            document.getElementById('campfire-lit').classList.remove('hidden');
+            const fire = this.hutInteriorGroup?.getObjectByName('hutCampfire');
+            const empty = this.hutInteriorGroup?.getObjectByName('hutCampfireEmpty');
+            const light = this.hutInteriorGroup?.getObjectByName('hutCampfireLight');
+            if (fire && empty) { fire.visible = true; empty.visible = false; }
+            if (light) light.intensity = 1.2;
             this.notify('Campfire placed inside the hut!', 'success');
             this.updateInventoryUI();
             this.updateUI();
@@ -4465,13 +4554,22 @@ class Game {
         const sunAngle = t * Math.PI * 2 - Math.PI / 2;
         const sunHeight = Math.sin(sunAngle);
         // Boost brightness: dawn/dusk should have decent light, not pitch black
-        const brightness = Math.max(0, Math.min(1, (sunHeight + 0.5) / 1.2));
+        // Morning boost: when sun is rising (sunHeight > 0 but small), increase brightness faster
+        let brightness = Math.max(0, Math.min(1, (sunHeight + 0.5) / 1.2));
+        // Morning boost - make mornings brighter by raising brightness when sun is low but rising
+        if (sunHeight > 0 && sunHeight < 0.3) {
+            brightness = Math.min(1, brightness + (0.3 - sunHeight) * 0.5);
+        }
+
+        // Season brightness modifier: summer=1.0, autumn=0.8, winter=0.6, spring=0.85
+        const seasonMult = this.seasonBrightness ? (this.seasonBrightness[this.season] || 1.0) : 1.0;
+        brightness *= seasonMult;
 
         // Dawn/dusk orange tint factor
         const dawnDusk = Math.max(0, 1 - Math.abs(sunHeight) * 3);
 
         if (this.sun) {
-            this.sun.intensity = 0.08 + brightness * 0.75;
+            this.sun.intensity = (0.08 + brightness * 0.75) * seasonMult;
             // Warm orange at dawn/dusk, white at noon, cool blue at night
             const c1 = this._tmpCol1.setHex(0x3a4a7a);
             const c2 = this._tmpCol2.setHex(0xfff5e0);
@@ -4490,10 +4588,10 @@ class Game {
             }
         }
         if (this.ambientLight) {
-            this.ambientLight.intensity = 0.12 + brightness * 0.38;
+            this.ambientLight.intensity = (0.12 + brightness * 0.38) * seasonMult;
         }
         if (this.hemiLight) {
-            this.hemiLight.intensity = 0.08 + brightness * 0.22;
+            this.hemiLight.intensity = (0.08 + brightness * 0.22) * seasonMult;
             const c1 = this._tmpCol1.setHex(0x87ceeb);
             const c2 = this._tmpCol2.setHex(0xff6a3a);
             c1.lerp(c2, dawnDusk * 0.4);
@@ -4567,7 +4665,9 @@ class Game {
                           this.dayTime < 0.35 ? 'Day' :
                           this.dayTime < 0.5 ? 'Dusk' :
                           this.dayTime < 0.85 ? 'Night' : 'Late Night';
-            timeEl.textContent = phase;
+            const seasonIcons = { summer: '☀️', autumn: '🍂', winter: '❄️', spring: '🌸' };
+            const seasonNames = { summer: 'Summer', autumn: 'Autumn', winter: 'Winter', spring: 'Spring' };
+            timeEl.textContent = `${phase} ${seasonIcons[this.season] || ''} ${seasonNames[this.season] || ''}`;
         }
         const hungerBar = document.getElementById('hunger-bar');
         if (hungerBar) hungerBar.style.width = (this.player.hunger / this.player.maxHunger * 100) + '%';
