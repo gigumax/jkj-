@@ -1,9 +1,10 @@
-const CACHE_NAME = 'explore-build-v1';
+const CACHE_NAME = 'explore-build-v2';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './game.js',
+    './icons.js',
     './manifest.json',
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js',
 ];
