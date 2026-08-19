@@ -1,4 +1,4 @@
-const CACHE_NAME = 'explore-build-v2';
+const CACHE_NAME = 'explore-build-v4';
 const ASSETS = [
     './',
     './index.html',

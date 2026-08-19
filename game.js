@@ -292,7 +292,9 @@ class World {
         this.noise2 = new Noise(seed + 1000);
         this.tiles = [];
         this.respawnQueue = []; // { tx, ty, type, timer }
+        this.bearCaves = []; // { tx, ty, x, z } — bear cave locations on mountain sides
         this.generate();
+        this.generateBearCaves();
     }
     generate() {
         for (let y = 0; y < WORLD_H; y++) {
@@ -397,6 +399,32 @@ class World {
             if (tile.resource) {
                 tile.resourceAmount = RESOURCE_TYPES[tile.resource].yields
                     ? Object.values(RESOURCE_TYPES[tile.resource].yields)[0] : 3;
+            }
+        }
+    }
+    generateBearCaves() {
+        // Place bear caves on mountain tiles adjacent to lower-elevation tiles (mountain sides)
+        for (let y = 2; y < WORLD_H - 2; y++) {
+            for (let x = 2; x < WORLD_W - 2; x++) {
+                const tile = this.tiles[y][x];
+                if (tile.biome !== 'mountain') continue;
+                // Check if this is a mountain side (adjacent to non-mountain, non-water walkable tile)
+                const neighbors = [[0,-1],[1,0],[0,1],[-1,0]];
+                let hasLowNeighbor = false;
+                for (const [dx, dy] of neighbors) {
+                    const nt = this.tiles[y + dy][x + dx];
+                    if (nt && (nt.biome === 'forest' || nt.biome === 'grass' || nt.biome === 'sand')) {
+                        hasLowNeighbor = true;
+                        break;
+                    }
+                }
+                if (!hasLowNeighbor) continue;
+                // Use deterministic random to place ~1 cave per 20x20 area
+                const r = this.rand(x, y, 42);
+                if (r < 0.015) {
+                    this.bearCaves.push({ tx: x, ty: y, x: x + 0.5, z: y + 0.5 });
+                    tile.cave = true;
+                }
             }
         }
     }
@@ -933,6 +961,39 @@ class ModelFactory {
             }
         }
         return group;
+    }
+
+    // --- Bear cave model ---
+    static createBearCave() {
+        const g = new THREE.Group();
+        const rockMat = new THREE.MeshLambertMaterial({ color: 0x5a5a5a, flatShading: true });
+        const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        // Cave entrance — dark arch
+        const arch = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 2.0, 8, 1, true), darkMat);
+        arch.position.set(0, 1.0, 0);
+        arch.rotation.x = Math.PI / 2;
+        arch.scale.set(1, 1, 0.6);
+        g.add(arch);
+        // Dark interior (half-sphere recessed)
+        const interior = new THREE.Mesh(new THREE.SphereGeometry(1.3, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), darkMat);
+        interior.position.set(0, 0.5, -0.3);
+        interior.scale.set(1, 0.8, 0.7);
+        g.add(interior);
+        // Rocks around entrance
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4 + Math.random() * 0.3, 0), rockMat);
+            rock.position.set(Math.cos(angle) * 1.5, 0.3 + Math.random() * 0.5, Math.sin(angle) * 1.2);
+            rock.rotation.set(Math.random(), Math.random(), Math.random());
+            rock.castShadow = true;
+            g.add(rock);
+        }
+        // Top boulder
+        const topRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8, 0), rockMat);
+        topRock.position.set(0, 2.2, 0);
+        topRock.castShadow = true;
+        g.add(topRock);
+        return g;
     }
 
     // --- Creature models ---
@@ -1503,6 +1564,7 @@ class Game {
         this.weather = 'clear'; // 'clear', 'rain', 'snow', 'fog'
         this.weatherTimer = 30 + Math.random() * 60; // weather changes over time
         this.weatherParticles = null;
+        this.audioCtx = null; // Web Audio context, created on first user interaction
         this.resourceMeshes = new Map(); // "x,y" -> mesh
         this.buildingMeshes = new Map();
         this.buildingPositions = new Set(); // "x,y" for efficient tick
@@ -1624,7 +1686,37 @@ class Game {
     // --- Resource meshes (dynamic: only near player) ---
     buildResources() {
         this.resourceLoadRadius = 25; // tiles
+        this.caveMeshes = new Map();
         this.updateResourceMeshes();
+    }
+
+    buildBearCaves() {
+        const ptx = Math.floor(this.player.x);
+        const pty = Math.floor(this.player.z);
+        const r = this.resourceLoadRadius;
+        const needed = new Set();
+        for (const cave of this.world.bearCaves) {
+            const dx = cave.tx - ptx, dy = cave.ty - pty;
+            if (dx*dx + dy*dy <= r*r) {
+                const key = `${cave.tx},${cave.ty}`;
+                needed.add(key);
+                if (!this.caveMeshes.has(key)) {
+                    const mesh = ModelFactory.createBearCave();
+                    const h = this.world.getTileHeight(cave.tx, cave.ty);
+                    mesh.position.set(cave.tx * TILE_SIZE + TILE_SIZE / 2, h, cave.ty * TILE_SIZE + TILE_SIZE / 2);
+                    mesh.traverse(c => { if (c.isMesh) c.castShadow = true; });
+                    this.scene.add(mesh);
+                    this.caveMeshes.set(key, mesh);
+                }
+            }
+        }
+        // Remove distant caves
+        for (const [key, mesh] of this.caveMeshes) {
+            if (!needed.has(key)) {
+                this.scene.remove(mesh);
+                this.caveMeshes.delete(key);
+            }
+        }
     }
 
     updateResourceMeshes() {
@@ -1826,6 +1918,7 @@ class Game {
 
         this.buildTerrain();
         this.buildResources();
+        this.buildBearCaves();
         this.buildPlayer();
 
         document.getElementById('game-over').classList.add('hidden');
@@ -2310,20 +2403,18 @@ class Game {
         raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
         const hits = raycaster.intersectObject(this.hutInteriorGroup, true);
         if (hits.length === 0) return;
-        const hit = hits[0].object;
-        if (hit.userData.isHutBed) {
-            this.startSleep();
-        } else if (hit.userData.isHutCampfireEmpty) {
-            this.placeCampfireInHut();
-        } else if (hit.userData.isHutCampfire) {
-            this.notify('The campfire crackles warmly.', 'info');
+        let node = hits[0].object;
+        while (node) {
+            if (node.userData.isHutBed) { this.startSleep(); return; }
+            if (node.userData.isHutCampfireEmpty) { this.placeCampfireInHut(); return; }
+            if (node.userData.isHutCampfire) { this.notify('The campfire crackles warmly.', 'info'); return; }
+            node = node.parent;
         }
     }
 
     enterHut(tx, ty) {
         this.inHut = true;
         this.hutTile = { tx, ty };
-        if (this.pointerLocked) document.exitPointerLock();
 
         // Build 3D interior if not already
         if (!this.hutInteriorGroup) this.buildHutInterior();
@@ -2999,6 +3090,7 @@ class Game {
                     c.howlTimer = 20 + Math.random() * 40;
                     if (this.isNight && distToPlayer < 40) {
                         this.notify('You hear a wolf howling in the distance...', 'warning');
+                        this.playWolfHowl(distToPlayer);
                         // Nearby wolves become alert
                         for (const other of this.creatures) {
                             if (other.type === 'wolf' && other !== c) {
