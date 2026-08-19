@@ -3706,6 +3706,7 @@ class Game {
             } else {
                 c.moving = false;
             }
+            } // end else (not pounced)
 
             // Attack player
             if (isAggro && distToPlayer < c.attackRange && c.attackCooldown <= 0 && !c.pounced) {
