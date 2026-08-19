@@ -954,47 +954,52 @@ class ModelFactory {
         const legMat = new THREE.MeshLambertMaterial({ color: 0x6b5535 });
         const bellyMat = new THREE.MeshLambertMaterial({ color: 0xc4a484 });
         const darkMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bodyMat);
-        body.scale.set(0.85, 0.75, 1.5); body.position.set(0, 1.0, 0);
-        body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), bodyMat);
-        chest.scale.set(1, 0.8, 1.2); chest.position.set(0, 1.05, 0.45); g.add(chest);
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.7, 6), bodyMat);
-        neck.position.set(0, 1.35, 0.6); neck.rotation.x = -0.6; g.add(neck);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), bodyMat);
-        head.position.set(0, 1.62, 0.92); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.3, 5), bodyMat);
-        snout.position.set(0, 1.6, 1.12); snout.rotation.x = Math.PI / 2; g.add(snout);
+        const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 1.1, 4, 8), bodyMat);
+        torso.rotation.x = Math.PI / 2; torso.position.set(0, 1.05, 0);
+        torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), bodyMat);
+        shoulder.position.set(0, 1.05, 0.5); g.add(shoulder);
+        const haunch = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), bodyMat);
+        haunch.position.set(0, 1.05, -0.5); g.add(haunch);
+        const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.7, 4, 6), bodyMat);
+        neck.position.set(0, 1.5, 0.7); neck.rotation.x = -0.6; g.add(neck);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), bodyMat);
+        head.position.set(0, 1.85, 0.95); head.userData.isHead = true; g.add(head);
+        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.22, 4, 6), bodyMat);
+        snout.position.set(0, 1.82, 1.15); snout.rotation.x = Math.PI / 2; g.add(snout);
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), darkMat);
+        nose.position.set(0, 1.82, 1.28); g.add(nose);
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 4), bodyMat);
-            ear.position.set(s * 0.12, 1.75, 0.88); ear.rotation.z = s * 0.5; g.add(ear);
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.14, 4), bodyMat);
+            ear.position.set(s * 0.08, 1.95, 0.9); ear.rotation.z = s * 0.4; g.add(ear);
         }
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
         const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
         for (let s = -1; s <= 1; s += 2) {
-            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 5), eyeMat);
-            eye.position.set(s * 0.09, 1.68, 1.05); g.add(eye);
-            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), pupilMat);
-            pupil.position.set(s * 0.09, 1.68, 1.08); g.add(pupil);
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), eyeMat);
+            eye.position.set(s * 0.07, 1.88, 1.05); g.add(eye);
+            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), pupilMat);
+            pupil.position.set(s * 0.07, 1.88, 1.08); g.add(pupil);
         }
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), darkMat);
-        nose.position.set(0, 1.62, 1.27); g.add(nose);
         const antMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
         for (let s = -1; s <= 1; s += 2) {
-            const main = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.45, 5), antMat);
-            main.position.set(s * 0.16, 1.88, 0.86); main.rotation.z = s * 0.3; main.rotation.x = -0.2; main.castShadow = true; g.add(main);
-            const branch1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.35, 4), antMat);
-            branch1.position.set(s * 0.34, 2.0, 0.86); branch1.rotation.z = s * 1.0; branch1.rotation.x = 0.1; g.add(branch1);
-            const branch2 = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.2, 4), antMat);
-            branch2.position.set(s * 0.48, 1.97, 0.9); branch2.rotation.z = s * 0.4; branch2.rotation.x = 0.3; g.add(branch2);
+            const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.45, 5), antMat);
+            beam.position.set(s * 0.12, 2.05, 0.88); beam.rotation.z = s * 0.3; beam.rotation.x = -0.2; g.add(beam);
+            const tine1 = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.32, 4), antMat);
+            tine1.position.set(s * 0.28, 2.15, 0.88); tine1.rotation.z = s * 0.9; g.add(tine1);
+            const tine2 = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.018, 0.2, 4), antMat);
+            tine2.position.set(s * 0.4, 2.1, 0.9); tine2.rotation.z = s * 0.5; tine2.rotation.x = 0.2; g.add(tine2);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.9, 5), legMat);
-            leg.position.set(s * 0.22, 0.45, f * 0.45); leg.castShadow = true;
-            leg.userData.isLeg = true; g.add(leg);
+            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.5, 4, 5), legMat);
+            upper.position.set(s * 0.18, 0.85, f * 0.45); upper.castShadow = true; g.add(upper);
+            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.4, 4, 5), legMat);
+            lower.position.set(s * 0.18, 0.3, f * 0.45); lower.castShadow = true; g.add(lower);
+            const hoof = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.07, 5), darkMat);
+            hoof.position.set(s * 0.18, 0.035, f * 0.45); hoof.rotation.x = Math.PI; g.add(hoof);
         }
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 4), bellyMat);
-        tail.position.set(0, 1.1, -0.78); tail.scale.set(0.8, 0.8, 1.5); tail.userData.isTail = true; g.add(tail);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.25, 5), bellyMat);
+        tail.position.set(0, 1.15, -0.78); tail.rotation.x = 0.2; tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
@@ -1004,44 +1009,49 @@ class ModelFactory {
         const legMat = new THREE.MeshLambertMaterial({ color: 0x9b7e54 });
         const bellyMat = new THREE.MeshLambertMaterial({ color: 0xe0cda0 });
         const spotMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
-        body.scale.set(0.85, 0.7, 1.4); body.position.set(0, 0.55, 0);
-        body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.18, 7, 5), bodyMat);
-        chest.scale.set(1, 0.8, 1.2); chest.position.set(0, 0.6, 0.35); g.add(chest);
-        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.13, 0.4, 5), bodyMat);
-        neck.position.set(0, 0.78, 0.36); neck.rotation.x = -0.5; g.add(neck);
+        const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.65, 4, 8), bodyMat);
+        torso.rotation.x = Math.PI / 2; torso.position.set(0, 0.6, 0);
+        torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 5), bodyMat);
+        shoulder.position.set(0, 0.6, 0.28); g.add(shoulder);
+        const haunch = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 5), bodyMat);
+        haunch.position.set(0, 0.6, -0.28); g.add(haunch);
+        const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.4, 4, 6), bodyMat);
+        neck.position.set(0, 0.85, 0.4); neck.rotation.x = -0.5; g.add(neck);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 7, 5), bodyMat);
-        head.position.set(0, 0.95, 0.55); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 5), bodyMat);
-        snout.position.set(0, 0.94, 0.66); snout.rotation.x = Math.PI / 2; g.add(snout);
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), new THREE.MeshLambertMaterial({ color: 0x6b5535 }));
-        nose.position.set(0, 0.94, 0.75); g.add(nose);
+        head.position.set(0, 1.02, 0.56); head.userData.isHead = true; g.add(head);
+        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.14, 4, 6), bodyMat);
+        snout.position.set(0, 1.0, 0.69); snout.rotation.x = Math.PI / 2; g.add(snout);
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), new THREE.MeshLambertMaterial({ color: 0x6b5535 }));
+        nose.position.set(0, 1.0, 0.77); g.add(nose);
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.1, 4), bodyMat);
-            ear.position.set(s * 0.06, 1.02, 0.52); ear.rotation.z = s * 0.5; g.add(ear);
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.1, 4), bodyMat);
+            ear.position.set(s * 0.05, 1.08, 0.52); ear.rotation.z = s * 0.5; g.add(ear);
         }
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
         const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
         for (let s = -1; s <= 1; s += 2) {
             const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat);
-            eye.position.set(s * 0.05, 0.98, 0.64); g.add(eye);
+            eye.position.set(s * 0.05, 1.04, 0.64); g.add(eye);
             const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 4), pupilMat);
-            pupil.position.set(s * 0.05, 0.98, 0.66); g.add(pupil);
+            pupil.position.set(s * 0.05, 1.04, 0.66); g.add(pupil);
         }
         for (let i = 0; i < 5; i++) {
-            const spot = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), spotMat);
+            const spot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), spotMat);
             const a = (i / 5) * Math.PI * 2;
-            spot.position.set(Math.cos(a) * 0.18, 0.62, Math.sin(a) * 0.25);
+            spot.position.set(Math.cos(a) * 0.15, 0.68, Math.sin(a) * 0.2);
             spot.scale.set(1, 0.25, 1); g.add(spot);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.5, 4), legMat);
-            leg.position.set(s * 0.13, 0.25, f * 0.28); leg.castShadow = true;
-            leg.userData.isLeg = true; g.add(leg);
+            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.3, 4, 5), legMat);
+            upper.position.set(s * 0.11, 0.45, f * 0.28); g.add(upper);
+            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.24, 4, 5), legMat);
+            lower.position.set(s * 0.11, 0.16, f * 0.28); g.add(lower);
+            const hoof = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.04, 4), new THREE.MeshLambertMaterial({ color: 0x6b5535 }));
+            hoof.position.set(s * 0.11, 0.02, f * 0.28); hoof.rotation.x = Math.PI; g.add(hoof);
         }
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), bellyMat);
-        tail.position.set(0, 0.6, -0.48); tail.userData.isTail = true; g.add(tail);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.16, 5), bellyMat);
+        tail.position.set(0, 0.66, -0.48); tail.rotation.x = 0.2; tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
@@ -1094,36 +1104,41 @@ class ModelFactory {
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6a6a6a });
         const legMat = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
         const bellyMat = new THREE.MeshLambertMaterial({ color: 0x8a8a8a });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), bodyMat);
-        body.scale.set(0.85, 0.7, 1.4); body.position.set(0, 0.7, 0);
-        body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), bodyMat);
-        chest.scale.set(1, 0.75, 1.15); chest.position.set(0, 0.75, 0.4); g.add(chest);
+        const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 1.0, 4, 8), bodyMat);
+        torso.rotation.x = Math.PI / 2; torso.position.set(0, 0.7, 0);
+        torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.27, 8, 6), bodyMat);
+        chest.position.set(0, 0.72, 0.42); g.add(chest);
+        const waist = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
+        waist.position.set(0, 0.68, -0.45); g.add(waist);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
-        head.position.set(0, 0.85, 0.7); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 5), bodyMat);
-        snout.position.set(0, 0.82, 0.98); snout.rotation.x = Math.PI / 2; g.add(snout);
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
-        nose.position.set(0, 0.82, 1.2); g.add(nose);
+        head.position.set(0, 0.88, 0.75); head.userData.isHead = true; g.add(head);
+        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.45, 4, 6), bodyMat);
+        snout.position.set(0, 0.85, 1.12); snout.rotation.x = Math.PI / 2; g.add(snout);
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
+        nose.position.set(0, 0.85, 1.35); g.add(nose);
         for (let s = -1; s <= 1; s += 2) {
             const ear = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 4), bodyMat);
-            ear.position.set(s * 0.1, 1.08, 0.68); ear.rotation.z = s * 0.2; g.add(ear);
+            ear.position.set(s * 0.1, 1.1, 0.72); ear.rotation.z = s * 0.2; g.add(ear);
         }
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
         const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
         for (let s = -1; s <= 1; s += 2) {
             const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), eyeMat);
-            eye.position.set(s * 0.08, 0.9, 0.88); g.add(eye);
+            eye.position.set(s * 0.08, 0.92, 0.95); g.add(eye);
             const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), pupilMat);
-            pupil.position.set(s * 0.08, 0.9, 0.9); g.add(pupil);
+            pupil.position.set(s * 0.08, 0.92, 0.97); g.add(pupil);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.55, 4), legMat);
-            leg.position.set(s * 0.18, 0.28, f * 0.35); leg.castShadow = true;
-            leg.userData.isLeg = true; g.add(leg);
+            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.35, 4, 5), legMat);
+            upper.position.set(s * 0.18, 0.45, f * 0.35); upper.castShadow = true; g.add(upper);
+            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.32, 4, 5), legMat);
+            lower.position.set(s * 0.18, 0.16, f * 0.35); g.add(lower);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), legMat);
+            paw.scale.set(1, 0.6, 1.4); paw.position.set(s * 0.18, 0.03, f * 0.35 + 0.02); g.add(paw);
         }
-        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.55, 5), bodyMat);
-        tail.position.set(0, 0.75, -0.65); tail.rotation.x = 0.5; tail.castShadow = true; tail.userData.isTail = true; g.add(tail);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.65, 6), bodyMat);
+        tail.position.set(0, 0.72, -0.65); tail.rotation.x = 0.5; tail.castShadow = true; tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
@@ -1131,71 +1146,84 @@ class ModelFactory {
         const g = new THREE.Group();
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a3a28 });
         const legMat = new THREE.MeshLambertMaterial({ color: 0x3a2a18 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 6), bodyMat);
-        body.scale.set(1, 0.85, 1.4); body.position.set(0, 0.85, 0);
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.9, 4, 8), bodyMat);
+        body.rotation.x = Math.PI / 2; body.position.set(0, 0.85, 0);
+        body.scale.set(1, 0.85, 1.35);
         body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bodyMat);
-        chest.scale.set(1, 0.8, 1.2); chest.position.set(0, 0.9, 0.45); g.add(chest);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 6), bodyMat);
-        head.position.set(0, 1.1, 0.82); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.18, 7, 5), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
-        snout.scale.set(1, 0.7, 0.9); snout.position.set(0, 1.05, 1.18); g.add(snout);
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), bodyMat);
+        chest.position.set(0, 0.88, 0.5); g.add(chest);
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), new THREE.MeshLambertMaterial({ color: 0x5a4a38 }));
+        belly.position.set(0, 0.72, 0); belly.scale.set(0.9, 0.7, 1.1); g.add(belly);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bodyMat);
+        head.position.set(0, 1.12, 0.9); head.userData.isHead = true; g.add(head);
+        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.3, 4, 6), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
+        snout.position.set(0, 1.08, 1.28); snout.rotation.x = Math.PI / 2; g.add(snout);
         const nose = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
-        nose.position.set(0, 1.08, 1.32); g.add(nose);
+        nose.position.set(0, 1.1, 1.43); g.add(nose);
         for (let s = -1; s <= 1; s += 2) {
             const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 5), bodyMat);
-            ear.position.set(s * 0.22, 1.4, 0.72); g.add(ear);
+            ear.position.set(s * 0.22, 1.45, 0.82); g.add(ear);
         }
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
         const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
         for (let s = -1; s <= 1; s += 2) {
             const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), eyeMat);
-            eye.position.set(s * 0.13, 1.15, 1.12); g.add(eye);
+            eye.position.set(s * 0.13, 1.18, 1.15); g.add(eye);
             const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), pupilMat);
-            pupil.position.set(s * 0.13, 1.15, 1.15); g.add(pupil);
+            pupil.position.set(s * 0.13, 1.18, 1.18); g.add(pupil);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.65, 5), legMat);
-            leg.position.set(s * 0.3, 0.32, f * 0.45); leg.castShadow = true;
-            leg.userData.isLeg = true; g.add(leg);
+            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.45, 4, 5), legMat);
+            upper.position.set(s * 0.28, 0.5, f * 0.42); upper.castShadow = true; g.add(upper);
+            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.4, 4, 5), legMat);
+            lower.position.set(s * 0.28, 0.18, f * 0.42); g.add(lower);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 5), legMat);
+            paw.scale.set(1.2, 0.5, 1.5); paw.position.set(s * 0.28, 0.05, f * 0.42 + 0.03); g.add(paw);
         }
         const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 5, 4), bodyMat);
-        tail.position.set(0, 0.95, -0.72); tail.userData.isTail = true; g.add(tail);
+        tail.position.set(0, 1.0, -0.75); tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
     static createRabbit() {
         const g = new THREE.Group();
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0xb0b0b0 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x909090 });
         const bellyMat = new THREE.MeshLambertMaterial({ color: 0xd0d0d0 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
-        body.scale.set(1, 0.85, 1.3); body.position.set(0, 0.32, 0);
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.55, 4, 8), bodyMat);
+        body.rotation.x = Math.PI / 2; body.position.set(0, 0.35, 0);
         body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 7, 5), bodyMat);
-        head.position.set(0, 0.48, 0.25); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), new THREE.MeshLambertMaterial({ color: 0xffaaaa }));
-        snout.position.set(0, 0.48, 0.34); g.add(snout);
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
-        nose.position.set(0, 0.5, 0.39); g.add(nose);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 5), bodyMat);
+        head.position.set(0, 0.5, 0.26); head.userData.isHead = true; g.add(head);
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), new THREE.MeshLambertMaterial({ color: 0xffaaaa }));
+        snout.position.set(0, 0.5, 0.35); g.add(snout);
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
+        nose.position.set(0, 0.52, 0.39); g.add(nose);
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.5, 5), bodyMat);
-            ear.position.set(s * 0.06, 0.8, 0.24); ear.castShadow = true; g.add(ear);
+            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.6, 4, 5), bodyMat);
+            ear.position.set(s * 0.05, 0.85, 0.24); g.add(ear);
         }
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
         const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
         for (let s = -1; s <= 1; s += 2) {
             const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat);
-            eye.position.set(s * 0.06, 0.52, 0.37); g.add(eye);
+            eye.position.set(s * 0.05, 0.54, 0.37); g.add(eye);
             const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 4), pupilMat);
-            pupil.position.set(s * 0.06, 0.52, 0.39); g.add(pupil);
+            pupil.position.set(s * 0.05, 0.54, 0.39); g.add(pupil);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.18, 3), bodyMat);
-            leg.position.set(s * 0.1, 0.09, f * 0.12);
-            leg.userData.isLeg = true; g.add(leg);
+            if (f === 1) {
+                const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 5), legMat);
+                thigh.position.set(s * 0.12, 0.18, f * 0.18); g.add(thigh);
+                const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.15, 4, 5), legMat);
+                foot.position.set(s * 0.12, 0.05, f * 0.2); foot.rotation.x = Math.PI / 2; g.add(foot);
+            } else {
+                const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.18, 4, 5), legMat);
+                leg.position.set(s * 0.08, 0.09, f * 0.1); leg.userData.isLeg = true; g.add(leg);
+            }
         }
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 5, 4), bellyMat);
-        tail.position.set(0, 0.35, -0.22); tail.userData.isTail = true; g.add(tail);
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bellyMat);
+        tail.position.set(0, 0.38, -0.22); tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
@@ -1203,35 +1231,39 @@ class ModelFactory {
         const g = new THREE.Group();
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
         const legMat = new THREE.MeshLambertMaterial({ color: 0x0a0a1a });
-        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bodyMat);
-        abdomen.position.set(0, 0.45, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; abdomen.userData.isBody = true; g.add(abdomen);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 7, 5), bodyMat);
-        head.position.set(0, 0.4, 0.32); head.userData.isHead = true; g.add(head);
+        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), bodyMat);
+        abdomen.position.set(0, 0.48, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; abdomen.userData.isBody = true; g.add(abdomen);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 5), bodyMat);
+        head.position.set(0, 0.42, 0.35); head.userData.isHead = true; g.add(head);
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
         for (let i = 0; i < 4; i++) {
             const a = (i / 4) * Math.PI * 0.6 - Math.PI * 0.3;
             for (let s = -1; s <= 1; s += 2) {
-                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), eyeMat);
-                eye.position.set(s * 0.07, 0.46 + Math.sin(a) * 0.05, 0.45 + Math.cos(a) * 0.08); g.add(eye);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.038, 5, 4), eyeMat);
+                eye.position.set(s * 0.08, 0.5 + Math.sin(a) * 0.05, 0.5 + Math.cos(a) * 0.08); g.add(eye);
             }
         }
         const fangMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
         for (let s = -1; s <= 1; s += 2) {
-            const fang = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.1, 3), fangMat);
-            fang.position.set(s * 0.06, 0.32, 0.5); fang.rotation.x = Math.PI; g.add(fang);
+            const fang = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.12, 3), fangMat);
+            fang.position.set(s * 0.07, 0.34, 0.55); fang.rotation.x = Math.PI; g.add(fang);
         }
         for (let i = 0; i < 8; i++) {
             const side = i < 4 ? -1 : 1;
             const idx = i % 4;
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.015, 0.65, 3), legMat);
-            leg.position.set(side * 0.15, 0.34, -0.05 + idx * 0.12);
-            leg.rotation.z = side * 0.8;
-            leg.castShadow = true;
-            leg.userData.isLeg = true; g.add(leg);
-            const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.01, 0.4, 3), legMat);
-            lowerLeg.position.set(side * 0.35, 0.08, -0.05 + idx * 0.12);
-            lowerLeg.rotation.z = side * 0.3;
-            g.add(lowerLeg);
+            const z = -0.05 + idx * 0.12;
+            const femur = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.5, 4, 5), legMat);
+            femur.position.set(side * 0.18, 0.4, z);
+            femur.rotation.z = side * 0.8;
+            femur.castShadow = true; femur.userData.isLeg = true; g.add(femur);
+            const tibia = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.45, 4, 5), legMat);
+            tibia.position.set(side * 0.42, 0.15, z);
+            tibia.rotation.z = side * -0.6;
+            tibia.rotation.x = 0.4; g.add(tibia);
+            const tarsus = new THREE.Mesh(new THREE.CapsuleGeometry(0.015, 0.25, 4, 5), legMat);
+            tarsus.position.set(side * 0.62, 0.04, z - 0.05);
+            tarsus.rotation.z = side * -1.1;
+            g.add(tarsus);
         }
         return g;
     }
@@ -1944,10 +1976,6 @@ class Game {
         document.getElementById('btn-craft').addEventListener('click', () => this.togglePanel('panel-crafting'));
         document.getElementById('btn-build').addEventListener('click', () => this.togglePanel('panel-build'));
         document.getElementById('btn-tech').addEventListener('click', () => this.togglePanel('panel-tech'));
-        // Hut interior buttons
-        document.getElementById('hut-exit-btn').addEventListener('click', () => this.exitHut());
-        document.getElementById('hut-bed').addEventListener('click', () => this.startSleep());
-        document.getElementById('hut-campfire-slot').addEventListener('click', () => this.placeCampfireInHut());
         document.querySelectorAll('.panel-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
