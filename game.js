@@ -2226,6 +2226,26 @@ class Game {
         const bd = tile.buildingData;
         const def = BUILDINGS[tile.building];
         if (tile.building === 'campfire') {
+            // Try cooking first - if player has raw meat or raw fish
+            let cooked = false;
+            if (this.player.hasItem('raw_meat', 1) && this.player.hasItem('wood', 1)) {
+                this.player.removeItem('raw_meat', 1);
+                this.player.removeItem('wood', 1);
+                this.player.addItem('cooked_meat', 1);
+                this.notify('🍖 Cooked meat on the campfire!', 'success');
+                cooked = true;
+            } else if (this.player.hasItem('raw_fish', 1) && this.player.hasItem('wood', 1)) {
+                this.player.removeItem('raw_fish', 1);
+                this.player.removeItem('wood', 1);
+                this.player.addItem('cooked_fish', 1);
+                this.notify('🐠 Cooked fish on the campfire!', 'success');
+                cooked = true;
+            }
+            if (cooked) {
+                this.updateInventoryUI();
+                this.updateUI();
+                return;
+            }
             if (this.player.energy < this.player.maxEnergy) {
                 this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 20);
                 this.notify('⚡ Restored energy by the campfire', 'success');
