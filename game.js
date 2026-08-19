@@ -1548,7 +1548,7 @@ class Game {
         this.tickAccumulator = 0;
         this.meshUpdateAccumulator = 0;
         this.time = 0;
-        this.dayTime = 0.1; // Start in morning (day, not dawn)
+        this.dayTime = 0.3; // Start mid-morning so the sun is up and the world is lit
         this.dayDuration = 300; // 5 minutes of day
         this.nightDuration = 180; // 3 minutes of night
         this.totalCycle = this.dayDuration + this.nightDuration; // 480s
@@ -1917,10 +1917,6 @@ class Game {
             this.weatherParticles = null;
         }
 
-        this.buildTerrain();
-        this.buildResources();
-        this.buildBearCaves();
-        this.buildPlayer();
 
         document.getElementById('game-over').classList.add('hidden');
         document.getElementById('crosshair').classList.add('visible');
@@ -2929,8 +2925,9 @@ class Game {
         const p = this.player;
         const angle = Math.random() * Math.PI * 2;
         const dist = 15 + Math.random() * 20;
-        const cx = Math.floor(p.x + Math.cos(angle) * dist);
-        const cz = Math.floor(p.z + Math.sin(angle) * dist);
+        const cx0 = Math.floor(p.x + Math.cos(angle) * dist);
+        const cz0 = Math.floor(p.z + Math.sin(angle) * dist);
+        let cx = cx0, cz = cz0;
         if (cx < 1 || cx >= WORLD_W - 1 || cz < 1 || cz >= WORLD_H - 1) return;
         const tile = this.world.getTile(cx, cz);
         if (!tile || !BIOMES[tile.biome].walkable) return;
@@ -2957,6 +2954,23 @@ class Game {
             if (roll <= 0) { type = t; def = d; break; }
         }
         if (!type) { type = candidates[0][0]; def = candidates[0][1]; }
+        // Bears spawn at cave locations on mountain sides
+        if (type === 'bear' && this.world.bearCaves.length > 0) {
+            // Find a cave near the player but not too close
+            let bestCave = null, bestDist = 999;
+            for (const cave of this.world.bearCaves) {
+                const cdx = cave.x - p.x, cdz = cave.z - p.z;
+                const cdist = Math.sqrt(cdx * cdx + cdz * cdz);
+                if (cdist > 12 && cdist < 40 && cdist < bestDist) {
+                    bestDist = cdist;
+                    bestCave = cave;
+                }
+            }
+            if (bestCave) {
+                cx = bestCave.tx;
+                cz = bestCave.ty;
+            }
+        }
         const h = this.world.getTileHeight(cx, cz);
         // Pack spawning for wolves
         const packSize = def.packSpawn ? 3 + Math.floor(Math.random() * 3) : 1;
@@ -4546,6 +4560,7 @@ class Game {
             this.season = seasons[(idx + 1) % seasons.length];
             const seasonNames = { summer: 'Summer', autumn: 'Autumn', winter: 'Winter', spring: 'Spring' };
             this.notify(`Season changed to ${seasonNames[this.season]}!`, 'info');
+            this.updateSeasonColors();
         }
 
         this.updateDayNightLighting();
@@ -4738,6 +4753,56 @@ class Game {
     }
 
     // --- UI Updates ---
+    updateSeasonColors() {
+        if (!this.terrainMesh) return;
+        const geo = this.terrainMesh.geometry;
+        const colors = geo.attributes.color;
+        if (!colors) return;
+        const tmpCol = new THREE.Color();
+        for (let y = 0; y < WORLD_H; y++) {
+            for (let x = 0; x < WORLD_W; x++) {
+                const tile = this.world.tiles[y][x];
+                const idx = (y * WORLD_W + x) * 3;
+                let r = (BIOMES[tile.biome].color >> 16) & 0xff;
+                let g = (BIOMES[tile.biome].color >> 8) & 0xff;
+                let b = BIOMES[tile.biome].color & 0xff;
+                // Apply season modifications
+                if (this.season === 'winter') {
+                    // Snow covers most biomes except desert/sand
+                    if (tile.biome !== 'desert' && tile.biome !== 'sand' && tile.biome !== 'water') {
+                        const snowFactor = tile.biome === 'snow' ? 0.9 : 0.65;
+                        r = Math.round(r * (1 - snowFactor) + 232 * snowFactor);
+                        g = Math.round(g * (1 - snowFactor) + 232 * snowFactor);
+                        b = Math.round(b * (1 - snowFactor) + 240 * snowFactor);
+                    }
+                } else if (this.season === 'autumn') {
+                    // Forest/grass turn autumn colors (orange/brown)
+                    if (tile.biome === 'forest') {
+                        r = Math.round(r * 0.5 + 180 * 0.5);
+                        g = Math.round(g * 0.5 + 90 * 0.5);
+                        b = Math.round(b * 0.5 + 30 * 0.5);
+                    } else if (tile.biome === 'grass') {
+                        r = Math.round(r * 0.6 + 180 * 0.4);
+                        g = Math.round(g * 0.6 + 140 * 0.4);
+                        b = Math.round(b * 0.6 + 50 * 0.4);
+                    }
+                } else if (this.season === 'spring') {
+                    // Brighter greens
+                    if (tile.biome === 'grass' || tile.biome === 'forest') {
+                        r = Math.round(r * 0.8 + 100 * 0.2);
+                        g = Math.round(g * 0.8 + 200 * 0.2);
+                        b = Math.round(b * 0.8 + 80 * 0.2);
+                    }
+                }
+                // summer = no modification (use base biome colors)
+                colors.array[idx] = r / 255;
+                colors.array[idx + 1] = g / 255;
+                colors.array[idx + 2] = b / 255;
+            }
+        }
+        colors.needsUpdate = true;
+    }
+
     _tmpCol1 = new THREE.Color();
     _tmpCol2 = new THREE.Color();
     _tmpCol3 = new THREE.Color();
