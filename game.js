@@ -975,10 +975,21 @@ class ModelFactory {
         mouth.position.set(0, 1.48, 1.08); g.add(mouth);
         const antMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
         for (let s = -1; s <= 1; s += 2) {
-            const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.6, 4), antMat);
-            ant.position.set(s * 0.12, 1.85, 0.75); ant.rotation.x = -0.2; ant.castShadow = true; g.add(ant);
-            const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.25, 3), antMat);
-            branch.position.set(s * 0.22, 1.95, 0.75); branch.rotation.z = s * 1.2; g.add(branch);
+            const mainBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.05, 0.5, 5), antMat);
+            mainBeam.position.set(s * 0.16, 1.85, 0.75);
+            mainBeam.rotation.z = s * 0.35;
+            mainBeam.rotation.x = -0.2;
+            mainBeam.castShadow = true; g.add(mainBeam);
+            const branchA = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 4), antMat);
+            branchA.position.set(s * 0.35, 1.95, 0.75);
+            branchA.rotation.z = s * 1.0;
+            branchA.rotation.x = 0.1;
+            g.add(branchA);
+            const branchB = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.025, 0.22, 4), antMat);
+            branchB.position.set(s * 0.5, 2.02, 0.78);
+            branchB.rotation.z = s * 0.7;
+            branchB.rotation.x = 0.3;
+            g.add(branchB);
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.85, 5), legMat);
@@ -1012,9 +1023,11 @@ class ModelFactory {
         neck.position.set(0, 0.75, 0.35); neck.rotation.x = -0.5; neck.castShadow = true; g.add(neck);
         const head = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.3, 5), bodyMat);
         head.position.set(0, 0.92, 0.52); head.rotation.x = Math.PI / 2 - 0.3; head.castShadow = true; head.userData.isHead = true; g.add(head);
+        // Ears
+        const earMat = new THREE.MeshLambertMaterial({ color: 0xc9a96e });
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 3), bodyMat);
-            ear.position.set(s * 0.07, 0.97, 0.5); ear.rotation.z = s * 0.5; g.add(ear);
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 4), earMat);
+            ear.position.set(s * 0.07, 1.0, 0.5); ear.rotation.z = s * 0.5; g.add(ear);
         }
         // Eyes
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -1095,8 +1108,8 @@ class ModelFactory {
         const head = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.5, 6), bodyMat);
         head.position.set(0, 0.78, 0.65); head.rotation.x = Math.PI / 2 - 0.15; head.castShadow = true; head.userData.isHead = true; g.add(head);
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.18, 3), bodyMat);
-            ear.position.set(s * 0.12, 0.98, 0.55); g.add(ear);
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 4), bodyMat);
+            ear.position.set(s * 0.14, 1.15, 0.55); ear.rotation.z = s * 0.4; g.add(ear);
         }
         // Eyes
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffff00 });
@@ -1131,9 +1144,10 @@ class ModelFactory {
         body.position.set(0, 0.85, 0); body.scale.set(1, 0.85, 1.5); body.castShadow = true; body.userData.isBody = true; g.add(body);
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 7, 6), bodyMat);
         head.position.set(0, 1.0, 0.8); head.castShadow = true; head.userData.isHead = true; g.add(head);
+        // Ears
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bodyMat);
-            ear.position.set(s * 0.2, 1.3, 0.7); g.add(ear);
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.14, 5, 4), bodyMat);
+            ear.position.set(s * 0.22, 1.32, 0.68); g.add(ear);
         }
         // Eyes
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -1167,8 +1181,8 @@ class ModelFactory {
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 6, 5), bodyMat);
         head.position.set(0, 0.42, 0.25); head.userData.isHead = true; g.add(head);
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.35, 4), bodyMat);
-            ear.position.set(s * 0.07, 0.68, 0.22); ear.castShadow = true; g.add(ear);
+            const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.5, 5), bodyMat);
+            ear.position.set(s * 0.07, 0.72, 0.24); ear.castShadow = true; g.add(ear);
         }
         // Eyes
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
