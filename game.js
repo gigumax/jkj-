@@ -3903,11 +3903,11 @@ class Game {
         // Sleeping in wood hut at night
         if (this.sleeping) {
             this.sleepTimer -= dt;
-            p.health = Math.min(p.maxHealth, p.health + dt * 15);
-            p.energy = Math.min(p.maxEnergy, p.energy + dt * 20);
             if (this.sleepTimer <= 0 || !this.isNight) {
                 this.sleeping = false;
-                this.notify('😴 You wake up feeling refreshed!', 'success');
+                p.health = Math.min(p.maxHealth, p.health + 20);
+                p.energy = p.maxEnergy;
+                this.notify('😴 You wake up feeling refreshed! +20 HP, full energy', 'success');
                 this.updateUI();
             }
             this.updateUI();
