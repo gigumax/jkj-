@@ -428,8 +428,8 @@ class World {
         let h;
         if (t.biome === 'water') h = -2;
         else if (t.biome === 'sand') h = 0.5 + elev * 2;
-        else if (t.biome === 'grass') h = 1 + elev * 1.5;
-        else if (t.biome === 'forest') h = 1.5 + elev * 2;
+        else if (t.biome === 'grass') h = 1 + elev * 4;
+        else if (t.biome === 'forest') h = 1.5 + elev * 5;
         else if (t.biome === 'mountain') h = 4 + elev * 18;
         else if (t.biome === 'snow') h = 8 + elev * 22;
         else if (t.biome === 'desert') h = 0.8 + elev * 3;
@@ -3945,7 +3945,7 @@ class Game {
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
             const curH = this.world.getHeightAt(p.x, p.z);
-            const MAX_STEP = 1.2;
+            const MAX_STEP = 2.5;
             const MAX_CLIMB = 100;
             const canStep = (nx, nz) => {
                 if (!this.world.isWalkable(nx, nz)) return false;
@@ -4036,26 +4036,16 @@ class Game {
                 }
             }
         }
-        // Smooth Y toward ground height (no snapping when walking slopes)
+        // Snap player Y to terrain height + jump offset (climbing smooths instead)
         const targetY = groundY + p.yOffset;
-        if (p.yOffset > 0) {
-            p.y = targetY; // during jump, follow physics exactly
-        } else if (p.isClimbing) {
+        if (p.isClimbing) {
             // Climb at a controlled vertical rate instead of snapping to full height
             const CLIMB_RISE_SPEED = 3.5; // units/sec
             const delta = targetY - p.y;
             const step = Math.sign(delta) * Math.min(Math.abs(delta), CLIMB_RISE_SPEED * dt);
             p.y += step;
         } else {
-            // Check for walking off a cliff (ground drops below player)
-            if (targetY < p.y - 0.5 && p.jumpVel === 0 && p.yOffset === 0) {
-                // Turn this into a fall - give downward velocity and small offset
-                p.jumpVel = -2;
-                p.yOffset = -0.01;
-                p.fallStartY = p.y;
-            } else {
-                p.y += (targetY - p.y) * Math.min(1, dt * 12);
-            }
+            p.y = targetY; // always attached to the ground (or jump arc)
         }
 
         // Update player mesh (hidden in FPV but kept for shadows)
