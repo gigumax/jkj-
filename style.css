@@ -916,6 +916,7 @@ kbd {
     z-index: 25;
     pointer-events: none;
 }
+#mobile-controls.hidden { display: none; }
 #mobile-controls.active {
     pointer-events: none; /* keep none so clicks pass through to panels */
 }

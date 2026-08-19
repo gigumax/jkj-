@@ -8,10 +8,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1a2a1a">
     <meta name="description" content="First-person 3D survival game. Gather resources, craft tools, build machines, research technology.">
-    <title>Explore & Build — Survival Technology</title>
+    <title>Explore & Build  Survival Technology</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 80 L35 30 L50 55 L65 20 L90 80 Z' fill='%234a7c3a' stroke='%232d5a1f' stroke-width='3'/><circle cx='75' cy='25' r='8' fill='%23f4d68a'/></svg>">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=19">
+    <link rel="stylesheet" href="style.css?v=20">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
 <body>
@@ -27,38 +27,38 @@
         <!-- Top HUD -->
         <div id="hud-top">
             <div class="hud-item" id="hud-health">
-                <span class="hud-icon">❤️</span>
+                <span class="hud-icon">[H]</span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="health-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-energy">
-                <span class="hud-icon">⚡</span>
+                <span class="hud-icon">[E]</span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="energy-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-research">
-                <span class="hud-icon">🔬</span>
+                <span class="hud-icon">[R]</span>
                 <span id="research-points">0</span> RP
             </div>
             <div class="hud-item" id="hud-power">
-                <span class="hud-icon">🔌</span>
+                <span class="hud-icon">[P]</span>
                 <span id="power-display">0 / 0</span>
             </div>
             <div class="hud-item" id="hud-time">
-                <span id="time-display">🌅 Morning</span>
+                <span id="time-display">Morning</span>
             </div>
             <div class="hud-item" id="hud-weather">
-                <span id="weather-display">☀️</span>
+                <span id="weather-display">Sun</span>
             </div>
             <div class="hud-item" id="hud-hunger">
-                <span class="hud-icon">🍖</span>
+                <span class="hud-icon">[H]</span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="hunger-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-thirst">
-                <span class="hud-icon">💧</span>
+                <span class="hud-icon">[W]</span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="thirst-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-temp">
-                <span class="hud-icon">🌡️</span>
-                <span id="temp-display">20°C</span>
+                <span class="hud-icon">[T]</span>
+                <span id="temp-display">20 deg C</span>
             </div>
         </div>
 
@@ -68,32 +68,32 @@
         <!-- Side panels -->
         <div id="panel-inventory" class="side-panel hidden">
             <div class="panel-header">
-                <h2>🎒 Inventory</h2>
-                <button class="panel-close" data-panel="panel-inventory">✕</button>
+                <h2>[I] Inventory</h2>
+                <button class="panel-close" data-panel="panel-inventory">X</button>
             </div>
             <div id="inventory-grid"></div>
         </div>
 
         <div id="panel-crafting" class="side-panel hidden">
             <div class="panel-header">
-                <h2>🔨 Crafting</h2>
-                <button class="panel-close" data-panel="panel-crafting">✕</button>
+                <h2>[C] Crafting</h2>
+                <button class="panel-close" data-panel="panel-crafting">X</button>
             </div>
             <div id="crafting-list"></div>
         </div>
 
         <div id="panel-build" class="side-panel hidden">
             <div class="panel-header">
-                <h2>🏗️ Build</h2>
-                <button class="panel-close" data-panel="panel-build">✕</button>
+                <h2>[B] Build</h2>
+                <button class="panel-close" data-panel="panel-build">X</button>
             </div>
             <div id="build-list"></div>
         </div>
 
         <div id="panel-tech" class="side-panel hidden">
             <div class="panel-header">
-                <h2>🔬 Technology</h2>
-                <button class="panel-close" data-panel="panel-tech">✕</button>
+                <h2>[R] Technology</h2>
+                <button class="panel-close" data-panel="panel-tech">X</button>
             </div>
             <div id="tech-list"></div>
         </div>
@@ -101,7 +101,7 @@
         <!-- Build placement mode indicator -->
         <div id="build-mode-indicator" class="hidden">
             <span id="build-mode-name"></span>
-            <span class="hint">Press ESC or ✖ to cancel</span>
+            <span class="hint">Press ESC or X to cancel</span>
         </div>
 
         <!-- Interaction prompt -->
@@ -115,14 +115,14 @@
 
         <!-- Bottom controls -->
         <div id="bottom-controls">
-            <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">🔨</button>
-            <button class="ctrl-btn" id="btn-build" title="Build (B)">🏗️</button>
-            <button class="ctrl-btn" id="btn-tech" title="Technology (T)">🔬</button>
+            <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">[C]</button>
+            <button class="ctrl-btn" id="btn-build" title="Build (B)">[B]</button>
+            <button class="ctrl-btn" id="btn-tech" title="Technology (T)">[R]</button>
         </div>
 
         <!-- Quest / Objective tracker -->
         <div id="quest-tracker">
-            <div id="quest-icon">🎯</div>
+            <div id="quest-icon">*</div>
             <div id="quest-text"></div>
         </div>
 
@@ -132,43 +132,43 @@
         <!-- Start screen -->
         <div id="start-screen">
             <div class="start-content">
-                <h1>🌍 Explore & Build 3D</h1>
+                <h1> Explore & Build 3D</h1>
                 <p class="tagline">First-person 3D survival. Gather resources. Craft tools. Build machines. Research technology. Endless exploration awaits!</p>
 
                 <div class="how-to-play">
-                    <h3>📖 How to Play</h3>
+                    <h3> How to Play</h3>
                     <div class="htp-section">
                         <div class="htp-title">1. Explore & Gather</div>
-                        <div class="htp-desc">Walk to <b>🌲 trees</b> and <b>🪨 rocks</b>. Look at them and press <kbd>E</kbd> or <kbd>Click</kbd> to harvest. You get <b>wood</b>, <b>stone</b>, <b>food</b>, and more. Resources respawn over time!</div>
+                        <div class="htp-desc">Walk to <b> trees</b> and <b> rocks</b>. Look at them and press <kbd>E</kbd> or <kbd>Click</kbd> to harvest. You get <b>wood</b>, <b>stone</b>, <b>food</b>, and more. Resources respawn over time!</div>
                     </div>
                     <div class="htp-section">
-                        <div class="htp-title">🌿 Forage Plants — Beware!</div>
-                        <div class="htp-desc">Look at plants and press <kbd>E</kbd> to pick them up — picking is always safe! Select a food item with <kbd>1-9</kbd> and press <kbd>F</kbd> to eat it. Some plants are nutritious, but some are poisonous or even deadly. You won't know which is which until you eat one!</div>
+                        <div class="htp-title">[g] Forage Plants  Beware!</div>
+                        <div class="htp-desc">Look at plants and press <kbd>E</kbd> to pick them up  picking is always safe! Select a food item with <kbd>1-9</kbd> and press <kbd>F</kbd> to eat it. Some plants are nutritious, but some are poisonous or even deadly. You won't know which is which until you eat one!</div>
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">2. Craft Tools</div>
-                        <div class="htp-desc">Press <kbd>Q</kbd> to open crafting. Make a <b>⛏️ wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
+                        <div class="htp-desc">Press <kbd>Q</kbd> to open crafting. Make a <b> wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">3. Build Structures</div>
-                        <div class="htp-desc">Press <kbd>B</kbd> to open build menu. Place a <b>🔥 campfire</b> to restore energy. Build <b>🏭 furnaces</b> to smelt ore into ingots.</div>
+                        <div class="htp-desc">Press <kbd>B</kbd> to open build menu. Place a <b> campfire</b> to restore energy. Build <b> furnaces</b> to smelt ore into ingots.</div>
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">4. Research Technology</div>
-                        <div class="htp-desc">Press <kbd>T</kbd> to open the tech tree. You earn <b>Research Points (RP)</b> from harvesting, crafting, and building <b>🔬 labs</b>. Unlock new tools, buildings, and automation!</div>
+                        <div class="htp-desc">Press <kbd>T</kbd> to open the tech tree. You earn <b>Research Points (RP)</b> from harvesting, crafting, and building <b>[R] labs</b>. Unlock new tools, buildings, and automation!</div>
                     </div>
                     <div class="htp-section">
                         <div class="htp-title">5. Automate Everything</div>
-                        <div class="htp-desc">Build <b>⛏️ mining drills</b>, <b>⚡ power plants</b>, <b>🤖 assemblers</b>, and <b>🔆 solar panels</b>. Create a self-running industrial empire!</div>
+                        <div class="htp-desc">Build <b> mining drills</b>, <b>[E] power plants</b>, <b> assemblers</b>, and <b> solar panels</b>. Create a self-running industrial empire!</div>
                     </div>
                     <div class="htp-section">
-                        <div class="htp-title">💡 Survival Tips</div>
-                        <div class="htp-desc"><b>Walking</b> slowly drains energy. <b>Running</b> (hold Shift) drains it faster. <b>Swimming</b> drains energy quickly — if you run out while swimming, you drown! Stay near a campfire to restore energy. If you die, you respawn nearby — no game over, ever!</div>
+                        <div class="htp-title"> Survival Tips</div>
+                        <div class="htp-desc"><b>Walking</b> slowly drains energy. <b>Running</b> (hold Shift) drains it faster. <b>Swimming</b> drains energy quickly  if you run out while swimming, you drown! Stay near a campfire to restore energy. If you die, you respawn nearby  no game over, ever!</div>
                     </div>
                 </div>
 
                 <div class="controls-info">
-                    <h3>🎮 Controls</h3>
+                    <h3> Controls</h3>
                     <div class="control-row"><kbd>W A S D</kbd> <span>Move</span></div>
                     <div class="control-row"><kbd>Shift</kbd> <span>Sprint (uses energy)</span></div>
                     <div class="control-row"><kbd>Space</kbd> <span>Jump</span></div>
@@ -187,32 +187,32 @@
                     <div class="control-row"><kbd>P</kbd> <span>Pause game</span></div>
                 </div>
                 <div class="controls-info" id="mobile-controls-info" style="display:none;">
-                    <h3>📱 Mobile Controls</h3>
-                    <div class="control-row"><span>🕹️ Left joystick</span> <span>Move around</span></div>
-                    <div class="control-row"><span>👆 Right screen drag</span> <span>Look around</span></div>
-                    <div class="control-row"><span>👆 Right screen tap</span> <span>Interact / Attack</span></div>
-                    <div class="control-row"><span>⬆ Button</span> <span>Jump</span></div>
-                    <div class="control-row"><span>🏃 Button (hold)</span> <span>Sprint</span></div>
-                    <div class="control-row"><span>🧗 Button (hold)</span> <span>Climb mountains</span></div>
-                    <div class="control-row"><span>⚔️ Button</span> <span>Attack creature</span></div>
-                    <div class="control-row"><span>✋ Button</span> <span>Interact / Harvest</span></div>
-                    <div class="control-row"><span>🍖 Button</span> <span>Eat selected food</span></div>
-                    <div class="control-row"><span>🤲 Button</span> <span>Feed nearby animal</span></div>
-                    <div class="control-row"><span>🎒 Button</span> <span>Open inventory</span></div>
-                    <div class="control-row"><span>⏸ Button</span> <span>Pause game</span></div>
-                    <div class="control-row"><span>✖ Button</span> <span>Cancel build / Close panels</span></div>
+                    <h3> Mobile Controls</h3>
+                    <div class="control-row"><span> Left joystick</span> <span>Move around</span></div>
+                    <div class="control-row"><span> Right screen drag</span> <span>Look around</span></div>
+                    <div class="control-row"><span> Right screen tap</span> <span>Interact / Attack</span></div>
+                    <div class="control-row"><span>^ Button</span> <span>Jump</span></div>
+                    <div class="control-row"><span>> Button (hold)</span> <span>Sprint</span></div>
+                    <div class="control-row"><span>^ Button (hold)</span> <span>Climb mountains</span></div>
+                    <div class="control-row"><span>X Button</span> <span>Attack creature</span></div>
+                    <div class="control-row"><span>H Button</span> <span>Interact / Harvest</span></div>
+                    <div class="control-row"><span>[H] Button</span> <span>Eat selected food</span></div>
+                    <div class="control-row"><span>F Button</span> <span>Feed nearby animal</span></div>
+                    <div class="control-row"><span>[I] Button</span> <span>Open inventory</span></div>
+                    <div class="control-row"><span>|| Button</span> <span>Pause game</span></div>
+                    <div class="control-row"><span>X Button</span> <span>Cancel build / Close panels</span></div>
                     <div class="control-row"><span>Tap inventory slot</span> <span>Select item</span></div>
                 </div>
-                <button id="start-btn">▶ Start Game</button>
+                <button id="start-btn">> Start Game</button>
             </div>
         </div>
 
         <!-- Pause screen -->
         <div id="pause-screen" class="hidden">
             <div class="start-content">
-                <h1>⏸ Paused</h1>
+                <h1>|| Paused</h1>
                 <p>Game is paused. Click resume to continue playing.</p>
-                <button id="resume-btn">▶ Resume</button>
+                <button id="resume-btn">> Resume</button>
             </div>
         </div>
 
@@ -226,19 +226,19 @@
             </div>
             <!-- Right action buttons -->
             <div id="mobile-actions">
-                <button class="mob-btn" id="mob-jump">⬆</button>
-                <button class="mob-btn" id="mob-sprint">🏃</button>
-                <button class="mob-btn" id="mob-climb">🧗</button>
-                <button class="mob-btn" id="mob-attack">⚔️</button>
-                <button class="mob-btn" id="mob-interact">✋</button>
+                <button class="mob-btn" id="mob-jump">^</button>
+                <button class="mob-btn" id="mob-sprint">></button>
+                <button class="mob-btn" id="mob-climb">^</button>
+                <button class="mob-btn" id="mob-attack">X</button>
+                <button class="mob-btn" id="mob-interact">H</button>
             </div>
             <!-- Secondary action buttons (left side, above joystick) -->
             <div id="mobile-actions-2">
-                <button class="mob-btn-sm" id="mob-eat">�</button>
-                <button class="mob-btn-sm" id="mob-feed">🤲</button>
-                <button class="mob-btn-sm" id="mob-inv">🎒</button>
-                <button class="mob-btn-sm" id="mob-pause">⏸</button>
-                <button class="mob-btn-sm" id="mob-cancel">✖</button>
+                <button class="mob-btn-sm" id="mob-eat"></button>
+                <button class="mob-btn-sm" id="mob-feed">F</button>
+                <button class="mob-btn-sm" id="mob-inv">[I]</button>
+                <button class="mob-btn-sm" id="mob-pause">||</button>
+                <button class="mob-btn-sm" id="mob-cancel">X</button>
             </div>
             <!-- Look area (right side of screen) -->
             <div id="mobile-look-zone"></div>
@@ -246,7 +246,7 @@
 
         <!-- Mobile toggle button on start screen -->
         <div id="mobile-toggle-wrapper">
-            <button id="mobile-toggle">📱 Mobile Mode: Off</button>
+            <button id="mobile-toggle"> Mobile Mode: Off</button>
         </div>
 
         <!-- Respawn screen -->
@@ -254,11 +254,11 @@
             <div class="start-content">
                 <h1>You Died!</h1>
                 <p>The world resets. Try again!</p>
-                <button id="restart-btn">▶ Restart</button>
+                <button id="restart-btn">> Restart</button>
             </div>
         </div>
     </div>
-    <script src="game.js?v=20"></script>
+    <script src="game.js?v=21"></script>
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });

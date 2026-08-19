@@ -80,14 +80,14 @@ const ITEMS = {
     nightshade:      { icon: '[B]', name: 'Dark Berries', edible: true, energy: 0, health: -50 },
     coal:        { icon: '[C]', name: 'Coal' },
     iron_ore:    { icon: '[I]', name: 'Iron Ore' },
-    iron_ingot:  { icon: '', name: 'Iron Ingot' },
+    iron_ingot:  { icon: '[Fe]', name: 'Iron Ingot' },
     copper_ore:  { icon: '[c]', name: 'Copper Ore' },
-    copper_ingot:{ icon: '', name: 'Copper Ingot' },
+    copper_ingot:{ icon: '[Cu]', name: 'Copper Ingot' },
     gold_ore:    { icon: '[G]', name: 'Gold Ore' },
-    gold_ingot:  { icon: '', name: 'Gold Ingot' },
+    gold_ingot:  { icon: '[Au]', name: 'Gold Ingot' },
     oil:         { icon: '[O]', name: 'Oil' },
     soil:         { icon: '[S]', name: 'Soil', attackPower: 3 },
-    grass:        { icon: '', name: 'Grass', attackPower: 1 },
+    grass:        { icon: '[g]', name: 'Grass', attackPower: 1 },
     brick:       { icon: '[B]', name: 'Brick', attackPower: 6 },
     gear:        { icon: '[g]', name: 'Gear', attackPower: 4 },
     circuit:     { icon: '[P]', name: 'Circuit', attackPower: 3 },
@@ -2710,9 +2710,10 @@ class Game {
                 }
             }
 
-            // --- Sleeping at night for non-hostile creatures ---
-            if (!def.hostile && !c.aggroed && !c.following && c.type !== 'spider') {
-                if (this.isNight && !c.sleeping && c.stateTimer <= 0 && Math.random() < 0.3) {
+            // --- Sleeping: diurnal creatures sleep at night, nocturnal sleep during day ---
+            if (!c.aggroed && !c.following) {
+                const shouldSleep = def.nocturnal ? !this.isNight : (this.isNight && c.type !== 'spider' && c.type !== 'wolf');
+                if (shouldSleep && !c.sleeping && c.stateTimer <= 0 && Math.random() < 0.3) {
                     c.sleeping = true;
                     c.sleepTimer = 15 + Math.random() * 25;
                     c.state = 'sleep';
@@ -2729,7 +2730,7 @@ class Game {
                         c.sleeping = false;
                         c.stateTimer = 2;
                     }
-                    if (c.sleepTimer <= 0 || !this.isNight) {
+                    if (c.sleepTimer <= 0 || !shouldSleep) {
                         c.sleeping = false;
                         c.stateTimer = 2;
                     }
@@ -2742,7 +2743,7 @@ class Game {
                 if (c.howlTimer <= 0) {
                     c.howlTimer = 20 + Math.random() * 40;
                     if (this.isNight && distToPlayer < 40) {
-                        this.notify(' You hear a wolf howling in the distance...', 'warning');
+                        this.notify('You hear a wolf howling in the distance...', 'warning');
                         // Nearby wolves become alert
                         for (const other of this.creatures) {
                             if (other.type === 'wolf' && other !== c) {
@@ -2809,7 +2810,7 @@ class Game {
                                 if (wd < 2) {
                                     // At water - try to catch fish
                                     if (Math.random() < 0.5) {
-                                        this.notify('🐻 The bear catches a fish from the water!', 'info');
+                                        this.notify(' The bear catches a fish from the water!', 'info');
                                     }
                                     c.fishTimer = 30 + Math.random() * 40;
                                     foundWater = true;
@@ -2892,7 +2893,7 @@ class Game {
                 if (c.starveTimer <= 0) {
                     c.aggroed = true; // starving wolf attacks player
                     c.starveTimer = 90;
-                    if (distToPlayer < 30) this.notify('🐺 A starving wolf is hunting you!', 'warning');
+                    if (distToPlayer < 30) this.notify(' A starving wolf is hunting you!', 'warning');
                 }
             }
 
@@ -2946,7 +2947,7 @@ class Game {
                     const odx = other.x - c.x;
                     const odz = other.z - c.z;
                     const odist = Math.sqrt(odx * odx + odz * odz);
-                    if (odist < 15) {
+                    if (odist < (def.stalkDist || 15)) {
                         if (!preyTarget || odist < Math.sqrt((preyTarget.x - c.x) ** 2 + (preyTarget.z - c.z) ** 2)) {
                             preyTarget = other;
                         }
@@ -2972,7 +2973,7 @@ class Game {
                     const odx = c.x - other.x;
                     const odz = c.z - other.z;
                     const odist = Math.sqrt(odx * odx + odz * odz);
-                    if (odist < 10) {
+                    if (odist < 12) {
                         if (!predatorThreat || odist < Math.sqrt((c.x - predatorThreat.x) ** 2 + (c.z - predatorThreat.z) ** 2)) {
                             predatorThreat = other;
                         }
@@ -2991,6 +2992,54 @@ class Game {
                 }
             }
 
+            // --- Alert/freeze state for prey animals ---
+            if (def.alertDist && def.isPrey && !isAggro && !c.following && !c.sleeping) {
+                // Count player as a threat too
+                let nearestThreat = predatorThreat;
+                let nearestThreatDist = predatorThreat ? Math.sqrt((c.x - predatorThreat.x)**2 + (c.z - predatorThreat.z)**2) : 999;
+                if (distToPlayer < nearestThreatDist) {
+                    nearestThreatDist = distToPlayer;
+                    nearestThreat = null; // null means player threat
+                }
+                // Enter alert state if threat is within alert distance but outside flee distance
+                if (nearestThreatDist < (def.alertDist || 10) && nearestThreatDist > (def.fleeDist || 6) && !c.alertState) {
+                    c.alertState = true;
+                    c.alertTimer = def.freezeDuration || 1.5;
+                    c.state = 'alert';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    c.moving = false;
+                    // Face the threat
+                    if (nearestThreat) {
+                        c.rotation = Math.atan2(nearestThreat.x - c.x, nearestThreat.z - c.z);
+                    } else {
+                        c.rotation = Math.atan2(p.x - c.x, p.z - c.z);
+                    }
+                }
+                // Handle alert state
+                if (c.alertState) {
+                    c.alertTimer -= dt;
+                    c.state = 'alert';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    c.moving = false;
+                    if (c.alertTimer <= 0) {
+                        c.alertState = false;
+                        // Now decide: flee if threat still close
+                        if (nearestThreatDist < (def.fleeDist || 6)) {
+                            // Will be handled by flee logic below
+                        } else {
+                            // Threat gone - resume normal behavior
+                            c.stateTimer = 0;
+                        }
+                    }
+                    // Skip other AI while in alert
+                    if (c.alertState) {
+                        // Still process pounce/mesh at end
+                    }
+                }
+            }
+
             // Spider on web stays put and doesn't attack
             if (c.onWeb) {
                 c.state = 'idle';
@@ -3001,6 +3050,8 @@ class Game {
                     c.aggroed = true;
                     this.notify('You broke the spider web!', 'warning');
                 }
+            } else if (c.alertState) {
+                // Frozen in alert - do nothing else
             } else if (c.following) {
                 const followDist = 4;
                 if (distToPlayer > followDist) {
@@ -3012,10 +3063,23 @@ class Game {
                     c.targetX = c.x;
                     c.targetZ = c.z;
                 }
-            } else if (isAggro && distToPlayer < 12) {
+            } else if (isAggro && distToPlayer < (def.aggroRange || 12)) {
+                // Aggro creature chases player
                 c.state = 'chase';
                 c.targetX = p.x;
                 c.targetZ = p.z;
+            } else if (isAggro && c.type === 'wolf' && distToPlayer < 25) {
+                // Wolf stalks player from distance when aggro
+                c.state = 'stalk';
+                const stalkDist = 12;
+                if (distToPlayer > stalkDist) {
+                    c.targetX = p.x;
+                    c.targetZ = p.z;
+                } else {
+                    c.state = 'idle';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                }
             } else if (wolfToFight) {
                 // Male deer charges at wolf to defend
                 c.state = 'defend';
@@ -3043,36 +3107,70 @@ class Game {
                     c.targetZ = wolfToFight.z;
                 }
             } else if (preyTarget && !c.aggroed) {
-                // Predator hunting prey
-                c.state = 'hunt';
-                c.targetX = preyTarget.x;
-                c.targetZ = preyTarget.z;
-                const pdx = preyTarget.x - c.x;
-                const pdz = preyTarget.z - c.z;
-                const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
-                if (pdist < c.attackRange && c.attackCooldown <= 0) {
-                    preyTarget.health -= c.damage * 0.6;
-                    c.attackCooldown = 1.5;
-                    c.huntCooldown = 3;
-                    if (preyTarget.health <= 0) {
-                        const pidx = this.creatures.indexOf(preyTarget);
-                        if (pidx >= 0) {
-                            for (const [item, amt] of Object.entries(preyTarget.drops)) {
-                                p.addItem(item, Math.max(1, Math.floor(amt * 0.5)));
+                // Predator hunting prey - wolves stalk first, bears charge
+                if (c.type === 'wolf') {
+                    const pdx = preyTarget.x - c.x;
+                    const pdz = preyTarget.z - c.z;
+                    const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+                    if (pdist > 8) {
+                        // Stalk: move slowly toward prey
+                        c.state = 'stalk';
+                        c.targetX = preyTarget.x;
+                        c.targetZ = preyTarget.z;
+                    } else {
+                        // Close enough - chase
+                        c.state = 'hunt';
+                        c.targetX = preyTarget.x;
+                        c.targetZ = preyTarget.z;
+                        if (pdist < c.attackRange && c.attackCooldown <= 0) {
+                            preyTarget.health -= c.damage * 0.6;
+                            c.attackCooldown = 1.5;
+                            c.huntCooldown = 3;
+                            if (preyTarget.health <= 0) {
+                                const pidx = this.creatures.indexOf(preyTarget);
+                                if (pidx >= 0) {
+                                    for (const [item, amt] of Object.entries(preyTarget.drops)) {
+                                        p.addItem(item, Math.max(1, Math.floor(amt * 0.5)));
+                                    }
+                                    this.creatures.splice(pidx, 1);
+                                    const pmesh = this.creatureMeshes.get(preyTarget.id);
+                                    if (pmesh) { this.scene.remove(pmesh); this.creatureMeshes.delete(preyTarget.id); }
+                                }
                             }
-                            this.creatures.splice(pidx, 1);
-                            const pmesh = this.creatureMeshes.get(preyTarget.id);
-                            if (pmesh) { this.scene.remove(pmesh); this.creatureMeshes.delete(preyTarget.id); }
+                        }
+                    }
+                } else {
+                    // Bear charges prey directly
+                    c.state = 'hunt';
+                    c.targetX = preyTarget.x;
+                    c.targetZ = preyTarget.z;
+                    const pdx = preyTarget.x - c.x;
+                    const pdz = preyTarget.z - c.z;
+                    const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+                    if (pdist < c.attackRange && c.attackCooldown <= 0) {
+                        preyTarget.health -= c.damage * 0.6;
+                        c.attackCooldown = 1.5;
+                        c.huntCooldown = 3;
+                        if (preyTarget.health <= 0) {
+                            const pidx = this.creatures.indexOf(preyTarget);
+                            if (pidx >= 0) {
+                                for (const [item, amt] of Object.entries(preyTarget.drops)) {
+                                    p.addItem(item, Math.max(1, Math.floor(amt * 0.5)));
+                                }
+                                this.creatures.splice(pidx, 1);
+                                const pmesh = this.creatureMeshes.get(preyTarget.id);
+                                if (pmesh) { this.scene.remove(pmesh); this.creatureMeshes.delete(preyTarget.id); }
+                            }
                         }
                     }
                 }
             } else if (predatorThreat && def.isPrey && !c.following) {
-                // Prey flees from predator  zigzag for realistic escape
+                // Prey flees from predator - zigzag for realistic escape
                 c.state = 'flee_predator';
                 const pdx = c.x - predatorThreat.x;
                 const pdz = c.z - predatorThreat.z;
                 const pAng = Math.atan2(pdz, pdx);
-                const zigzag = Math.sin(this.time * 3 + c.id.charCodeAt(0)) * 0.5;
+                const zigzag = def.zigzag ? Math.sin(this.time * 5 + c.id.charCodeAt(0)) * 0.8 : Math.sin(this.time * 3 + c.id.charCodeAt(0)) * 0.5;
                 const fleeAng = pAng + zigzag;
                 c.targetX = c.x + Math.cos(fleeAng) * 8;
                 c.targetZ = c.z + Math.sin(fleeAng) * 8;
@@ -3086,6 +3184,55 @@ class Game {
                         other.targetX = other.x + Math.cos(fleeAng) * 6;
                         other.targetZ = other.z + Math.sin(fleeAng) * 6;
                         other.stateTimer = 2;
+                        other.alertState = false;
+                    }
+                }
+            } else if (def.isPrey && c.fleeDist > 0 && distToPlayer < c.fleeDist && !c.following) {
+                // Prey flees from player (skittish behavior)
+                c.state = 'flee';
+                const fleeAng = Math.atan2(c.z - p.z, c.x - p.x);
+                const zigzag = def.zigzag ? Math.sin(this.time * 5 + c.id.charCodeAt(0)) * 0.8 : 0;
+                c.targetX = c.x + Math.cos(fleeAng + zigzag) * 10;
+                c.targetZ = c.z + Math.sin(fleeAng + zigzag) * 10;
+                c.stateTimer = 2;
+                // Alert herd members
+                if (def.herdAnimal) {
+                    for (const other of this.creatures) {
+                        if (other === c || other.type !== c.type) continue;
+                        const odx = other.x - c.x, odz = other.z - c.z;
+                        if (Math.sqrt(odx*odx + odz*odz) < 12) {
+                            other.alertState = false;
+                            other.state = 'flee';
+                            other.targetX = other.x + Math.cos(fleeAng) * 8;
+                            other.targetZ = other.z + Math.sin(fleeAng) * 8;
+                            other.stateTimer = 2;
+                        }
+                    }
+                }
+            } else if (def.followsParent && c.parentId && !c.aggroed && !c.following) {
+                // Fawn follows parent deer
+                const parent = this.creatures.find(o => o.id === c.parentId);
+                if (parent) {
+                    const pdx = parent.x - c.x;
+                    const pdz = parent.z - c.z;
+                    const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+                    if (pdist > 4) {
+                        c.state = 'follow_parent';
+                        c.targetX = parent.x - (pdx / pdist) * 3;
+                        c.targetZ = parent.z - (pdz / pdist) * 3;
+                    } else if (c.stateTimer <= 0 && c.state !== 'graze' && c.state !== 'seek_grass') {
+                        c.state = 'wander';
+                        c.targetX = c.x + (Math.random() - 0.5) * 3;
+                        c.targetZ = c.z + (Math.random() - 0.5) * 3;
+                        c.stateTimer = 3 + Math.random() * 4;
+                    }
+                } else {
+                    // Parent died - fawn wanders alone
+                    if (c.stateTimer <= 0 && c.state !== 'graze' && c.state !== 'seek_grass') {
+                        c.state = 'wander';
+                        c.targetX = c.x + (Math.random() - 0.5) * 4;
+                        c.targetZ = c.z + (Math.random() - 0.5) * 4;
+                        c.stateTimer = 3 + Math.random() * 4;
                     }
                 }
             } else if (def.eatsGrass && !c.aggroed && !c.following && distToPlayer < 15) {
@@ -3093,7 +3240,6 @@ class Game {
                 const items = Object.entries(p.inventory).filter(([_, cnt]) => cnt > 0);
                 const entry = items[p.selectedSlot];
                 if (entry && entry[0] === 'grass') {
-                    // Approach the player
                     c.state = 'approach';
                     const followDist = 2.5;
                     if (distToPlayer > followDist) {
@@ -3105,20 +3251,36 @@ class Game {
                         c.targetZ = c.z;
                     }
                 } else if (c.stateTimer <= 0 && c.state !== 'seek_grass' && c.state !== 'graze') {
+                    // Wander within territory
                     c.state = 'wander';
-                    c.targetX = c.x + (Math.random() - 0.5) * 6;
-                    c.targetZ = c.z + (Math.random() - 0.5) * 6;
+                    const wx = c.x + (Math.random() - 0.5) * 6;
+                    const wz = c.z + (Math.random() - 0.5) * 6;
+                    // Stay within territory
+                    const tdx = wx - c.territoryX, tdz = wz - c.territoryZ;
+                    const tdist = Math.sqrt(tdx*tdx + tdz*tdz);
+                    if (tdist > c.territoryRadius) {
+                        c.targetX = c.territoryX + (tdx / tdist) * c.territoryRadius * 0.8;
+                        c.targetZ = c.territoryZ + (tdz / tdist) * c.territoryRadius * 0.8;
+                    } else {
+                        c.targetX = wx;
+                        c.targetZ = wz;
+                    }
                     c.stateTimer = 3 + Math.random() * 4;
                 }
-            } else if (!isAggro && c.fleeDist > 0 && distToPlayer < c.fleeDist) {
-                c.state = 'flee';
-                c.targetX = c.x - dx * 3;
-                c.targetZ = c.z - dz * 3;
-                c.stateTimer = 2;
-            } else if (c.stateTimer <= 0 && c.state !== 'seek_berries' && c.state !== 'seek_grass' && c.state !== 'graze') {
+            } else if (c.stateTimer <= 0 && c.state !== 'seek_berries' && c.state !== 'seek_grass' && c.state !== 'graze' && c.state !== 'seek_water' && c.state !== 'seek_shelter') {
+                // Default wander within territory
                 c.state = 'wander';
-                c.targetX = c.x + (Math.random() - 0.5) * 6;
-                c.targetZ = c.z + (Math.random() - 0.5) * 6;
+                const wx = c.x + (Math.random() - 0.5) * 6;
+                const wz = c.z + (Math.random() - 0.5) * 6;
+                const tdx = wx - c.territoryX, tdz = wz - c.territoryZ;
+                const tdist = Math.sqrt(tdx*tdx + tdz*tdz);
+                if (tdist > c.territoryRadius) {
+                    c.targetX = c.territoryX + (tdx / tdist) * c.territoryRadius * 0.8;
+                    c.targetZ = c.territoryZ + (tdz / tdist) * c.territoryRadius * 0.8;
+                } else {
+                    c.targetX = wx;
+                    c.targetZ = wz;
+                }
                 c.stateTimer = 3 + Math.random() * 4;
             }
 
@@ -3151,6 +3313,9 @@ class Game {
                 let speedMult = 1;
                 if (c.state === 'flee' || c.state === 'flee_predator') speedMult = 1.6;
                 else if (c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') speedMult = 1.3;
+                else if (c.state === 'stalk') speedMult = 0.5; // slow stalking
+                else if (c.state === 'alert') speedMult = 0; // frozen
+                else if (c.state === 'follow_parent') speedMult = 0.8; // gentle follow
                 const speed = c.speed * dt * speedMult;
                 const nx = c.x + (tdx / tdist) * speed;
                 const nz = c.z + (tdz / tdist) * speed;
@@ -3207,11 +3372,15 @@ class Game {
                     mesh.userData.bodyRef.position.y = Math.abs(Math.sin(c.walkPhase)) * bobAmp;
                     mesh.userData.bodyRef.rotation.z = 0;
                 }
-                // Head bob  slight up/down different from body, or lowered when grazing
+                // Head bob - slight up/down different from body, or lowered when grazing, or raised when alert
                 if (mesh.userData.headRef) {
                     if (c.state === 'graze') {
-                        // Lower head to ground
                         mesh.userData.headRef.rotation.x = 1.4;
+                    } else if (c.state === 'alert') {
+                        // Head raised, looking around nervously
+                        mesh.userData.headRef.rotation.x = -0.3 + Math.sin(this.time * 2) * 0.1;
+                    } else if (c.state === 'sleep') {
+                        mesh.userData.headRef.rotation.x = 0.8;
                     } else {
                         mesh.userData.headRef.rotation.x = Math.sin(c.walkPhase * 0.5) * 0.08;
                     }
@@ -3852,18 +4021,18 @@ class Game {
                 this.ambientTimer = 0;
                 const pBiome3 = pTile ? pTile.biome : 'grass';
                 const ambients = {
-                    grass: [' You hear birds chirping', ' A butterfly flutters by', ' A gentle breeze rustles the grass', ' Crickets chirp in the distance'],
-                    forest: [' An owl hoots in the trees', ' Leaves rustle in the wind', ' A squirrel chatters nearby', '[T] The forest is alive with sounds'],
-                    mountain: [' An eagle soars overhead', ' Wind howls through the peaks', '[R] Rocks clatter somewhere above'],
-                    snow: [' The wind bites at your skin', ' Deer tracks lead through the snow', ' A bitter wind sweeps across the tundra'],
-                    desert: [' Sand shifts in the wind', ' A scorpion scurries under a rock', 'Sun The sun beats down relentlessly'],
-                    sand: [' Waves lap at the shore', ' You spot seashells on the beach', ' A crab scuttles sideways'],
-                    water: ['[W] Water laps gently at your feet'],
+                    grass: ['You hear birds chirping', 'A butterfly flutters by', 'A gentle breeze rustles the grass', 'Crickets chirp in the distance'],
+                    forest: ['An owl hoots in the trees', 'Leaves rustle in the wind', 'A squirrel chatters nearby', 'The forest is alive with sounds'],
+                    mountain: ['An eagle soars overhead', 'Wind howls through the peaks', 'Rocks clatter somewhere above'],
+                    snow: ['The wind bites at your skin', 'Deer tracks lead through the snow', 'A bitter wind sweeps across the tundra'],
+                    desert: ['Sand shifts in the wind', 'A scorpion scurries under a rock', 'The sun beats down relentlessly'],
+                    sand: ['Waves lap at the shore', 'You spot seashells on the beach', 'A crab scuttles sideways'],
+                    water: ['Water laps gently at your feet'],
                 };
                 const msgs = ambients[pBiome3] || ambients.grass;
-                if (this.weather === 'rain') msgs.push('Rain Rain patters on the ground');
-                if (this.weather === 'snow') msgs.push(' Snowflakes drift silently down');
-                if (this.isNight) msgs.push('Night The night is quiet and still', 'Stars Stars twinkle overhead');
+                if (this.weather === 'rain') msgs.push('Rain patters on the ground');
+                if (this.weather === 'snow') msgs.push('Snowflakes drift silently down');
+                if (this.isNight) msgs.push('The night is quiet and still', 'Stars twinkle overhead');
                 this.notify(msgs[Math.floor(Math.random() * msgs.length)], 'info');
             }
         }
@@ -3922,9 +4091,9 @@ class Game {
         const wasNight = this.isNight;
         this.isNight = this.dayTime > 0.5 && this.dayTime < 0.95;
         if (this.isNight && !wasNight) {
-            this.notify('Night Night falls! Find a Wood Hut to sleep.', 'warning');
+            this.notify('Night falls! Find a Wood Hut to sleep.', 'warning');
         } else if (!this.isNight && wasNight) {
-            this.notify('Dawn Dawn breaks. Stay safe!', 'info');
+            this.notify('Dawn breaks. Stay safe!', 'info');
         }
         this.updateDayNightLighting();
 
@@ -3943,7 +4112,7 @@ class Game {
             }
             this.weatherTimer = 40 + Math.random() * 80;
             if (this.weather !== oldWeather) {
-                const names = { clear: 'Sun Skies clear up', rain: 'Rain It starts raining', snow: ' Snow begins to fall', fog: 'Fog Fog rolls in' };
+                const names = { clear: 'Skies clear up', rain: 'It starts raining', snow: 'Snow begins to fall', fog: 'Fog rolls in' };
                 this.notify(names[this.weather] || 'Weather changes', 'info');
                 this.updateWeatherParticles();
             }
@@ -4225,9 +4394,9 @@ class Game {
         document.getElementById('power-display').textContent = `${Math.floor(this.powerProduced)} / ${Math.floor(this.powerConsumed)}`;
         const timeEl = document.getElementById('time-display');
         if (timeEl) {
-            const phase = this.dayTime < 0.25 ? 'Dawn Morning' :
-                          this.dayTime < 0.5 ? 'Sun Day' :
-                          this.dayTime < 0.75 ? 'Night Night' : 'Night Late Night';
+            const phase = this.dayTime < 0.25 ? 'Morning' :
+                          this.dayTime < 0.5 ? 'Day' :
+                          this.dayTime < 0.75 ? 'Night' : 'Late Night';
             timeEl.textContent = phase;
         }
         const hungerBar = document.getElementById('hunger-bar');
@@ -4242,8 +4411,8 @@ class Game {
         }
         const weatherEl = document.getElementById('weather-display');
         if (weatherEl) {
-            const icons = { clear: 'Sun', rain: 'Rain', snow: '', fog: 'Fog' };
-            weatherEl.textContent = icons[this.weather] || 'Sun';
+            const icons = { clear: 'Clear', rain: 'Rain', snow: 'Snow', fog: 'Fog' };
+            weatherEl.textContent = icons[this.weather] || 'Clear';
         }
         this.updateInventoryUI();
         // Note: panels (crafting/build/tech/inventory) are NOT re-rendered here
