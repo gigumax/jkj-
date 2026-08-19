@@ -1884,6 +1884,7 @@ class Game {
             }
             this.resourceMeshes.clear();
             this.buildingMeshes.clear();
+            if (this.caveMeshes) this.caveMeshes.clear();
             this.buildingPositions.clear();
             const ambient = new THREE.AmbientLight(0xffffff, 0.5);
             this.scene.add(ambient);
@@ -2069,8 +2070,8 @@ class Game {
         document.getElementById('hud-temp-icon').innerHTML = sprite('temp');
         document.getElementById('quest-icon').innerHTML = sprite('quest');
 
-        document.getElementById('start-btn').addEventListener('click', () => this.start());
-        document.getElementById('restart-btn').addEventListener('click', () => this.respawn());
+        document.getElementById('start-btn').addEventListener('click', () => { this.ensureAudioCtx(); this.start(); });
+        document.getElementById('restart-btn').addEventListener('click', () => { this.ensureAudioCtx(); this.respawn(); });
         document.getElementById('resume-btn').addEventListener('click', () => this.togglePause());
         document.getElementById('mobile-toggle').addEventListener('click', () => this.toggleMobileMode());
         this.setupMobileControls();
@@ -3889,6 +3890,93 @@ class Game {
         setTimeout(() => el.remove(), 3500);
     }
 
+    // --- Audio: wolf howl synthesized via Web Audio API ---
+    ensureAudioCtx() {
+        if (!this.audioCtx) {
+            try {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { return null; }
+        }
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        return this.audioCtx;
+    }
+
+    playWolfHowl(distToPlayer) {
+        const ctx = this.ensureAudioCtx();
+        if (!ctx) return;
+        // Volume falls off with distance (40 tiles max hearing range)
+        const volume = Math.max(0.05, 1 - distToPlayer / 45);
+        const now = ctx.currentTime;
+
+        // Howl: rising pitch then sustained then falling — like a real wolf howl
+        // Base frequency around 300-400 Hz with harmonics
+        const baseFreq = 280 + Math.random() * 60;
+        const duration = 2.5 + Math.random() * 1.5; // 2.5-4 seconds
+
+        // Main oscillator (the howl)
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        // Pitch envelope: rise -> sustain -> fall
+        osc.frequency.setValueAtTime(baseFreq * 0.6, now);
+        osc.frequency.linearRampToValueAtTime(baseFreq, now + 0.4);
+        osc.frequency.setValueAtTime(baseFreq, now + 0.4);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 1.05, now + duration * 0.4);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 0.9, now + duration * 0.7);
+        osc.frequency.linearRampToValueAtTime(baseFreq * 0.5, now + duration);
+
+        // Second oscillator for harmonic richness (a fifth above)
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(baseFreq * 0.9, now);
+        osc2.frequency.linearRampToValueAtTime(baseFreq * 1.5, now + 0.4);
+        osc2.frequency.linearRampToValueAtTime(baseFreq * 1.5 * 1.05, now + duration * 0.4);
+        osc2.frequency.linearRampToValueAtTime(baseFreq * 1.5 * 0.5, now + duration);
+
+        // Amplitude envelope: fade in, sustain, fade out
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(volume * 0.4, now + 0.3);
+        gain.gain.setValueAtTime(volume * 0.4, now + duration * 0.5);
+        gain.gain.linearRampToValueAtTime(0, now + duration);
+
+        // Harmonic gain (lower volume)
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0, now);
+        gain2.gain.linearRampToValueAtTime(volume * 0.12, now + 0.3);
+        gain2.gain.setValueAtTime(volume * 0.12, now + duration * 0.5);
+        gain2.gain.linearRampToValueAtTime(0, now + duration);
+
+        // Lowpass filter for muffled distant sound
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        // Closer wolves = brighter sound, distant = more muffled
+        filter.frequency.setValueAtTime(800 + volume * 1500, now);
+        filter.Q.value = 1;
+
+        // Connect: osc -> gain -> filter -> destination
+        osc.connect(gain);
+        gain.connect(filter);
+        osc2.connect(gain2);
+        gain2.connect(filter);
+        filter.connect(ctx.destination);
+
+        // Add slight vibrato for realism
+        const vibrato = ctx.createOscillator();
+        vibrato.frequency.value = 5; // 5 Hz vibrato
+        const vibratoGain = ctx.createGain();
+        vibratoGain.gain.value = 8; // 8 Hz pitch wobble
+        vibrato.connect(vibratoGain);
+        vibratoGain.connect(osc.frequency);
+        vibratoGain.connect(osc2.frequency);
+
+        osc.start(now);
+        osc2.start(now);
+        vibrato.start(now);
+        osc.stop(now + duration);
+        osc2.stop(now + duration);
+        vibrato.stop(now + duration);
+    }
+
     // --- Pause ---
     togglePause() {
         this.paused = !this.paused;
@@ -4348,6 +4436,7 @@ class Game {
             this.meshUpdateAccumulator = 0;
             this.updateResourceMeshes();
             this.updateBuildingMeshes();
+            this.buildBearCaves();
         }
 
         // Building tick
