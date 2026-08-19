@@ -45,6 +45,9 @@
             <div class="hud-item" id="hud-time">
                 <span id="time-display">🌅 Morning</span>
             </div>
+            <div class="hud-item" id="hud-weather">
+                <span id="weather-display">☀️</span>
+            </div>
             <div class="hud-item" id="hud-hunger">
                 <span class="hud-icon">🍖</span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="hunger-bar"></div></div>
@@ -174,6 +177,7 @@
                     <div class="control-row"><kbd>I / Click</kbd> <span>Harvest / Interact / Place</span></div>
                     <div class="control-row"><kbd>F</kbd> <span>Eat selected food item</span></div>
                     <div class="control-row"><kbd>G</kbd> <span>Feed nearby animal</span></div>
+                    <div class="control-row"><kbd>R</kbd> <span>Drink water (near lakes/rivers)</span></div>
                     <div class="control-row"><kbd>C</kbd> <span>Dig soil (makes a hole)</span></div>
                     <div class="control-row"><kbd>E</kbd> <span>Inventory (1-9 to browse pages)</span></div>
                     <div class="control-row"><kbd>Q</kbd> <span>Crafting Menu</span></div>
@@ -248,13 +252,13 @@
         <!-- Respawn screen -->
         <div id="game-over" class="hidden">
             <div class="start-content">
-                <h1>� You Died!</h1>
+                <h1>You Died!</h1>
                 <p>The world resets. Try again!</p>
                 <button id="restart-btn">▶ Restart</button>
             </div>
         </div>
     </div>
-    <script src="game.js?v=17"></script>
+    <script src="game.js?v=18"></script>
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });

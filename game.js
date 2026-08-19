@@ -3741,6 +3741,28 @@ class Game {
             this.world.processRespawns(0.5);
             this.checkQuests();
             this.updateUI();
+
+            // Ambient wilderness notifications
+            if (!this.ambientTimer) this.ambientTimer = 0;
+            this.ambientTimer += 0.5;
+            if (this.ambientTimer > 25 + Math.random() * 30) {
+                this.ambientTimer = 0;
+                const pBiome3 = pTile ? pTile.biome : 'grass';
+                const ambients = {
+                    grass: ['🐦 You hear birds chirping', '🦋 A butterfly flutters by', '🌬️ A gentle breeze rustles the grass', '🦗 Crickets chirp in the distance'],
+                    forest: ['🦉 An owl hoots in the trees', '🍃 Leaves rustle in the wind', '🐿️ A squirrel chatters nearby', '🌲 The forest is alive with sounds'],
+                    mountain: ['🦅 An eagle soars overhead', '⛰️ Wind howls through the peaks', '🪨 Rocks clatter somewhere above'],
+                    snow: ['❄️ The wind bites at your skin', '🦌 Deer tracks lead through the snow', '🌬️ A bitter wind sweeps across the tundra'],
+                    desert: ['🏜️ Sand shifts in the wind', '🦂 A scorpion scurries under a rock', '☀️ The sun beats down relentlessly'],
+                    sand: ['🌊 Waves lap at the shore', '🐚 You spot seashells on the beach', '🦀 A crab scuttles sideways'],
+                    water: ['💧 Water laps gently at your feet'],
+                };
+                const msgs = ambients[pBiome3] || ambients.grass;
+                if (this.weather === 'rain') msgs.push('🌧️ Rain patters on the ground');
+                if (this.weather === 'snow') msgs.push('❄️ Snowflakes drift silently down');
+                if (this.isNight) msgs.push('🌙 The night is quiet and still', '✨ Stars twinkle overhead');
+                this.notify(msgs[Math.floor(Math.random() * msgs.length)], 'info');
+            }
         }
 
         // Creature spawning
@@ -3956,11 +3978,11 @@ class Game {
             const yieldKey = resDef.yields ? Object.keys(resDef.yields)[0] : null;
             const isMystery = yieldKey && ITEMS[yieldKey]?.edible && !this.discoveredFoods.has(yieldKey);
             const displayName = isMystery ? 'Mysterious Food' : resDef.name;
-            el.innerHTML = `<kbd>E / Click</kbd> Harvest ${resDef.icon} ${displayName}`;
+            el.innerHTML = `<kbd>I / Click</kbd> Harvest ${resDef.icon} ${displayName}`;
             el.classList.remove('hidden');
         } else if (tile.building && !this.buildMode) {
             const def = BUILDINGS[tile.building];
-            el.innerHTML = `<kbd>E / Click</kbd> ${def.icon} ${def.name}`;
+            el.innerHTML = `<kbd>I / Click</kbd> ${def.icon} ${def.name}`;
             el.classList.remove('hidden');
         } else {
             el.classList.add('hidden');
@@ -4112,6 +4134,11 @@ class Game {
             const t = Math.round(this.player.temperature);
             tempEl.textContent = `${t}°C`;
             tempEl.style.color = t < 0 ? '#3498db' : t > 35 ? '#e74c3c' : '#2ecc71';
+        }
+        const weatherEl = document.getElementById('weather-display');
+        if (weatherEl) {
+            const icons = { clear: '☀️', rain: '🌧️', snow: '❄️', fog: '🌫️' };
+            weatherEl.textContent = icons[this.weather] || '☀️';
         }
         this.updateInventoryUI();
         // Note: panels (crafting/build/tech/inventory) are NOT re-rendered here
