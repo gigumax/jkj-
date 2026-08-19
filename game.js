@@ -1917,6 +1917,11 @@ class Game {
             this.weatherParticles = null;
         }
 
+        // Build terrain and resources
+        this.buildTerrain();
+        this.buildResources();
+        this.updateDayNightLighting();
+
 
         document.getElementById('game-over').classList.add('hidden');
         document.getElementById('crosshair').classList.add('visible');
@@ -4217,7 +4222,7 @@ class Game {
             try {
                 this.update(dt);
             } catch (err) {
-                console.error('Game loop error:', err);
+                console.error('Game loop error:', err.message, err.stack);
             }
         }
         this.render();
