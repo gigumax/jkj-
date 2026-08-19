@@ -1920,6 +1920,9 @@ class Game {
         // Build terrain and resources
         this.buildTerrain();
         this.buildResources();
+        this.buildBearCaves();
+        this.buildPlayer();
+        this.updateSeasonColors();
         this.updateDayNightLighting();
 
 
