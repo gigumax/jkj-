@@ -444,6 +444,20 @@ class World {
                 this.getTileHeight(tx, ty + 1) +
                 this.getTileHeight(tx + 1, ty + 1)) / 4;
     }
+    // Bilinear interpolation of terrain height at exact world tile coordinates
+    getHeightAt(wx, wz) {
+        const tx = Math.floor(wx);
+        const ty = Math.floor(wz);
+        const fx = wx - tx;
+        const fz = wz - ty;
+        const h00 = this.getTileHeight(tx, ty);
+        const h10 = this.getTileHeight(tx + 1, ty);
+        const h01 = this.getTileHeight(tx, ty + 1);
+        const h11 = this.getTileHeight(tx + 1, ty + 1);
+        const h0 = h00 * (1 - fx) + h10 * fx;
+        const h1 = h01 * (1 - fx) + h11 * fx;
+        return h0 * (1 - fz) + h1 * fz;
+    }
 
     queueRespawn(tx, ty, resourceType) {
         const time = RESOURCE_RESPAWN[resourceType] || 60;
@@ -1707,7 +1721,7 @@ class Game {
             if (found) break;
         }
         this.player = new Player(sx + 0.5, sy + 0.5);
-        this.player.y = this.world.getTileHeight(sx, sy);
+        this.player.y = this.world.getHeightAt(sx + 0.5, sy + 0.5);
         this.player.addItem('wood', 5);
         this.player.addItem('stone', 5);
         this.spawnPoint = { x: sx + 0.5, z: sy + 0.5 };
@@ -2039,9 +2053,9 @@ class Game {
         const p = this.player;
         if (p.thirst >= p.maxThirst - 5) { this.notify('Not thirsty!', 'info'); return; }
         const ptx = Math.floor(p.x), pty = Math.floor(p.z);
-        // Check for adjacent water tiles
-        for (let dy = -2; dy <= 2; dy++) {
-            for (let dx = -2; dx <= 2; dx++) {
+        // Check for adjacent water tiles (3-tile radius for easier access from shore)
+        for (let dy = -3; dy <= 3; dy++) {
+            for (let dx = -3; dx <= 3; dx++) {
                 const t = this.world.getTile(ptx + dx, pty + dy);
                 if (t && t.biome === 'water') {
                     p.thirst = Math.min(p.maxThirst, p.thirst + 40);
@@ -2601,7 +2615,7 @@ class Game {
             const pz = cz + (Math.random() - 0.5) * 4;
             const ptile = this.world.getTile(Math.floor(px), Math.floor(pz));
             if (!ptile || !BIOMES[ptile.biome].walkable) continue;
-            const ph = this.world.getTileHeight(Math.floor(px), Math.floor(pz));
+            const ph = this.world.getHeightAt(px + 0.5, pz + 0.5);
             this.creatures.push({
                 id: Math.random().toString(36).slice(2),
                 type, x: px + 0.5, z: pz + 0.5, y: ph,
@@ -3056,7 +3070,7 @@ class Game {
                 if (tile && BIOMES[tile.biome].walkable) {
                     c.x = nx;
                     c.z = nz;
-                    c.y = this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
+                    c.y = this.world.getHeightAt(nx, nz);
                     c.rotation = Math.atan2(tdx, tdz);
                     // Walk phase frequency depends on speed state
                     const phaseSpeed = (c.state === 'flee' || c.state === 'flee_predator' || c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') ? 14 : 7;
@@ -3552,13 +3566,13 @@ class Game {
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
-            const curH = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
+            const curH = this.world.getHeightAt(p.x, p.z);
             const MAX_STEP = 2.5;
             const MAX_CLIMB = 100;
             const canStep = (nx, nz) => {
                 if (!this.world.isWalkable(nx, nz)) return false;
                 const targetTile = this.world.getTile(nx, nz);
-                const h = this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
+                const h = this.world.getHeightAt(nx, nz);
                 const diff = h - (curH + p.yOffset);
                 if (diff <= MAX_STEP) return true;
                 if (isClimbing && targetTile && CLIMBABLE_BIOMES.includes(targetTile.biome) && diff <= MAX_CLIMB) return true;
@@ -3598,7 +3612,7 @@ class Game {
         p.z = Math.max(0.5, Math.min(WORLD_H - 0.5, p.z));
 
         // Update player Y to terrain height + jump offset
-        const groundY = this.world.getTileHeight(Math.floor(p.x), Math.floor(p.z));
+        const groundY = this.world.getHeightAt(p.x, p.z);
         // Jump physics
         if (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0) {
             p.yOffset += p.jumpVel * dt;
@@ -3701,9 +3715,8 @@ class Game {
             this.camera.lookAt(lookX, lookY, lookZ);
         }
 
-        // Move sun with player for consistent shadows
+        // Sun target follows player (position is set in updateDayNightLighting)
         if (this.sun) {
-            this.sun.position.set(p.x * TILE_SIZE + 50, 80, p.z * TILE_SIZE + 30);
             this.sun.target.position.set(p.x * TILE_SIZE, p.y, p.z * TILE_SIZE);
             this.sun.target.updateMatrixWorld();
         }
@@ -3720,8 +3733,12 @@ class Game {
             document.getElementById('harvest-progress').classList.add('hidden');
         }
 
-        // Interaction prompt
-        this.updateInteractionPrompt();
+        // Interaction prompt (throttled)
+        this._promptTimer = (this._promptTimer || 0) + dt;
+        if (this._promptTimer >= 0.1) {
+            this._promptTimer = 0;
+            this.updateInteractionPrompt();
+        }
 
         // Dynamic mesh loading/unloading near player
         this.meshUpdateAccumulator += dt;
@@ -4015,6 +4032,9 @@ class Game {
     }
 
     // --- UI Updates ---
+    _tmpCol1 = new THREE.Color();
+    _tmpCol2 = new THREE.Color();
+    _tmpCol3 = new THREE.Color();
     updateDayNightLighting() {
         const t = this.dayTime;
         const sunAngle = t * Math.PI * 2 - Math.PI / 2;
@@ -4023,17 +4043,16 @@ class Game {
 
         // Dawn/dusk orange tint factor
         const dawnDusk = Math.max(0, 1 - Math.abs(sunHeight) * 3);
-        const isDawn = t < 0.25 || t > 0.75;
 
         if (this.sun) {
             this.sun.intensity = 0.08 + brightness * 0.75;
             // Warm orange at dawn/dusk, white at noon, cool blue at night
-            const dayCol = new THREE.Color(0xfff5e0);
-            const nightCol = new THREE.Color(0x3a4a7a);
-            const duskCol = new THREE.Color(0xff8c42);
-            let sunCol = nightCol.lerp(dayCol, brightness);
-            sunCol.lerp(duskCol, dawnDusk * 0.5);
-            this.sun.color.copy(sunCol);
+            const c1 = this._tmpCol1.setHex(0x3a4a7a);
+            const c2 = this._tmpCol2.setHex(0xfff5e0);
+            const c3 = this._tmpCol3.setHex(0xff8c42);
+            c1.lerp(c2, brightness);
+            c1.lerp(c3, dawnDusk * 0.5);
+            this.sun.color.copy(c1);
             // Move sun position across sky
             const p = this.player;
             if (p) {
@@ -4049,26 +4068,26 @@ class Game {
         }
         if (this.hemiLight) {
             this.hemiLight.intensity = 0.08 + brightness * 0.22;
-            // Warm sky color at dusk
-            const skyCol = new THREE.Color(0x87ceeb).lerp(new THREE.Color(0xff6a3a), dawnDusk * 0.4);
-            this.hemiLight.color.copy(skyCol);
+            const c1 = this._tmpCol1.setHex(0x87ceeb);
+            const c2 = this._tmpCol2.setHex(0xff6a3a);
+            c1.lerp(c2, dawnDusk * 0.4);
+            this.hemiLight.color.copy(c1);
         }
         if (this.scene.background) {
-            const dayColor = new THREE.Color(0x87ceeb);
-            const nightColor = new THREE.Color(0x080820);
-            const duskColor = new THREE.Color(0xe85a2a);
-            let c = nightColor.lerp(dayColor, brightness);
-            c.lerp(duskColor, dawnDusk * 0.45);
-            this.scene.background.copy(c);
+            const c1 = this._tmpCol1.setHex(0x080820);
+            const c2 = this._tmpCol2.setHex(0x87ceeb);
+            const c3 = this._tmpCol3.setHex(0xe85a2a);
+            c1.lerp(c2, brightness);
+            c1.lerp(c3, dawnDusk * 0.45);
+            this.scene.background.copy(c1);
         }
         if (this.scene.fog) {
-            const dayFog = new THREE.Color(0x87ceeb);
-            const nightFog = new THREE.Color(0x080820);
-            const duskFog = new THREE.Color(0xc04a20);
-            let c = nightFog.lerp(dayFog, brightness);
-            c.lerp(duskFog, dawnDusk * 0.4);
-            this.scene.fog.color.copy(c);
-            // Denser fog at night, even denser in fog weather
+            const c1 = this._tmpCol1.setHex(0x080820);
+            const c2 = this._tmpCol2.setHex(0x87ceeb);
+            const c3 = this._tmpCol3.setHex(0xc04a20);
+            c1.lerp(c2, brightness);
+            c1.lerp(c3, dawnDusk * 0.4);
+            this.scene.fog.color.copy(c1);
             if (this.scene.fog.density !== undefined) {
                 let density = 0.006 + (1 - brightness) * 0.006;
                 if (this.weather === 'fog') density *= 3;
