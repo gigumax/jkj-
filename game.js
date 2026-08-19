@@ -428,8 +428,8 @@ class World {
         let h;
         if (t.biome === 'water') h = -2;
         else if (t.biome === 'sand') h = 0.5 + elev * 2;
-        else if (t.biome === 'grass') h = 1 + elev * 4;
-        else if (t.biome === 'forest') h = 1.5 + elev * 5;
+        else if (t.biome === 'grass') h = 1 + elev * 1.5;
+        else if (t.biome === 'forest') h = 1.5 + elev * 2;
         else if (t.biome === 'mountain') h = 4 + elev * 18;
         else if (t.biome === 'snow') h = 8 + elev * 22;
         else if (t.biome === 'desert') h = 0.8 + elev * 3;
@@ -1451,10 +1451,15 @@ class Game {
         this.tickAccumulator = 0;
         this.meshUpdateAccumulator = 0;
         this.time = 0;
-        this.dayTime = 0; // 0..1 cycle (0=dawn, 0.25=noon, 0.5=dusk, 0.75=midnight)
-        this.dayLength = 120; // seconds per full day/night cycle
+        this.dayTime = 0; // 0..1 cycle (0=dawn, 0.5=dusk, day=0..0.5, night=0.5..1)
+        this.dayDuration = 300; // 5 minutes of day
+        this.nightDuration = 180; // 3 minutes of night
+        this.totalCycle = this.dayDuration + this.nightDuration; // 480s
         this.isNight = false;
         this.sleeping = false;
+        this.sleepFade = 0; // 0..1 fade-to-black during sleep
+        this.inHut = false;
+        this.hutTile = null;
         this.weather = 'clear'; // 'clear', 'rain', 'snow', 'fog'
         this.weatherTimer = 30 + Math.random() * 60; // weather changes over time
         this.weatherParticles = null;
@@ -2275,18 +2280,7 @@ class Game {
                 this.updateUI();
             } else { this.notify('Energy already full', 'info'); }
         } else if (tile.building === 'wood_hut') {
-            if (this.isNight) {
-                if (this.sleeping) {
-                    this.notify('Already sleeping!', 'info');
-                } else {
-                    this.sleeping = true;
-                    this.sleepTimer = 10;
-                    this.notify('Sleeping... Rest until dawn.', 'info');
-                    this.updateUI();
-                }
-            } else {
-                this.notify('You can only sleep at night!', 'warning');
-            }
+            this.enterHut(tx, ty);
         } else if (tile.building === 'furnace') {
             for (const recipe of def.recipes) {
                 if (this.player.hasCost(recipe.in)) {
@@ -3835,7 +3829,7 @@ class Game {
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
             const curH = this.world.getHeightAt(p.x, p.z);
-            const MAX_STEP = 2.5;
+            const MAX_STEP = 1.2;
             const MAX_CLIMB = 100;
             const canStep = (nx, nz) => {
                 if (!this.world.isWalkable(nx, nz)) return false;
@@ -4097,10 +4091,17 @@ class Game {
             }
         }
 
-        // Day/night cycle
-        this.dayTime = (this.dayTime + dt / this.dayLength) % 1;
+        // Day/night cycle: dayTime is 0..1 where 0..0.5 is day (300s) and 0.5..1 is night (180s)
+        // Convert elapsed time to dayTime: day portion maps to 0..0.5, night portion maps to 0.5..1
+        const dayFraction = this.dayDuration / this.totalCycle; // 0.625
+        const elapsedInCycle = (this.time % this.totalCycle);
+        if (elapsedInCycle < this.dayDuration) {
+            this.dayTime = (elapsedInCycle / this.dayDuration) * dayFraction; // 0..0.5
+        } else {
+            this.dayTime = dayFraction + ((elapsedInCycle - this.dayDuration) / this.nightDuration) * (1 - dayFraction); // 0.5..1
+        }
         const wasNight = this.isNight;
-        this.isNight = this.dayTime > 0.5 && this.dayTime < 0.95;
+        this.isNight = this.dayTime >= 0.5;
         if (this.isNight && !wasNight) {
             this.notify('Night falls! Find a Wood Hut to sleep.', 'warning');
         } else if (!this.isNight && wasNight) {
@@ -4305,9 +4306,11 @@ class Game {
     _tmpCol3 = new THREE.Color();
     updateDayNightLighting() {
         const t = this.dayTime;
+        // Map dayTime 0..1 to sun angle: 0=dawn(rising), 0.25=noon, 0.5=dusk(setting), 0.5..1=night
         const sunAngle = t * Math.PI * 2 - Math.PI / 2;
         const sunHeight = Math.sin(sunAngle);
-        const brightness = Math.max(0, Math.min(1, (sunHeight + 0.3) / 0.8));
+        // Boost brightness: dawn/dusk should have decent light, not pitch black
+        const brightness = Math.max(0, Math.min(1, (sunHeight + 0.5) / 1.2));
 
         // Dawn/dusk orange tint factor
         const dawnDusk = Math.max(0, 1 - Math.abs(sunHeight) * 3);
@@ -4405,9 +4408,10 @@ class Game {
         document.getElementById('power-display').textContent = `${Math.floor(this.powerProduced)} / ${Math.floor(this.powerConsumed)}`;
         const timeEl = document.getElementById('time-display');
         if (timeEl) {
-            const phase = this.dayTime < 0.25 ? 'Morning' :
-                          this.dayTime < 0.5 ? 'Day' :
-                          this.dayTime < 0.75 ? 'Night' : 'Late Night';
+            const phase = this.dayTime < 0.15 ? 'Dawn' :
+                          this.dayTime < 0.35 ? 'Day' :
+                          this.dayTime < 0.5 ? 'Dusk' :
+                          this.dayTime < 0.85 ? 'Night' : 'Late Night';
             timeEl.textContent = phase;
         }
         const hungerBar = document.getElementById('hunger-bar');

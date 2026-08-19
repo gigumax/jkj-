@@ -98,6 +98,33 @@
             <div id="tech-list"></div>
         </div>
 
+        <!-- Hut interior view -->
+        <div id="hut-interior" class="hidden">
+            <div class="hut-interior-content">
+                <h2>Wood Hut</h2>
+                <div class="hut-scene">
+                    <div class="hut-bed" id="hut-bed" title="Click bed to sleep">
+                        <div class="bed-frame"></div>
+                        <div class="bed-pillow"></div>
+                        <div class="bed-blanket"></div>
+                        <span class="bed-label">Sleep</span>
+                    </div>
+                    <div class="hut-campfire-slot" id="hut-campfire-slot">
+                        <div class="campfire-empty" id="campfire-empty">Place Campfire</div>
+                        <div class="campfire-lit hidden" id="campfire-lit">
+                            <div class="campfire-flame"></div>
+                            <div class="campfire-flame2"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="hut-hint" id="hut-hint">Click the bed to sleep through the night. Press I or ESC to exit.</p>
+                <button id="hut-exit-btn">Leave Hut</button>
+            </div>
+        </div>
+
+        <!-- Sleep fade-to-black overlay -->
+        <div id="sleep-overlay" class="hidden"></div>
+
         <!-- Build placement mode indicator -->
         <div id="build-mode-indicator" class="hidden">
             <span id="build-mode-name"></span>
