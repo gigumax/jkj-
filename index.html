@@ -11,7 +11,7 @@
     <title>Explore & Build - Survival Technology</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M10 80 L35 30 L50 55 L65 20 L90 80 Z' fill='%234a7c3a' stroke='%232d5a1f' stroke-width='3'/><circle cx='75' cy='25' r='8' fill='%23f4d68a'/></svg>">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=22">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
 </head>
 <body>
@@ -27,19 +27,19 @@
         <!-- Top HUD -->
         <div id="hud-top">
             <div class="hud-item" id="hud-health">
-                <span class="hud-icon">[H]</span>
+                <span class="hud-icon" id="hud-health-icon"></span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="health-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-energy">
-                <span class="hud-icon">[E]</span>
+                <span class="hud-icon" id="hud-energy-icon"></span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="energy-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-research">
-                <span class="hud-icon">[R]</span>
+                <span class="hud-icon" id="hud-research-icon"></span>
                 <span id="research-points">0</span> RP
             </div>
             <div class="hud-item" id="hud-power">
-                <span class="hud-icon">[P]</span>
+                <span class="hud-icon" id="hud-power-icon"></span>
                 <span id="power-display">0 / 0</span>
             </div>
             <div class="hud-item" id="hud-time">
@@ -49,15 +49,15 @@
                 <span id="weather-display">Sun</span>
             </div>
             <div class="hud-item" id="hud-hunger">
-                <span class="hud-icon">[H]</span>
+                <span class="hud-icon" id="hud-hunger-icon"></span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="hunger-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-thirst">
-                <span class="hud-icon">[W]</span>
+                <span class="hud-icon" id="hud-thirst-icon"></span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="thirst-bar"></div></div>
             </div>
             <div class="hud-item" id="hud-temp">
-                <span class="hud-icon">[T]</span>
+                <span class="hud-icon" id="hud-temp-icon"></span>
                 <span id="temp-display">20C</span>
             </div>
         </div>
@@ -68,7 +68,7 @@
         <!-- Side panels -->
         <div id="panel-inventory" class="side-panel hidden">
             <div class="panel-header">
-                <h2>[I] Inventory</h2>
+                <h2>Inventory</h2>
                 <button class="panel-close" data-panel="panel-inventory">X</button>
             </div>
             <div id="inventory-grid"></div>
@@ -76,7 +76,7 @@
 
         <div id="panel-crafting" class="side-panel hidden">
             <div class="panel-header">
-                <h2>[C] Crafting</h2>
+                <h2>Crafting</h2>
                 <button class="panel-close" data-panel="panel-crafting">X</button>
             </div>
             <div id="crafting-list"></div>
@@ -84,7 +84,7 @@
 
         <div id="panel-build" class="side-panel hidden">
             <div class="panel-header">
-                <h2>[B] Build</h2>
+                <h2>Build</h2>
                 <button class="panel-close" data-panel="panel-build">X</button>
             </div>
             <div id="build-list"></div>
@@ -92,7 +92,7 @@
 
         <div id="panel-tech" class="side-panel hidden">
             <div class="panel-header">
-                <h2>[R] Technology</h2>
+                <h2>Technology</h2>
                 <button class="panel-close" data-panel="panel-tech">X</button>
             </div>
             <div id="tech-list"></div>
@@ -115,14 +115,14 @@
 
         <!-- Bottom controls -->
         <div id="bottom-controls">
-            <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">[C]</button>
-            <button class="ctrl-btn" id="btn-build" title="Build (B)">[B]</button>
-            <button class="ctrl-btn" id="btn-tech" title="Technology (T)">[R]</button>
+            <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">Craft</button>
+            <button class="ctrl-btn" id="btn-build" title="Build (B)">Build</button>
+            <button class="ctrl-btn" id="btn-tech" title="Technology (T)">Tech</button>
         </div>
 
         <!-- Quest / Objective tracker -->
         <div id="quest-tracker">
-            <div id="quest-icon">*</div>
+            <div id="quest-icon"></div>
             <div id="quest-text"></div>
         </div>
 
@@ -258,7 +258,8 @@
             </div>
         </div>
     </div>
-    <script src="game.js?v=22"></script>
+    <script src="icons.js?v=1"></script>
+    <script src="game.js?v=23"></script>
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });

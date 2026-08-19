@@ -24,23 +24,23 @@ const BIOMES = {
 
 // --- Resource types ---
 const RESOURCE_TYPES = {
-    tree:    { icon: '[T]', name: 'Tree',    yields: { wood: 3 },       biome: ['forest','grass','sand','desert'], hardness: 1 },
-    bush:    { icon: '[B]', name: 'Berry Bush', yields: { food: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
-    red_mushroom:  { icon: '[M]', name: 'Red Mushroom', yields: { red_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
-    purple_mushroom: { icon: '[P]', name: 'Purple Mushroom', yields: { purple_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'poisonous' },
-    red_berries:   { icon: '[r]', name: 'Red Berries', yields: { red_berries: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
-    nightshade:    { icon: '[B]', name: 'Dark Berries', yields: { nightshade: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
-    cactus_fruit:  { icon: '[C]', name: 'Cactus Fruit', yields: { cactus_fruit: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
-    glowing_plant: { icon: '[G]', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
-    thorn_bush:    { icon: '[g]', name: 'Thorn Bush', yields: { thorn_bush: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
-    stone:   { icon: '[R]', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain','grass','forest'], hardness: 1 },
-    coal:    { icon: '[C]', name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
-    iron:    { icon: '[I]', name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 2 },
-    copper:  { icon: '[c]', name: 'Copper',  yields: { copper_ore: 3 }, biome: ['mountain'],       hardness: 3 },
-    gold:    { icon: '[G]', name: 'Gold',    yields: { gold_ore: 2 },   biome: ['mountain'],       hardness: 4 },
-    oil:     { icon: '[O]', name: 'Oil',     yields: { oil: 2 },        biome: ['desert','snow'],  hardness: 3 },
-    soil:         { icon: '[S]', name: 'Soil', yields: { soil: 2 }, biome: ['forest','grass'], hardness: 0 },
-    grass:        { icon: '[g]', name: 'Grass', yields: { grass: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    tree:    { icon: 'tree',    name: 'Tree',    yields: { wood: 3 },       biome: ['forest','grass','sand','desert'], hardness: 1 },
+    bush:    { icon: 'bush', name: 'Berry Bush', yields: { food: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    red_mushroom:  { icon: 'red_mushroom', name: 'Red Mushroom', yields: { red_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    purple_mushroom: { icon: 'purple_mushroom', name: 'Purple Mushroom', yields: { purple_mushroom: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'poisonous' },
+    red_berries:   { icon: 'red_berries', name: 'Red Berries', yields: { red_berries: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    nightshade:    { icon: 'nightshade', name: 'Dark Berries', yields: { nightshade: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
+    cactus_fruit:  { icon: 'cactus_fruit', name: 'Cactus Fruit', yields: { cactus_fruit: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
+    glowing_plant: { icon: 'glowing_plant', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
+    thorn_bush:    { icon: 'thorn_bush', name: 'Thorn Bush', yields: { thorn_bush: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
+    stone:   { icon: 'stone',   name: 'Stone',   yields: { stone: 3 },      biome: ['mountain','grass','forest'], hardness: 1 },
+    coal:    { icon: 'coal',    name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
+    iron:    { icon: 'iron',    name: 'Iron',    yields: { iron_ore: 3 },   biome: ['mountain'],       hardness: 2 },
+    copper:  { icon: 'copper',  name: 'Copper',  yields: { copper_ore: 3 }, biome: ['mountain'],       hardness: 3 },
+    gold:    { icon: 'gold',    name: 'Gold',    yields: { gold_ore: 2 },   biome: ['mountain'],       hardness: 4 },
+    oil:     { icon: 'oil',     name: 'Oil',     yields: { oil: 2 },        biome: ['desert','snow'],  hardness: 3 },
+    soil:         { icon: 'soil', name: 'Soil', yields: { soil: 2 }, biome: ['forest','grass'], hardness: 0 },
+    grass:        { icon: 'grass', name: 'Grass', yields: { grass: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
 };
 
 // Resource respawn times (seconds)
@@ -67,46 +67,46 @@ const RESOURCE_RESPAWN = {
 // --- Items ---
 // Edible items have `edible: true` and effects applied only when eaten (press F)
 const ITEMS = {
-    wood:        { icon: '[W]', name: 'Wood', attackPower: 3 },
-    plank:       { icon: '[W]', name: 'Plank', attackPower: 3 },
-    stone:       { icon: '[R]', name: 'Stone', attackPower: 4 },
-    food:        { icon: '[B]', name: 'Food', edible: true, energy: 15, health: 0 },
-    red_mushroom:    { icon: '[M]', name: 'Red Mushroom', edible: true, energy: 20, health: 0 },
-    red_berries:     { icon: '[r]', name: 'Red Berries', edible: true, energy: 12, health: 0 },
-    cactus_fruit:    { icon: '[C]', name: 'Cactus Fruit', edible: true, energy: 12, health: 0 },
-    glowing_plant:   { icon: '[G]', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
-    purple_mushroom: { icon: '[P]', name: 'Purple Mushroom', edible: true, energy: -10, health: -15 },
-    thorn_bush:      { icon: '[g]', name: 'Thorn Bush', edible: true, energy: -10, health: -15 },
-    nightshade:      { icon: '[B]', name: 'Dark Berries', edible: true, energy: 0, health: -50 },
-    leather:     { icon: '[L]', name: 'Leather', attackPower: 5 },
-    coal:        { icon: '[C]', name: 'Coal' },
-    iron_ore:    { icon: '[I]', name: 'Iron Ore' },
-    iron_ingot:  { icon: '[Fe]', name: 'Iron Ingot' },
-    copper_ore:  { icon: '[c]', name: 'Copper Ore' },
-    copper_ingot:{ icon: '[Cu]', name: 'Copper Ingot' },
-    gold_ore:    { icon: '[G]', name: 'Gold Ore' },
-    gold_ingot:  { icon: '[Au]', name: 'Gold Ingot' },
-    oil:         { icon: '[O]', name: 'Oil' },
-    soil:         { icon: '[S]', name: 'Soil', attackPower: 3 },
-    grass:        { icon: '[g]', name: 'Grass', attackPower: 1 },
-    brick:       { icon: '[B]', name: 'Brick', attackPower: 6 },
-    gear:        { icon: '[g]', name: 'Gear', attackPower: 4 },
-    circuit:     { icon: '[P]', name: 'Circuit', attackPower: 3 },
-    battery:     { icon: '[B]', name: 'Battery', attackPower: 3 },
-    wood_pickaxe:{ icon: '[P]', name: 'Wooden Pickaxe', tool: 'pickaxe', power: 1, attackPower: 8 },
-    stone_pickaxe:{icon: '[P]', name: 'Stone Pickaxe',  tool: 'pickaxe', power: 2, attackPower: 12 },
-    iron_pickaxe:{ icon: '[P]', name: 'Iron Pickaxe',   tool: 'pickaxe', power: 3, attackPower: 18 },
-    wood_axe:    { icon: '[A]', name: 'Wooden Axe',     tool: 'axe',     power: 1, attackPower: 10 },
-    stone_axe:   { icon: '[A]', name: 'Stone Axe',      tool: 'axe',     power: 2, attackPower: 14 },
-    iron_axe:    { icon: '[A]', name: 'Iron Axe',       tool: 'axe',     power: 3, attackPower: 20 },
-    raw_meat:    { icon: '[m]', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
-    cooked_meat: { icon: '[M]', name: 'Cooked Meat', edible: true, energy: 25, health: 5, attackPower: 2 },
-    fang:        { icon: '[F]', name: 'Fang', attackPower: 7 },
-    hunting_gun: { icon: '[G]', name: 'Hunting Gun', tool: 'gun', power: 0, attackPower: 35, ranged: true, range: 30 },
-    spider_web:  { icon: '[W]', name: 'Spider Web' },
-    fishing_rod: { icon: '[R]', name: 'Fishing Rod', tool: 'fishing' },
-    raw_fish:    { icon: '[f]', name: 'Raw Fish', edible: true, energy: 10, health: -3, attackPower: 2 },
-    cooked_fish: { icon: '[F]', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
+    wood:        { icon: 'wood', name: 'Wood', attackPower: 3 },
+    plank:       { icon: 'plank', name: 'Plank', attackPower: 3 },
+    stone:       { icon: 'stone', name: 'Stone', attackPower: 4 },
+    food:        { icon: 'food', name: 'Food', edible: true, energy: 15, health: 0 },
+    red_mushroom:    { icon: 'red_mushroom', name: 'Red Mushroom', edible: true, energy: 20, health: 0 },
+    red_berries:     { icon: 'red_berries', name: 'Red Berries', edible: true, energy: 12, health: 0 },
+    cactus_fruit:    { icon: 'cactus_fruit', name: 'Cactus Fruit', edible: true, energy: 12, health: 0 },
+    glowing_plant:   { icon: 'glowing_plant', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
+    purple_mushroom: { icon: 'purple_mushroom', name: 'Purple Mushroom', edible: true, energy: -10, health: -15 },
+    thorn_bush:      { icon: 'thorn_bush', name: 'Thorn Bush', edible: true, energy: -10, health: -15 },
+    nightshade:      { icon: 'nightshade', name: 'Dark Berries', edible: true, energy: 0, health: -50 },
+    leather:     { icon: 'leather', name: 'Leather', attackPower: 5 },
+    coal:        { icon: 'coal', name: 'Coal' },
+    iron_ore:    { icon: 'iron_ore', name: 'Iron Ore' },
+    iron_ingot:  { icon: 'iron_ingot', name: 'Iron Ingot' },
+    copper_ore:  { icon: 'copper_ore', name: 'Copper Ore' },
+    copper_ingot:{ icon: 'copper_ingot', name: 'Copper Ingot' },
+    gold_ore:    { icon: 'gold_ore', name: 'Gold Ore' },
+    gold_ingot:  { icon: 'gold_ingot', name: 'Gold Ingot' },
+    oil:         { icon: 'oil', name: 'Oil' },
+    soil:         { icon: 'soil', name: 'Soil', attackPower: 3 },
+    grass:        { icon: 'grass', name: 'Grass', attackPower: 1 },
+    brick:       { icon: 'brick', name: 'Brick', attackPower: 6 },
+    gear:        { icon: 'gear', name: 'Gear', attackPower: 4 },
+    circuit:     { icon: 'circuit', name: 'Circuit', attackPower: 3 },
+    battery:     { icon: 'battery', name: 'Battery', attackPower: 3 },
+    wood_pickaxe:{ icon: 'wood_pickaxe', name: 'Wooden Pickaxe', tool: 'pickaxe', power: 1, attackPower: 8 },
+    stone_pickaxe:{icon: 'stone_pickaxe', name: 'Stone Pickaxe',  tool: 'pickaxe', power: 2, attackPower: 12 },
+    iron_pickaxe:{ icon: 'iron_pickaxe', name: 'Iron Pickaxe',   tool: 'pickaxe', power: 3, attackPower: 18 },
+    wood_axe:    { icon: 'wood_axe', name: 'Wooden Axe',     tool: 'axe',     power: 1, attackPower: 10 },
+    stone_axe:   { icon: 'stone_axe', name: 'Stone Axe',      tool: 'axe',     power: 2, attackPower: 14 },
+    iron_axe:    { icon: 'iron_axe', name: 'Iron Axe',       tool: 'axe',     power: 3, attackPower: 20 },
+    raw_meat:    { icon: 'raw_meat', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
+    cooked_meat: { icon: 'cooked_meat', name: 'Cooked Meat', edible: true, energy: 25, health: 5, attackPower: 2 },
+    fang:        { icon: 'fang', name: 'Fang', attackPower: 7 },
+    hunting_gun: { icon: 'hunting_gun', name: 'Hunting Gun', tool: 'gun', power: 0, attackPower: 35, ranged: true, range: 30 },
+    spider_web:  { icon: 'spider_web', name: 'Spider Web' },
+    fishing_rod: { icon: 'fishing_rod', name: 'Fishing Rod', tool: 'fishing' },
+    raw_fish:    { icon: 'raw_fish', name: 'Raw Fish', edible: true, energy: 10, health: -3, attackPower: 2 },
+    cooked_fish: { icon: 'cooked_fish', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
 };
 
 // --- Creature types ---
@@ -141,18 +141,18 @@ const RECIPES = [
 // --- Buildings ---
 const BUILDINGS = {
     campfire: {
-        icon: '[!]', name: 'Campfire', cost: { wood: 5, stone: 3 }, tech: null,
+        icon: 'campfire', name: 'Campfire', cost: { wood: 5, stone: 3 }, tech: null,
         desc: 'Restores energy when nearby', power: 0, powerUse: 0,
         color: 0xe67e22, size: { w: 1.5, h: 1.0, d: 1.5 },
     },
     research_table: {
-        icon: '[B]', name: 'Research Table', cost: { wood: 8, stone: 5 }, tech: null,
+        icon: 'research_table', name: 'Research Table', cost: { wood: 8, stone: 5 }, tech: null,
         desc: 'Generates research points slowly', power: 0, powerUse: 0,
         color: 0x8B4513, size: { w: 2, h: 1.5, d: 2 },
         researchRate: 0.5,
     },
     furnace: {
-        icon: '[F]', name: 'Furnace', cost: { stone: 10, brick: 4 }, tech: 'smelting',
+        icon: 'furnace', name: 'Furnace', cost: { brick: 4 }, tech: 'smelting',
         desc: 'Smelts ore into ingots', power: 0, powerUse: 0,
         color: 0x555555, size: { w: 2, h: 2.5, d: 2 },
         recipes: [
@@ -162,39 +162,39 @@ const BUILDINGS = {
         ],
     },
     mining_drill: {
-        icon: '[P]', name: 'Mining Drill', cost: { iron_ingot: 5, gear: 3 }, tech: 'mining_automation',
+        icon: 'mining_drill', name: 'Mining Drill', cost: { iron_ingot: 5, gear: 3 }, tech: 'mining_automation',
         desc: 'Auto-mines resources from adjacent tiles', power: 0, powerUse: 10,
         color: 0x888888, size: { w: 2, h: 3, d: 2 },
     },
     power_plant: {
-        icon: '[E]', name: 'Power Plant', cost: { iron_ingot: 8, copper_ingot: 4, gear: 5 }, tech: 'power_generation',
+        icon: 'power_plant', name: 'Power Plant', cost: { iron_ingot: 8, copper_ingot: 4, gear: 5 }, tech: 'power_generation',
         desc: 'Generates power from coal', power: 50, powerUse: 0,
         color: 0x8e44ad, size: { w: 3, h: 4, d: 3 },
         fuel: { coal: 1 }, fuelTime: 10,
     },
     solar_panel: {
-        icon: '[S]', name: 'Solar Panel', cost: { copper_ingot: 5, circuit: 2, iron_ingot: 3 }, tech: 'renewable_energy',
+        icon: 'solar_panel', name: 'Solar Panel', cost: { copper_ingot: 5, circuit: 2, iron_ingot: 3 }, tech: 'renewable_energy',
         desc: 'Generates free power', power: 20, powerUse: 0,
         color: 0x1a5276, size: { w: 3, h: 0.3, d: 2 },
     },
     research_lab: {
-        icon: '[R]', name: 'Research Lab', cost: { iron_ingot: 10, copper_ingot: 5, circuit: 3 }, tech: 'scientific_method',
+        icon: 'research_lab', name: 'Research Lab', cost: { iron_ingot: 10, copper_ingot: 5, circuit: 3 }, tech: 'scientific_method',
         desc: 'Generates research points', power: 0, powerUse: 15,
         color: 0x2ecc71, size: { w: 3, h: 3, d: 3 },
         researchRate: 1,
     },
     oil_pump: {
-        icon: '[O]', name: 'Oil Pump', cost: { iron_ingot: 6, gear: 4 }, tech: 'oil_processing',
+        icon: 'oil_pump', name: 'Oil Pump', cost: { iron_ingot: 6, gear: 4 }, tech: 'oil_processing',
         desc: 'Pumps oil from oil tiles', power: 0, powerUse: 8,
         color: 0x34495e, size: { w: 2, h: 3.5, d: 2 },
     },
     assembler: {
-        icon: '[A]', name: 'Assembler', cost: { iron_ingot: 8, gear: 5, circuit: 3 }, tech: 'automation',
+        icon: 'assembler', name: 'Assembler', cost: { iron_ingot: 10, gear: 8, circuit: 4 }, tech: 'automation',
         desc: 'Automatically crafts items', power: 0, powerUse: 12,
         color: 0xe74c3c, size: { w: 2.5, h: 2.5, d: 2.5 },
     },
     wood_hut: {
-        icon: '[H]', name: 'Wood Hut', cost: { plank: 10 }, tech: null,
+        icon: 'wood_hut', name: 'Wood Hut', cost: { plank: 10 }, tech: null,
         desc: 'Sleep here at night to restore health & energy', power: 0, powerUse: 0,
         color: 0x8B6B47, size: { w: 3, h: 2.5, d: 3 },
     },
@@ -202,37 +202,37 @@ const BUILDINGS = {
 
 // --- Technology tree ---
 const TECH_TREE = [
-    { id: 'stone_tools',       icon: '[R]', name: 'Stone Tools',       cost: 5,   prereq: [],                  desc: 'Unlock stone pickaxe & axe' },
-    { id: 'smelting',          icon: '[!]', name: 'Smelting',           cost: 10,  prereq: ['stone_tools'],      desc: 'Unlock furnace to smelt ore' },
-    { id: 'iron_tools',        icon: '[I]', name: 'Iron Tools',         cost: 15,  prereq: ['smelting'],         desc: 'Unlock iron pickaxe & axe' },
-    { id: 'machinery',         icon: '[g]', name: 'Machinery',          cost: 25,  prereq: ['iron_tools'],       desc: 'Craft gears for machines' },
-    { id: 'power_generation',  icon: '[E]', name: 'Power Generation',   cost: 30,  prereq: ['machinery'],        desc: 'Build power plants' },
-    { id: 'scientific_method', icon: '[R]', name: 'Scientific Method',  cost: 35,  prereq: ['machinery'],        desc: 'Build research labs' },
-    { id: 'mining_automation', icon: '[P]', name: 'Mining Automation',  cost: 40,  prereq: ['power_generation'], desc: 'Build mining drills' },
-    { id: 'electronics',       icon: '[P]', name: 'Electronics',        cost: 50,  prereq: ['power_generation','scientific_method'], desc: 'Craft circuits & batteries' },
-    { id: 'oil_processing',    icon: '[O]', name: 'Oil Processing',     cost: 45,  prereq: ['machinery'],        desc: 'Build oil pumps' },
-    { id: 'renewable_energy',  icon: '[S]', name: 'Renewable Energy',   cost: 60,  prereq: ['electronics'],      desc: 'Build solar panels' },
-    { id: 'automation',        icon: '[A]', name: 'Automation',         cost: 70,  prereq: ['electronics','mining_automation'], desc: 'Build assemblers' },
+    { id: 'stone_tools',       icon: 'stone_tools', name: 'Stone Tools',       cost: 5,   prereq: [],                  desc: 'Unlock stone pickaxe & axe' },
+    { id: 'smelting',          icon: 'smelting', name: 'Smelting',           cost: 10,  prereq: ['stone_tools'],      desc: 'Unlock furnace to smelt ore' },
+    { id: 'iron_tools',        icon: 'iron_tools', name: 'Iron Tools',         cost: 15,  prereq: ['smelting'],         desc: 'Unlock iron pickaxe & axe' },
+    { id: 'machinery',         icon: 'machinery', name: 'Machinery',          cost: 25,  prereq: ['iron_tools'],       desc: 'Craft gears for machines' },
+    { id: 'power_generation',  icon: 'power_generation', name: 'Power Generation',   cost: 30,  prereq: ['machinery'],        desc: 'Build power plants' },
+    { id: 'scientific_method', icon: 'scientific_method', name: 'Scientific Method',  cost: 35,  prereq: ['machinery'],        desc: 'Build research labs' },
+    { id: 'mining_automation', icon: 'mining_automation', name: 'Mining Automation',  cost: 40,  prereq: ['power_generation'], desc: 'Build mining drills' },
+    { id: 'electronics',       icon: 'electronics', name: 'Electronics',        cost: 50,  prereq: ['power_generation','scientific_method'], desc: 'Craft circuits & batteries' },
+    { id: 'oil_processing',    icon: 'oil_processing', name: 'Oil Processing',     cost: 45,  prereq: ['machinery'],        desc: 'Build oil pumps' },
+    { id: 'renewable_energy',  icon: 'renewable_energy', name: 'Renewable Energy',   cost: 60,  prereq: ['electronics'],      desc: 'Build solar panels' },
+    { id: 'automation',        icon: 'automation', name: 'Automation',         cost: 70,  prereq: ['electronics','mining_automation'], desc: 'Build assemblers' },
 ];
 
 // ============================================================
 //  Quest / Tutorial System
 // ============================================================
 const QUESTS = [
-    { id: 'harvest_wood',   title: 'Gather Wood',    desc: 'Find a [T] tree and harvest it',         check: (g) => g.player.hasItem('wood', 1),         reward: 2 },
-    { id: 'harvest_stone',  title: 'Gather Stone',   desc: 'Find a [R] rock on a mountain and harvest it', check: (g) => g.player.hasItem('stone', 1),  reward: 2 },
-    { id: 'craft_pickaxe',  title: 'Craft a Pickaxe', desc: 'Press C and craft a [P] wooden pickaxe',  check: (g) => g.player.hasItem('wood_pickaxe', 1) || g.player.hasItem('stone_pickaxe', 1) || g.player.hasItem('iron_pickaxe', 1), reward: 3 },
-    { id: 'build_campfire', title: 'Build a Campfire', desc: 'Press B and place a [!] campfire',       check: (g) => g.countBuildings('campfire') > 0,   reward: 3 },
+    { id: 'harvest_wood',   title: 'Gather Wood',    desc: 'Find a tree and harvest it',         check: (g) => g.player.hasItem('wood', 1),         reward: 2 },
+    { id: 'harvest_stone',  title: 'Gather Stone',   desc: 'Find a rock on a mountain and harvest it', check: (g) => g.player.hasItem('stone', 1),  reward: 2 },
+    { id: 'craft_pickaxe',  title: 'Craft a Pickaxe', desc: 'Press C and craft a wooden pickaxe',  check: (g) => g.player.hasItem('wood_pickaxe', 1) || g.player.hasItem('stone_pickaxe', 1) || g.player.hasItem('iron_pickaxe', 1), reward: 3 },
+    { id: 'build_campfire', title: 'Build a Campfire', desc: 'Press B and place a campfire',       check: (g) => g.countBuildings('campfire') > 0,   reward: 3 },
     { id: 'research_stone', title: 'Research Stone Tools', desc: 'Press T and unlock Stone Tools (5 RP)', check: (g) => g.completedTech.has('stone_tools'), reward: 5 },
-    { id: 'build_furnace',  title: 'Build a Furnace', desc: 'Craft bricks, then build a [F] furnace',  check: (g) => g.countBuildings('furnace') > 0,    reward: 5 },
+    { id: 'build_furnace',  title: 'Build a Furnace', desc: 'Craft bricks, then build a furnace',  check: (g) => g.countBuildings('furnace') > 0,    reward: 5 },
     { id: 'smelt_iron',     title: 'Smelt Iron',     desc: 'Get iron ore + coal, use furnace to smelt', check: (g) => g.player.hasItem('iron_ingot', 1), reward: 5 },
     { id: 'research_iron',  title: 'Research Iron Tools', desc: 'Unlock Iron Tools in the tech tree',    check: (g) => g.completedTech.has('iron_tools'),  reward: 8 },
     { id: 'build_lab',      title: 'Build a Research Lab', desc: 'Build a research lab for auto RP',   check: (g) => g.countBuildings('research_lab') > 0, reward: 10 },
     { id: 'build_power',    title: 'Generate Power',  desc: 'Build a power plant to power machines', check: (g) => g.countBuildings('power_plant') > 0, reward: 10 },
-    { id: 'build_drill',    title: 'Automate Mining', desc: 'Build a [P] mining drill near resources',   check: (g) => g.countBuildings('mining_drill') > 0, reward: 12 },
+    { id: 'build_drill',    title: 'Automate Mining', desc: 'Build a mining drill near resources',   check: (g) => g.countBuildings('mining_drill') > 0, reward: 12 },
     { id: 'research_electronics', title: 'Research Electronics', desc: 'Unlock Electronics in the tech tree', check: (g) => g.completedTech.has('electronics'), reward: 15 },
-    { id: 'build_solar',    title: 'Go Solar',       desc: 'Build a [S] solar panel for free power',   check: (g) => g.countBuildings('solar_panel') > 0, reward: 15 },
-    { id: 'build_assembler', title: 'Full Automation', desc: 'Build a [A] assembler to auto-craft',     check: (g) => g.countBuildings('assembler') > 0,  reward: 20 },
+    { id: 'build_solar',    title: 'Go Solar',       desc: 'Build a solar panel for free power',   check: (g) => g.countBuildings('solar_panel') > 0, reward: 15 },
+    { id: 'build_assembler', title: 'Full Automation', desc: 'Build an assembler to auto-craft',     check: (g) => g.countBuildings('assembler') > 0,  reward: 20 },
     { id: 'all_tech',       title: 'Master All Technology', desc: 'Research every technology in the tree', check: (g) => g.completedTech.size >= TECH_TREE.length, reward: 50 },
 ];
 
@@ -1911,6 +1911,16 @@ class Game {
     }
 
     setupUI() {
+        // Initialize HUD sprites
+        document.getElementById('hud-health-icon').innerHTML = sprite('health');
+        document.getElementById('hud-energy-icon').innerHTML = sprite('energy');
+        document.getElementById('hud-research-icon').innerHTML = sprite('research');
+        document.getElementById('hud-power-icon').innerHTML = sprite('power');
+        document.getElementById('hud-hunger-icon').innerHTML = sprite('hunger');
+        document.getElementById('hud-thirst-icon').innerHTML = sprite('thirst');
+        document.getElementById('hud-temp-icon').innerHTML = sprite('temp');
+        document.getElementById('quest-icon').innerHTML = sprite('quest');
+
         document.getElementById('start-btn').addEventListener('click', () => this.start());
         document.getElementById('restart-btn').addEventListener('click', () => this.respawn());
         document.getElementById('resume-btn').addEventListener('click', () => this.togglePause());
@@ -4251,11 +4261,11 @@ class Game {
             const yieldKey = resDef.yields ? Object.keys(resDef.yields)[0] : null;
             const isMystery = yieldKey && ITEMS[yieldKey]?.edible && !this.discoveredFoods.has(yieldKey);
             const displayName = isMystery ? 'Mysterious Food' : resDef.name;
-            el.innerHTML = `<kbd>I / Click</kbd> Harvest ${resDef.icon} ${displayName}`;
+            el.innerHTML = `<kbd>I / Click</kbd> Harvest ${sprite(resDef.icon)} ${displayName}`;
             el.classList.remove('hidden');
         } else if (tile.building && !this.buildMode) {
             const def = BUILDINGS[tile.building];
-            el.innerHTML = `<kbd>I / Click</kbd> ${def.icon} ${def.name}`;
+            el.innerHTML = `<kbd>I / Click</kbd> ${sprite(def.icon)} ${def.name}`;
             el.classList.remove('hidden');
         } else {
             el.classList.add('hidden');
@@ -4428,7 +4438,7 @@ class Game {
         items.forEach(([item, count], i) => {
             const def = ITEMS[item];
             const isUndiscoveredFood = def?.edible && !this.discoveredFoods.has(item);
-            const icon = def?.icon || '?';
+            const icon = sprite(def?.icon) || '?';
             const name = isUndiscoveredFood ? 'Mysterious Food' : (def?.name || item);
             const slot = document.createElement('div');
             slot.className = 'inv-slot' + (i === this.player.selectedSlot ? ' selected' : '');
@@ -4463,7 +4473,7 @@ class Game {
         for (const [item, count] of pageItems) {
             const def = ITEMS[item];
             const isUndiscoveredFood = def?.edible && !this.discoveredFoods.has(item);
-            const icon = def?.icon || '?';
+            const icon = sprite(def?.icon) || '?';
             const name = isUndiscoveredFood ? 'Mysterious Food' : (def?.name || item);
             const cell = document.createElement('div');
             cell.style.cssText = 'background:rgba(255,255,255,0.08);border-radius:8px;padding:8px;text-align:center;cursor:pointer;';
@@ -4492,12 +4502,12 @@ class Game {
             const card = document.createElement('div');
             const canAfford = this.player.hasCost(recipe.cost);
             card.className = 'recipe-card' + (canAfford ? '' : ' cant-afford');
-            const outItems = Object.entries(recipe.output).map(([item, amt]) => `${ITEMS[item]?.icon || ''} ${ITEMS[item]?.name || item} x${amt}`).join(', ');
+            const outItems = Object.entries(recipe.output).map(([item, amt]) => `${sprite(ITEMS[item]?.icon)} ${ITEMS[item]?.name || item} x${amt}`).join(', ');
             const costItems = Object.entries(recipe.cost).map(([item, amt]) => {
                 const has = this.player.hasItem(item, amt);
-                return `<span class="cost-item${has ? '' : ' lacking'}">${ITEMS[item]?.icon || ''} ${amt}</span>`;
+                return `<span class="cost-item${has ? '' : ' lacking'}">${sprite(ITEMS[item]?.icon)} ${amt}</span>`;
             }).join('');
-            card.innerHTML = `<div class="recipe-header"><span class="recipe-icon">${ITEMS[Object.keys(recipe.output)[0]]?.icon || ''}</span><span class="recipe-name">${outItems}</span></div><div class="recipe-cost">Cost: ${costItems}</div>`;
+            card.innerHTML = `<div class="recipe-header"><span class="recipe-icon">${sprite(ITEMS[Object.keys(recipe.output)[0]]?.icon)}</span><span class="recipe-name">${outItems}</span></div><div class="recipe-cost">Cost: ${costItems}</div>`;
             card.addEventListener('click', (e) => { e.stopPropagation(); this.craft(recipe.id); });
             list.appendChild(card);
         }
@@ -4514,10 +4524,10 @@ class Game {
             card.className = 'build-card' + (canAfford ? '' : ' cant-afford');
             const costItems = Object.entries(def.cost).map(([item, amt]) => {
                 const has = this.player.hasItem(item, amt);
-                return `<span class="cost-item${has ? '' : ' lacking'}">${ITEMS[item]?.icon || ''} ${amt}</span>`;
+                return `<span class="cost-item${has ? '' : ' lacking'}">${sprite(ITEMS[item]?.icon)} ${amt}</span>`;
             }).join('');
             const powerInfo = def.power > 0 ? ` +${def.power}` : (def.powerUse > 0 ? ` -${def.powerUse}` : '');
-            card.innerHTML = `<div class="build-header"><span class="build-icon">${def.icon}</span><span class="build-name">${def.name}${powerInfo}</span></div><div style="font-size:11px;color:#999;margin-bottom:4px;">${def.desc}</div><div class="build-cost">Cost: ${costItems}</div>`;
+            card.innerHTML = `<div class="build-header"><span class="build-icon">${sprite(def.icon)}</span><span class="build-name">${def.name}${powerInfo}</span></div><div style="font-size:11px;color:#999;margin-bottom:4px;">${def.desc}</div><div class="build-cost">Cost: ${costItems}</div>`;
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.buildMode = id;
@@ -4540,11 +4550,11 @@ class Game {
             const card = document.createElement('div');
             card.className = 'tech-card' + (completed ? ' completed' : '') + (available ? ' available' : (!completed ? ' locked' : ''));
             let status;
-            if (completed) status = '<span class="tech-status" style="color:#2ecc71;">[v] Done</span>';
+            if (completed) status = '<span class="tech-status" style="color:#2ecc71;">Done</span>';
             else if (available) status = `<span class="tech-status" style="color:#f1c40f;">${tech.cost} RP</span>`;
-            else status = '<span class="tech-status" style="color:#888;">[L] Locked</span>';
+            else status = `<span class="tech-status" style="color:#888;">${sprite('locked')} Locked</span>`;
             const prereqText = tech.prereq.length > 0 ? `<div class="tech-prereq">Requires: ${tech.prereq.map(p => TECH_TREE.find(t=>t.id===p)?.name).join(', ')}</div>` : '';
-            card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
+            card.innerHTML = `<div class="tech-header"><span class="tech-icon">${sprite(tech.icon)}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
             if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
             list.appendChild(card);
         }
@@ -4554,7 +4564,7 @@ class Game {
         const el = document.getElementById('build-mode-indicator');
         if (this.buildMode) {
             el.classList.remove('hidden');
-            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} - Click to place`;
+            document.getElementById('build-mode-name').innerHTML = `Placing: ${sprite(BUILDINGS[this.buildMode].icon)} ${BUILDINGS[this.buildMode].name} - Click to place`;
         } else {
             el.classList.add('hidden');
         }
