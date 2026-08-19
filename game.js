@@ -1842,7 +1842,13 @@ class Game {
             if (e.key.toLowerCase() === 'q' && this.gameRunning) this.togglePanel('panel-crafting');
             if (e.key.toLowerCase() === 'b' && this.gameRunning) this.togglePanel('panel-build');
             if (e.key.toLowerCase() === 't' && this.gameRunning) this.togglePanel('panel-tech');
-            if (e.key.toLowerCase() === 'i' && this.gameRunning) this.interact();
+            if (e.key.toLowerCase() === 'i' && this.gameRunning) {
+                if (this.inHut) this.exitHut();
+                else this.interact();
+            }
+            if (e.key === 'Escape' && this.inHut) {
+                this.exitHut();
+            }
             if (e.key.toLowerCase() === 'e' && this.gameRunning) this.togglePanel('panel-inventory');
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
@@ -1934,6 +1940,10 @@ class Game {
         document.getElementById('btn-craft').addEventListener('click', () => this.togglePanel('panel-crafting'));
         document.getElementById('btn-build').addEventListener('click', () => this.togglePanel('panel-build'));
         document.getElementById('btn-tech').addEventListener('click', () => this.togglePanel('panel-tech'));
+        // Hut interior buttons
+        document.getElementById('hut-exit-btn').addEventListener('click', () => this.exitHut());
+        document.getElementById('hut-bed').addEventListener('click', () => this.startSleep());
+        document.getElementById('hut-campfire-slot').addEventListener('click', () => this.placeCampfireInHut());
         document.querySelectorAll('.panel-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -2191,6 +2201,108 @@ class Game {
         this.updateUI();
     }
 
+
+    // --- Hut Interior ---
+    enterHut(tx, ty) {
+        this.inHut = true;
+        this.hutTile = { tx, ty };
+        if (this.pointerLocked) document.exitPointerLock();
+        document.getElementById('hut-interior').classList.remove('hidden');
+        document.getElementById('crosshair').classList.remove('visible');
+        // Check if campfire is already placed inside
+        const tile = this.world.getTile(tx, ty);
+        const hasCampfire = tile.hutCampfire === true;
+        if (hasCampfire) {
+            document.getElementById('campfire-empty').classList.add('hidden');
+            document.getElementById('campfire-lit').classList.remove('hidden');
+        } else {
+            document.getElementById('campfire-empty').classList.remove('hidden');
+            document.getElementById('campfire-lit').classList.add('hidden');
+        }
+        // Update hint based on time
+        const hint = document.getElementById('hut-hint');
+        if (this.isNight) {
+            hint.textContent = 'Click the bed to sleep through the night. Press I or ESC to exit.';
+        } else {
+            hint.textContent = 'You can only sleep at night. Press I or ESC to exit.';
+        }
+    }
+
+    exitHut() {
+        this.inHut = false;
+        this.hutTile = null;
+        document.getElementById('hut-interior').classList.add('hidden');
+        if (this.gameRunning) {
+            document.getElementById('crosshair').classList.add('visible');
+            this.requestPointerLock();
+        }
+    }
+
+    placeCampfireInHut() {
+        if (!this.hutTile) return;
+        const tile = this.world.getTile(this.hutTile.tx, this.hutTile.ty);
+        if (tile.hutCampfire) {
+            this.notify('There is already a campfire in the hut', 'info');
+            return;
+        }
+        if (this.player.hasItem('wood', 5) && this.player.hasItem('stone', 3)) {
+            this.player.removeItem('wood', 5);
+            this.player.removeItem('stone', 3);
+            tile.hutCampfire = true;
+            document.getElementById('campfire-empty').classList.add('hidden');
+            document.getElementById('campfire-lit').classList.remove('hidden');
+            this.notify('Campfire placed inside the hut!', 'success');
+            this.updateInventoryUI();
+            this.updateUI();
+        } else {
+            this.notify('Need 5 wood and 3 stone to build a campfire', 'warning');
+        }
+    }
+
+    startSleep() {
+        if (!this.isNight) {
+            this.notify('You can only sleep at night!', 'warning');
+            return;
+        }
+        if (this.sleeping) return;
+        this.sleeping = true;
+        this.sleepFade = 0;
+        this.sleepTimer = 4; // 4 seconds of fade before skip
+        const overlay = document.getElementById('sleep-overlay');
+        overlay.classList.remove('hidden');
+        overlay.classList.add('fading-in');
+        this.notify('You drift off to sleep...', 'info');
+    }
+
+    finishSleep() {
+        // Skip to dawn: advance time to start of next day
+        const elapsedInCycle = (this.time % this.totalCycle);
+        if (this.isNight) {
+            // Skip remaining night time
+            const nightElapsed = elapsedInCycle - this.dayDuration;
+            const nightRemaining = this.nightDuration - nightElapsed;
+            this.time += nightRemaining;
+        }
+        this.sleeping = false;
+        this.sleepFade = 0;
+        // Restore player
+        this.player.health = Math.min(this.player.maxHealth, this.player.health + 30);
+        this.player.energy = this.player.maxEnergy;
+        this.player.hunger = Math.min(this.player.maxHunger, this.player.hunger + 20);
+        this.player.thirst = Math.min(this.player.maxThirst, this.player.thirst + 20);
+        // Fade out
+        const overlay = document.getElementById('sleep-overlay');
+        overlay.classList.remove('fading-in');
+        overlay.classList.add('fading-out');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('fading-out');
+        }, 1500);
+        this.notify('You wake up feeling refreshed! +30 HP, full energy', 'success');
+        this.updateUI();
+        // Exit hut
+        this.exitHut();
+    }
 
     startFishing(tx, ty) {
         const baseTime = 3 + Math.random() * 4;
@@ -2607,6 +2719,10 @@ class Game {
             candidates = candidates.filter(([t, d]) => !d.nocturnal);
         }
         if (candidates.length === 0) return;
+        // Boost wolf spawn weight by 20% at night for more wolf packs
+        if (this.isNight) {
+            candidates = candidates.map(([t, d]) => [t, t === 'wolf' ? { ...d, spawnWeight: d.spawnWeight * 1.2 } : d]);
+        }
         const totalWeight = candidates.reduce((sum, [_, d]) => sum + (d.spawnWeight || 1), 0);
         let roll = Math.random() * totalWeight;
         let type, def;
@@ -4169,15 +4285,11 @@ class Game {
             positions.needsUpdate = true;
         }
 
-        // Sleeping in wood hut at night
+        // Sleeping in wood hut - fade to black then skip night
         if (this.sleeping) {
             this.sleepTimer -= dt;
-            if (this.sleepTimer <= 0 || !this.isNight) {
-                this.sleeping = false;
-                p.health = Math.min(p.maxHealth, p.health + 20);
-                p.energy = p.maxEnergy;
-                this.notify('You wake up feeling refreshed! +20 HP, full energy', 'success');
-                this.updateUI();
+            if (this.sleepTimer <= 0) {
+                this.finishSleep();
             }
             this.updateUI();
         }
