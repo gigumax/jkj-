@@ -290,6 +290,24 @@
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });
+
+        // Clear old service worker / cache once to load fresh custom SVG sprites
+        const SW_VERSION = 'v2';
+        if (localStorage.getItem('sw-version') !== SW_VERSION) {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    for (const r of regs) r.unregister();
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    for (const k of keys) caches.delete(k);
+                });
+            }
+            localStorage.setItem('sw-version', SW_VERSION);
+            location.reload();
+        }
+
         // Register service worker for PWA (if supported)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
