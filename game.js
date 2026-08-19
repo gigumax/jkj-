@@ -446,6 +446,7 @@ class World {
                 this.getTileHeight(tx + 1, ty + 1)) / 4;
     }
     // Bilinear interpolation of terrain height at exact world tile coordinates
+    // Uses triangle-based (barycentric) interpolation to match the GPU terrain mesh
     getHeightAt(wx, wz) {
         const tx = Math.floor(wx);
         const ty = Math.floor(wz);
@@ -455,9 +456,12 @@ class World {
         const h10 = this.getTileHeight(tx + 1, ty);
         const h01 = this.getTileHeight(tx, ty + 1);
         const h11 = this.getTileHeight(tx + 1, ty + 1);
-        const h0 = h00 * (1 - fx) + h10 * fx;
-        const h1 = h01 * (1 - fx) + h11 * fx;
-        return h0 * (1 - fz) + h1 * fz;
+        // Triangle 1: (tx,ty), (tx+1,ty), (tx,ty+1) — covers fx+fz <= 1
+        if (fx + fz <= 1) {
+            return h00 * (1 - fx - fz) + h10 * fx + h01 * fz;
+        }
+        // Triangle 2: (tx+1,ty), (tx+1,ty+1), (tx,ty+1) — covers fx+fz > 1
+        return h10 * (1 - fz) + h11 * (fx + fz - 1) + h01 * (1 - fx);
     }
 
     queueRespawn(tx, ty, resourceType) {
