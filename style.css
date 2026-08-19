@@ -178,7 +178,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     backdrop-filter: blur(12px);
-    z-index: 20;
+    z-index: 30;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -917,7 +917,7 @@ kbd {
     pointer-events: none;
 }
 #mobile-controls.active {
-    pointer-events: auto;
+    pointer-events: none; /* keep none so clicks pass through to panels */
 }
 
 /* Joystick */
