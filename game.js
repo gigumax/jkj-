@@ -2254,6 +2254,7 @@ class Game {
         this.notify(`Built ${def.name}!`, 'success');
         this.updateInventoryUI();
         this.updateUI();
+        this.renderBuild();
         this.checkQuests();
     }
 
@@ -3132,6 +3133,8 @@ class Game {
         this.notify(`🔬 Researched: ${tech.name}!`, 'success');
         this.updateUI();
         this.renderTech();
+        this.renderBuild();
+        this.renderCrafting();
         this.checkQuests();
     }
 
@@ -3957,10 +3960,9 @@ class Game {
             tempEl.style.color = t < 0 ? '#3498db' : t > 35 ? '#e74c3c' : '#2ecc71';
         }
         this.updateInventoryUI();
-        if (!document.getElementById('panel-crafting').classList.contains('hidden')) this.renderCrafting();
-        if (!document.getElementById('panel-build').classList.contains('hidden')) this.renderBuild();
-        if (!document.getElementById('panel-tech').classList.contains('hidden')) this.renderTech();
-        if (!document.getElementById('panel-inventory').classList.contains('hidden')) this.renderInventoryGrid();
+        // Note: panels (crafting/build/tech/inventory) are NOT re-rendered here
+        // because doing so destroys click event listeners. They are re-rendered
+        // only when opened or when an action (craft/build/research) completes.
     }
 
     updateInventoryUI() {
