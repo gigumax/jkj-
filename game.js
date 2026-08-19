@@ -110,12 +110,12 @@ const ITEMS = {
 
 // --- Creature types ---
 const CREATURE_TYPES = {
-    deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true },
-    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true },
-    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: true,  fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true },
-    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 0.15, aggroWhenAttacked: true, hungerChance: 0.3, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true },
-    rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 6, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true },
-    spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true },
+    deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 12, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true, alertDist: 15, freezeDuration: 1.5, herdAnimal: true, crepuscular: true },
+    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 10, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true, alertDist: 12, freezeDuration: 2, followsParent: true, crepuscular: true },
+    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
+    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 0.1, aggroWhenAttacked: true, hungerChance: 0.15, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
+    rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 8, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true, alertDist: 10, freezeDuration: 1.5, zigzag: true, burrowChance: true },
+    spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true, nocturnal: true },
 };
 
 // --- Crafting recipes ---
@@ -2593,10 +2593,13 @@ class Game {
         if (!tile || !BIOMES[tile.biome].walkable) return;
         // Pick a creature type that fits the biome, weighted by spawnWeight
         let candidates = Object.entries(CREATURE_TYPES).filter(([_, def]) => def.biomes.includes(tile.biome));
-        // At night: bears, spiders, deer, and fawn don't spawn
+        // Time-based spawning: nocturnal creatures spawn at night, diurnal during day
         if (this.isNight) {
-            const nocturnalBlocked = ['bear', 'spider', 'deer', 'fawn'];
-            candidates = candidates.filter(([t]) => !nocturnalBlocked.includes(t));
+            // At night: only nocturnal creatures (spider) + wolves
+            candidates = candidates.filter(([t, d]) => d.nocturnal || t === 'wolf');
+        } else {
+            // During day: block nocturnal creatures (spider)
+            candidates = candidates.filter(([t, d]) => !d.nocturnal);
         }
         if (candidates.length === 0) return;
         const totalWeight = candidates.reduce((sum, [_, d]) => sum + (d.spawnWeight || 1), 0);
