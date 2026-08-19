@@ -1487,11 +1487,15 @@ class Game {
         this.tickAccumulator = 0;
         this.meshUpdateAccumulator = 0;
         this.time = 0;
-        this.dayTime = 0; // 0..1 cycle (0=dawn, 0.5=dusk, day=0..0.5, night=0.5..1)
+        this.dayTime = 0.1; // Start in morning (day, not dawn)
         this.dayDuration = 300; // 5 minutes of day
         this.nightDuration = 180; // 3 minutes of night
         this.totalCycle = this.dayDuration + this.nightDuration; // 480s
         this.isNight = false;
+        this.season = 'summer'; // summer, autumn, winter, spring
+        this.seasonTimer = 0;
+        this.seasonDuration = 600; // 10 minutes per season
+        this.seasonBrightness = { summer: 1.0, autumn: 0.8, winter: 0.6, spring: 0.85 };
         this.sleeping = false;
         this.sleepFade = 0; // 0..1 fade-to-black during sleep
         this.inHut = false;
@@ -2130,6 +2134,11 @@ class Game {
     // --- Interaction ---
     interact() {
         if (this.player.harvesting) return;
+        // Inside hut: raycast against 3D bed / campfire
+        if (this.inHut) {
+            this.interactWithHutInterior();
+            return;
+        }
         const target = this.getTargetTile();
         if (!target) return;
         if (target.distance > INTERACT_RANGE) {
@@ -4245,6 +4254,18 @@ class Game {
         } else if (!this.isNight && wasNight) {
             this.notify('Dawn breaks. Stay safe!', 'info');
         }
+
+        // --- Season progression ---
+        this.seasonTimer += dt;
+        if (this.seasonTimer >= this.seasonDuration) {
+            this.seasonTimer = 0;
+            const seasons = ['summer', 'autumn', 'winter', 'spring'];
+            const idx = seasons.indexOf(this.season);
+            this.season = seasons[(idx + 1) % seasons.length];
+            const seasonNames = { summer: 'Summer', autumn: 'Autumn', winter: 'Winter', spring: 'Spring' };
+            this.notify(`Season changed to ${seasonNames[this.season]}!`, 'info');
+        }
+
         this.updateDayNightLighting();
 
         // --- Weather system ---
