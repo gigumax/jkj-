@@ -4105,38 +4105,3 @@ class Game {
 
 // --- Start ---
 const game = new Game();
-        if (list.children.length === 0) list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No buildings available. Research technology to unlock more!</p>';
-    }
-
-    renderTech() {
-        const list = document.getElementById('tech-list');
-        list.innerHTML = '';
-        for (const tech of TECH_TREE) {
-            const completed = this.completedTech.has(tech.id);
-            const available = this.isTechAvailable(tech.id);
-            const card = document.createElement('div');
-            card.className = 'tech-card' + (completed ? ' completed' : '') + (available ? ' available' : (!completed ? ' locked' : ''));
-            let status;
-            if (completed) status = '<span class="tech-status" style="color:#2ecc71;">✓ Done</span>';
-            else if (available) status = `<span class="tech-status" style="color:#f1c40f;">${tech.cost} RP</span>`;
-            else status = '<span class="tech-status" style="color:#888;">🔒 Locked</span>';
-            const prereqText = tech.prereq.length > 0 ? `<div class="tech-prereq">Requires: ${tech.prereq.map(p => TECH_TREE.find(t=>t.id===p)?.name).join(', ')}</div>` : '';
-            card.innerHTML = `<div class="tech-header"><span class="tech-icon">${tech.icon}</span><span class="tech-name">${tech.name}</span>${status}</div><div class="tech-desc">${tech.desc}</div>${prereqText}`;
-            if (available) { card.style.cursor = 'pointer'; card.addEventListener('click', (e) => { e.stopPropagation(); this.researchTech(tech.id); }); }
-            list.appendChild(card);
-        }
-    }
-
-    updateBuildModeUI() {
-        const el = document.getElementById('build-mode-indicator');
-        if (this.buildMode) {
-            el.classList.remove('hidden');
-            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} — Click to place`;
-        } else {
-            el.classList.add('hidden');
-        }
-    }
-}
-
-// --- Start ---
-const game = new Game();
