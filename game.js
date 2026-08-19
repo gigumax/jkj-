@@ -113,7 +113,7 @@ const ITEMS = {
 const CREATURE_TYPES = {
     deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 12, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true, alertDist: 15, freezeDuration: 1.5, herdAnimal: true, crepuscular: true },
     fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 10, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true, alertDist: 12, freezeDuration: 2, followsParent: true, crepuscular: true },
-    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass','snow'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
+    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
     bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 0.1, aggroWhenAttacked: true, hungerChance: 0.15, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
     rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 8, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true, alertDist: 10, freezeDuration: 1.5, zigzag: true, burrowChance: true },
     spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true, nocturnal: true },
@@ -3683,20 +3683,28 @@ class Game {
                 const nz = c.z + (tdz / tdist) * speed;
                 const tile = this.world.getTile(Math.floor(nx), Math.floor(nz));
                 if (tile && BIOMES[tile.biome].walkable) {
-                    c.x = nx;
-                    c.z = nz;
-                    c.y = this.world.getHeightAt(nx, nz);
-                    c.rotation = Math.atan2(tdx, tdz);
-                    // Walk phase frequency depends on speed state
-                    const phaseSpeed = (c.state === 'flee' || c.state === 'flee_predator' || c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') ? 14 : 7;
-                    c.walkPhase += dt * phaseSpeed;
-                    c.moving = true;
+                    // Check height difference - creatures can't climb steep slopes
+                    // Bears can climb since they live on mountains
+                    const newH = this.world.getHeightAt(nx, nz);
+                    const heightDiff = Math.abs(newH - c.y);
+                    const maxCreatureStep = def.isPredator && def.biomes.includes('mountain') ? 100 : 3;
+                    if (heightDiff <= maxCreatureStep) {
+                        c.x = nx;
+                        c.z = nz;
+                        c.y = newH;
+                        c.rotation = Math.atan2(tdx, tdz);
+                        // Walk phase frequency depends on speed state
+                        const phaseSpeed = (c.state === 'flee' || c.state === 'flee_predator' || c.state === 'chase' || c.state === 'hunt' || c.state === 'defend') ? 14 : 7;
+                        c.walkPhase += dt * phaseSpeed;
+                        c.moving = true;
+                    } else {
+                        c.moving = false;
+                    }
                 } else {
                     c.moving = false;
                 }
             } else {
                 c.moving = false;
-            }
             }
 
             // Attack player
