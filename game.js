@@ -68,6 +68,7 @@ const RESOURCE_RESPAWN = {
 // Edible items have `edible: true` and effects applied only when eaten (press F)
 const ITEMS = {
     wood:        { icon: '🪵', name: 'Wood', attackPower: 3 },
+    plank:       { icon: '🪵', name: 'Plank', attackPower: 3 },
     stone:       { icon: '🪨', name: 'Stone', attackPower: 4 },
     food:        { icon: '🫐', name: 'Food', edible: true, energy: 15, health: 0 },
     red_mushroom:    { icon: '🍄', name: 'Red Mushroom', edible: true, energy: 20, health: 0 },
@@ -87,7 +88,6 @@ const ITEMS = {
     oil:         { icon: '🛢️', name: 'Oil' },
     soil:         { icon: '🟫', name: 'Soil', attackPower: 3 },
     grass:        { icon: '🌱', name: 'Grass', attackPower: 1 },
-    leather:     { icon: '🟫', name: 'Leather', attackPower: 3 },
     brick:       { icon: '🧱', name: 'Brick', attackPower: 6 },
     gear:        { icon: '⚙️', name: 'Gear', attackPower: 4 },
     circuit:     { icon: '🔌', name: 'Circuit', attackPower: 3 },
@@ -100,7 +100,6 @@ const ITEMS = {
     iron_axe:    { icon: '🪓', name: 'Iron Axe',       tool: 'axe',     power: 3, attackPower: 20 },
     raw_meat:    { icon: '🥩', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
     cooked_meat: { icon: '🍖', name: 'Cooked Meat', edible: true, energy: 25, health: 5, attackPower: 2 },
-    leather:     { icon: '🟫', name: 'Leather', attackPower: 3 },
     fang:        { icon: '🦷', name: 'Fang', attackPower: 7 },
     hunting_gun: { icon: '🔫', name: 'Hunting Gun', tool: 'gun', power: 0, attackPower: 35, ranged: true, range: 30 },
     spider_web:  { icon: '🕸️', name: 'Spider Web' },
@@ -2297,9 +2296,10 @@ class Game {
                         if (nt && nt.resource) {
                             const resDef = RESOURCE_TYPES[nt.resource];
                             for (const [item, amt] of Object.entries(resDef.yields)) this.player.addItem(item, amt);
+                            const resType = nt.resource;
                             nt.resource = null; nt.resourceAmount = 0;
                             this.removeResourceMesh(x+dx, y+dy);
-                            this.world.queueRespawn(x+dx, y+dy, nt.resource || 'stone');
+                            this.world.queueRespawn(x+dx, y+dy, resType || 'stone');
                             bd.active = true; break;
                         }
                     }
@@ -2589,6 +2589,9 @@ class Game {
         for (let i = this.creatures.length - 1; i >= 0; i--) {
             const c = this.creatures[i];
             const def = CREATURE_TYPES[c.type];
+            const dx = p.x - c.x;
+            const dz = p.z - c.z;
+            const distToPlayer = Math.sqrt(dx * dx + dz * dz);
             c.stateTimer -= dt;
             c.attackCooldown = Math.max(0, c.attackCooldown - dt);
             c.huntCooldown = Math.max(0, c.huntCooldown - dt);
@@ -2752,10 +2755,11 @@ class Game {
                                 const wz = ctz + sy + 0.5;
                                 const bd = Math.sqrt((wx - c.x) ** 2 + (wz - c.z) ** 2);
                                 if (bd < 2) {
+                                    const berryType = t.resource;
                                     t.resource = null;
                                     t.resourceAmount = 0;
                                     this.removeResourceMesh(ctx + sx, ctz + sy);
-                                    this.world.queueRespawn(ctx + sx, ctz + sy, 'bush');
+                                    this.world.queueRespawn(ctx + sx, ctz + sy, berryType);
                                     c.berryTimer = 25 + Math.random() * 20;
                                     foundBerry = true;
                                 } else {
@@ -3440,6 +3444,7 @@ class Game {
 
     update(dt) {
         const p = this.player;
+        this.time += dt;
 
         // Check if player is pounced by a wolf
         const isPounced = this.creatures.some(c => c.pounced);
@@ -3701,8 +3706,6 @@ class Game {
         }
 
         // --- Survival mechanics ---
-        // Energy drain
-        p.energy = Math.max(0, p.energy - dt * 0.3);
         // Hunger decays slowly
         p.hunger = Math.max(0, p.hunger - dt * 0.4);
         // Thirst decays faster, especially in hot biomes
