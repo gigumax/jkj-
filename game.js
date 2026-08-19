@@ -31,7 +31,7 @@ const RESOURCE_TYPES = {
     red_berries:   { icon: '[r]', name: 'Red Berries', yields: { red_berries: 2 }, biome: ['forest','grass','sand'], hardness: 0, forage: true, forageType: 'edible' },
     nightshade:    { icon: '[B]', name: 'Dark Berries', yields: { nightshade: 1 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'deadly' },
     cactus_fruit:  { icon: '[C]', name: 'Cactus Fruit', yields: { cactus_fruit: 2 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'edible' },
-    glowing_plant: { icon: 'Stars', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
+    glowing_plant: { icon: '[G]', name: 'Glowing Plant', yields: { glowing_plant: 3 }, biome: ['snow','mountain'], hardness: 0, forage: true, forageType: 'edible' },
     thorn_bush:    { icon: '[g]', name: 'Thorn Bush', yields: { thorn_bush: 1 }, biome: ['desert','sand'], hardness: 0, forage: true, forageType: 'poisonous' },
     stone:   { icon: '[R]', name: 'Stone',   yields: { stone: 3 },      biome: ['mountain','grass','forest'], hardness: 1 },
     coal:    { icon: '[C]', name: 'Coal',    yields: { coal: 3 },       biome: ['mountain'],       hardness: 2 },
@@ -40,7 +40,7 @@ const RESOURCE_TYPES = {
     gold:    { icon: '[G]', name: 'Gold',    yields: { gold_ore: 2 },   biome: ['mountain'],       hardness: 4 },
     oil:     { icon: '[O]', name: 'Oil',     yields: { oil: 2 },        biome: ['desert','snow'],  hardness: 3 },
     soil:         { icon: '[S]', name: 'Soil', yields: { soil: 2 }, biome: ['forest','grass'], hardness: 0 },
-    grass:        { icon: '', name: 'Grass', yields: { grass: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
+    grass:        { icon: '[g]', name: 'Grass', yields: { grass: 2 }, biome: ['forest','grass'], hardness: 0, forage: true, forageType: 'edible' },
 };
 
 // Resource respawn times (seconds)
@@ -74,10 +74,11 @@ const ITEMS = {
     red_mushroom:    { icon: '[M]', name: 'Red Mushroom', edible: true, energy: 20, health: 0 },
     red_berries:     { icon: '[r]', name: 'Red Berries', edible: true, energy: 12, health: 0 },
     cactus_fruit:    { icon: '[C]', name: 'Cactus Fruit', edible: true, energy: 12, health: 0 },
-    glowing_plant:   { icon: 'Stars', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
+    glowing_plant:   { icon: '[G]', name: 'Glowing Plant', edible: true, energy: 18, health: 0 },
     purple_mushroom: { icon: '[P]', name: 'Purple Mushroom', edible: true, energy: -10, health: -15 },
     thorn_bush:      { icon: '[g]', name: 'Thorn Bush', edible: true, energy: -10, health: -15 },
     nightshade:      { icon: '[B]', name: 'Dark Berries', edible: true, energy: 0, health: -50 },
+    leather:     { icon: '[L]', name: 'Leather', attackPower: 5 },
     coal:        { icon: '[C]', name: 'Coal' },
     iron_ore:    { icon: '[I]', name: 'Iron Ore' },
     iron_ingot:  { icon: '[Fe]', name: 'Iron Ingot' },
@@ -98,14 +99,14 @@ const ITEMS = {
     wood_axe:    { icon: '[A]', name: 'Wooden Axe',     tool: 'axe',     power: 1, attackPower: 10 },
     stone_axe:   { icon: '[A]', name: 'Stone Axe',      tool: 'axe',     power: 2, attackPower: 14 },
     iron_axe:    { icon: '[A]', name: 'Iron Axe',       tool: 'axe',     power: 3, attackPower: 20 },
-    raw_meat:    { icon: '', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
+    raw_meat:    { icon: '[m]', name: 'Raw Meat', edible: true, energy: 8, health: -5, attackPower: 2 },
     cooked_meat: { icon: '[M]', name: 'Cooked Meat', edible: true, energy: 25, health: 5, attackPower: 2 },
     fang:        { icon: '[F]', name: 'Fang', attackPower: 7 },
     hunting_gun: { icon: '[G]', name: 'Hunting Gun', tool: 'gun', power: 0, attackPower: 35, ranged: true, range: 30 },
     spider_web:  { icon: '[W]', name: 'Spider Web' },
     fishing_rod: { icon: '[R]', name: 'Fishing Rod', tool: 'fishing' },
     raw_fish:    { icon: '[f]', name: 'Raw Fish', edible: true, energy: 10, health: -3, attackPower: 2 },
-    cooked_fish: { icon: '', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
+    cooked_fish: { icon: '[F]', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
 };
 
 // --- Creature types ---
@@ -166,7 +167,7 @@ const BUILDINGS = {
         color: 0x888888, size: { w: 2, h: 3, d: 2 },
     },
     power_plant: {
-        icon: '', name: 'Power Plant', cost: { iron_ingot: 8, copper_ingot: 4, gear: 5 }, tech: 'power_generation',
+        icon: '[E]', name: 'Power Plant', cost: { iron_ingot: 8, copper_ingot: 4, gear: 5 }, tech: 'power_generation',
         desc: 'Generates power from coal', power: 50, powerUse: 0,
         color: 0x8e44ad, size: { w: 3, h: 4, d: 3 },
         fuel: { coal: 1 }, fuelTime: 10,
@@ -177,7 +178,7 @@ const BUILDINGS = {
         color: 0x1a5276, size: { w: 3, h: 0.3, d: 2 },
     },
     research_lab: {
-        icon: '', name: 'Research Lab', cost: { iron_ingot: 10, copper_ingot: 5, circuit: 3 }, tech: 'scientific_method',
+        icon: '[R]', name: 'Research Lab', cost: { iron_ingot: 10, copper_ingot: 5, circuit: 3 }, tech: 'scientific_method',
         desc: 'Generates research points', power: 0, powerUse: 15,
         color: 0x2ecc71, size: { w: 3, h: 3, d: 3 },
         researchRate: 1,
@@ -205,8 +206,8 @@ const TECH_TREE = [
     { id: 'smelting',          icon: '[!]', name: 'Smelting',           cost: 10,  prereq: ['stone_tools'],      desc: 'Unlock furnace to smelt ore' },
     { id: 'iron_tools',        icon: '[I]', name: 'Iron Tools',         cost: 15,  prereq: ['smelting'],         desc: 'Unlock iron pickaxe & axe' },
     { id: 'machinery',         icon: '[g]', name: 'Machinery',          cost: 25,  prereq: ['iron_tools'],       desc: 'Craft gears for machines' },
-    { id: 'power_generation',  icon: '', name: 'Power Generation',   cost: 30,  prereq: ['machinery'],        desc: 'Build power plants' },
-    { id: 'scientific_method', icon: '', name: 'Scientific Method',  cost: 35,  prereq: ['machinery'],        desc: 'Build research labs' },
+    { id: 'power_generation',  icon: '[E]', name: 'Power Generation',   cost: 30,  prereq: ['machinery'],        desc: 'Build power plants' },
+    { id: 'scientific_method', icon: '[R]', name: 'Scientific Method',  cost: 35,  prereq: ['machinery'],        desc: 'Build research labs' },
     { id: 'mining_automation', icon: '[P]', name: 'Mining Automation',  cost: 40,  prereq: ['power_generation'], desc: 'Build mining drills' },
     { id: 'electronics',       icon: '[P]', name: 'Electronics',        cost: 50,  prereq: ['power_generation','scientific_method'], desc: 'Craft circuits & batteries' },
     { id: 'oil_processing',    icon: '[O]', name: 'Oil Processing',     cost: 45,  prereq: ['machinery'],        desc: 'Build oil pumps' },
@@ -226,8 +227,8 @@ const QUESTS = [
     { id: 'build_furnace',  title: 'Build a Furnace', desc: 'Craft bricks, then build a [F] furnace',  check: (g) => g.countBuildings('furnace') > 0,    reward: 5 },
     { id: 'smelt_iron',     title: 'Smelt Iron',     desc: 'Get iron ore + coal, use furnace to smelt', check: (g) => g.player.hasItem('iron_ingot', 1), reward: 5 },
     { id: 'research_iron',  title: 'Research Iron Tools', desc: 'Unlock Iron Tools in the tech tree',    check: (g) => g.completedTech.has('iron_tools'),  reward: 8 },
-    { id: 'build_lab',      title: 'Build a Research Lab', desc: 'Build a  research lab for auto RP',   check: (g) => g.countBuildings('research_lab') > 0, reward: 10 },
-    { id: 'build_power',    title: 'Generate Power',  desc: 'Build a  power plant to power machines', check: (g) => g.countBuildings('power_plant') > 0, reward: 10 },
+    { id: 'build_lab',      title: 'Build a Research Lab', desc: 'Build a research lab for auto RP',   check: (g) => g.countBuildings('research_lab') > 0, reward: 10 },
+    { id: 'build_power',    title: 'Generate Power',  desc: 'Build a power plant to power machines', check: (g) => g.countBuildings('power_plant') > 0, reward: 10 },
     { id: 'build_drill',    title: 'Automate Mining', desc: 'Build a [P] mining drill near resources',   check: (g) => g.countBuildings('mining_drill') > 0, reward: 12 },
     { id: 'research_electronics', title: 'Research Electronics', desc: 'Unlock Electronics in the tech tree', check: (g) => g.completedTech.has('electronics'), reward: 15 },
     { id: 'build_solar',    title: 'Go Solar',       desc: 'Build a [S] solar panel for free power',   check: (g) => g.countBuildings('solar_panel') > 0, reward: 15 },
@@ -1785,7 +1786,7 @@ class Game {
         this.updateQuestUI();
         this.lastTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
-        this.notify(' Welcome to the 3D world!', 'info');
+        this.notify('Welcome to the 3D world!', 'info');
         if (!this.mobileMode) this.requestPointerLock();
         if (!this.pointerLocked && !this.mobileMode) {
             const prompt = document.getElementById('pointer-lock-prompt');
@@ -2162,14 +2163,14 @@ class Game {
             this.player.energy = Math.max(0, this.player.energy + def.energy);
         }
         if (def.health < 0 && def.health <= -40) {
-            this.notify(` The ${def.name} was deadly! ${def.health} HP!`, 'warning');
+            this.notify(`The ${def.name} was deadly! ${def.health} HP!`, 'warning');
         } else if (def.health < 0) {
-            this.notify(` The ${def.name} was poisonous! ${def.health} HP, ${def.energy} energy`, 'warning');
+            this.notify(`The ${def.name} was poisonous! ${def.health} HP, ${def.energy} energy`, 'warning');
         } else {
-            this.notify(` Ate ${def.name}: +${def.energy} energy`, 'success');
+            this.notify(`Ate ${def.name}: +${def.energy} energy`, 'success');
         }
         if (wasUndiscovered) {
-            this.notify(` You discovered: ${def.name}!`, 'info');
+            this.notify(`You discovered: ${def.name}!`, 'info');
         }
         this.updateInventoryUI();
         this.updateUI();
@@ -2250,7 +2251,7 @@ class Game {
                 this.player.removeItem('raw_fish', 1);
                 this.player.removeItem('wood', 1);
                 this.player.addItem('cooked_fish', 1);
-                this.notify(' Cooked fish on the campfire!', 'success');
+                this.notify('Cooked fish on the campfire!', 'success');
                 cooked = true;
             }
             if (cooked) {
@@ -2260,7 +2261,7 @@ class Game {
             }
             if (this.player.energy < this.player.maxEnergy) {
                 this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + 20);
-                this.notify(' Restored energy by the campfire', 'success');
+                this.notify('Restored energy by the campfire', 'success');
                 this.updateUI();
             } else { this.notify('Energy already full', 'info'); }
         } else if (tile.building === 'wood_hut') {
@@ -2270,7 +2271,7 @@ class Game {
                 } else {
                     this.sleeping = true;
                     this.sleepTimer = 10;
-                    this.notify(' Sleeping... Rest until dawn.', 'info');
+                    this.notify('Sleeping... Rest until dawn.', 'info');
                     this.updateUI();
                 }
             } else {
@@ -2810,7 +2811,7 @@ class Game {
                                 if (wd < 2) {
                                     // At water - try to catch fish
                                     if (Math.random() < 0.5) {
-                                        this.notify(' The bear catches a fish from the water!', 'info');
+                                        this.notify('The bear catches a fish from the water!', 'info');
                                     }
                                     c.fishTimer = 30 + Math.random() * 40;
                                     foundWater = true;
@@ -2893,7 +2894,7 @@ class Game {
                 if (c.starveTimer <= 0) {
                     c.aggroed = true; // starving wolf attacks player
                     c.starveTimer = 90;
-                    if (distToPlayer < 30) this.notify(' A starving wolf is hunting you!', 'warning');
+                    if (distToPlayer < 30) this.notify('A starving wolf is hunting you!', 'warning');
                 }
             }
 
@@ -3458,7 +3459,7 @@ class Game {
         if (this.researchPoints < tech.cost) { this.notify(`Need ${tech.cost} RP (have ${Math.floor(this.researchPoints)})`, 'warning'); return; }
         this.researchPoints -= tech.cost;
         this.completedTech.add(techId);
-        this.notify(` Researched: ${tech.name}!`, 'success');
+        this.notify(`Researched: ${tech.name}!`, 'success');
         this.updateUI();
         this.renderTech();
         this.renderBuild();
@@ -3496,14 +3497,14 @@ class Game {
         const quest = QUESTS[this.currentQuestIndex];
         if (quest.check(this)) {
             this.researchPoints += quest.reward;
-            this.notify(` Quest complete: ${quest.title}! +${quest.reward} RP`, 'success');
+            this.notify(`Quest complete: ${quest.title}! +${quest.reward} RP`, 'success');
             this.currentQuestIndex++;
             this.updateQuestUI();
             if (this.currentQuestIndex < QUESTS.length) {
                 const next = QUESTS[this.currentQuestIndex];
-                this.notify(` New quest: ${next.title}`, 'info');
+                this.notify(`New quest: ${next.title}`, 'info');
             } else {
-                this.notify(' All quests complete! Keep building your empire!', 'success');
+                this.notify('All quests complete! Keep building your empire!', 'success');
             }
         }
     }
@@ -3516,7 +3517,7 @@ class Game {
             return;
         }
         const quest = QUESTS[this.currentQuestIndex];
-        text.innerHTML = `<div class="quest-title">${quest.title}</div><div class="quest-desc">${quest.desc}</div><div class="quest-progress">Quest ${this.currentQuestIndex + 1} / ${QUESTS.length}  Reward: ${quest.reward} RP</div>`;
+        text.innerHTML = `<div class="quest-title">${quest.title}</div><div class="quest-desc">${quest.desc}</div><div class="quest-progress">Quest ${this.currentQuestIndex + 1} / ${QUESTS.length} - Reward: ${quest.reward} RP</div>`;
         tracker.classList.add('visible');
     }
 
@@ -3569,13 +3570,13 @@ class Game {
         const controls = document.getElementById('mobile-controls');
         const mobInfo = document.getElementById('mobile-controls-info');
         if (this.mobileMode) {
-            btn.textContent = ' Mobile Mode: On';
+            btn.textContent = 'Mobile Mode: On';
             btn.classList.add('active');
             controls.classList.remove('hidden');
             controls.classList.add('active');
             if (mobInfo) mobInfo.style.display = '';
         } else {
-            btn.textContent = ' Mobile Mode: Off';
+            btn.textContent = 'Mobile Mode: Off';
             btn.classList.remove('active');
             controls.classList.remove('active');
             controls.classList.add('hidden');
@@ -3741,7 +3742,7 @@ class Game {
             this.mobileMode = true;
             const btn = document.getElementById('mobile-toggle');
             const controls = document.getElementById('mobile-controls');
-            btn.textContent = ' Mobile Mode: On';
+            btn.textContent = 'Mobile Mode: On';
             btn.classList.add('active');
             controls.classList.remove('hidden');
             controls.classList.add('active');
@@ -4164,7 +4165,7 @@ class Game {
                 this.sleeping = false;
                 p.health = Math.min(p.maxHealth, p.health + 20);
                 p.energy = p.maxEnergy;
-                this.notify(' You wake up feeling refreshed! +20 HP, full energy', 'success');
+                this.notify('You wake up feeling refreshed! +20 HP, full energy', 'success');
                 this.updateUI();
             }
             this.updateUI();
@@ -4406,7 +4407,7 @@ class Game {
         const tempEl = document.getElementById('temp-display');
         if (tempEl) {
             const t = Math.round(this.player.temperature);
-            tempEl.textContent = `${t} deg C`;
+            tempEl.textContent = `${t}C`;
             tempEl.style.color = t < 0 ? '#3498db' : t > 35 ? '#e74c3c' : '#2ecc71';
         }
         const weatherEl = document.getElementById('weather-display');
@@ -4449,7 +4450,7 @@ class Game {
 
         const pageLabel = document.createElement('div');
         pageLabel.style.cssText = 'text-align:center;color:#aaa;font-size:12px;margin-bottom:8px;';
-        pageLabel.textContent = `Page ${this.inventoryPage + 1} / ${totalPages}  Press 1-9 to switch pages`;
+        pageLabel.textContent = `Page ${this.inventoryPage + 1} / ${totalPages} - Press 1-9 to switch pages`;
         grid.appendChild(pageLabel);
 
         if (pageItems.length === 0) {
@@ -4553,7 +4554,7 @@ class Game {
         const el = document.getElementById('build-mode-indicator');
         if (this.buildMode) {
             el.classList.remove('hidden');
-            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name}  Click to place`;
+            document.getElementById('build-mode-name').textContent = `Placing: ${BUILDINGS[this.buildMode].icon} ${BUILDINGS[this.buildMode].name} - Click to place`;
         } else {
             el.classList.add('hidden');
         }
