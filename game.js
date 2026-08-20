@@ -1828,6 +1828,34 @@ class Game {
         this.playerMesh = ModelFactory.createPlayer();
         this.playerMesh.traverse(c => { if (c.isMesh) c.castShadow = true; });
         this.scene.add(this.playerMesh);
+
+        // First-person hand + tool for climbing and mining
+        this.handGroup = new THREE.Group();
+        const hand = new THREE.Mesh(
+            new THREE.SphereGeometry(0.25, 10, 10),
+            new THREE.MeshLambertMaterial({ color: 0xffccaa })
+        );
+        hand.castShadow = true;
+        this.handGroup.add(hand);
+
+        const toolGroup = new THREE.Group();
+        toolGroup.name = 'tool';
+        const tool = new THREE.Mesh(
+            new THREE.BoxGeometry(0.12, 1.0, 0.12),
+            new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+        );
+        tool.position.set(0, 0.5, 0.05);
+        toolGroup.add(tool);
+        const toolHead = new THREE.Mesh(
+            new THREE.BoxGeometry(0.35, 0.15, 0.1),
+            new THREE.MeshLambertMaterial({ color: 0x999999 })
+        );
+        toolHead.position.set(0.15, 0.95, 0.05);
+        toolGroup.add(toolHead);
+        this.handGroup.add(toolGroup);
+
+        this.handGroup.visible = false;
+        this.scene.add(this.handGroup);
     }
 
     // --- Start game ---
@@ -2565,9 +2593,10 @@ class Game {
             this.notify(`Need a stronger tool to harvest ${resDef.name}!`, 'warning');
             return;
         }
-        let baseTime = resDef.hardness * 1.5 + 0.5;
-        if (toolType === 'pickaxe' && ['stone','coal','iron','copper','gold','oil'].includes(tile.resource)) baseTime *= 0.5;
-        if (toolType === 'axe' && tile.resource === 'tree') baseTime *= 0.5;
+        let baseTime = resDef.hardness * 2.5 + 1.0;
+        if (toolType === 'pickaxe' && ['stone','coal','iron','copper','gold','oil'].includes(tile.resource)) baseTime *= 0.6;
+        if (toolType === 'axe' && tile.resource === 'tree') baseTime *= 0.6;
+        if (!toolType && resDef.hardness > 0) baseTime *= 3; // wrong tool / bare hands are very slow
         this.player.harvesting = { tx, ty, progress: 0, total: baseTime, resource: tile.resource };
     }
 
@@ -4287,7 +4316,7 @@ class Game {
             let speed = PLAYER_SPEED * dt;
             if (isSprinting && !isSwimming) speed *= 1.8;
             if (isSwimming) speed *= 0.5; // slower in water
-            if (isClimbing) speed *= 0.5; // climbing is slower than walking
+            if (isClimbing) speed *= 0.25; // climbing is much slower than walking
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
@@ -4387,7 +4416,7 @@ class Game {
         const targetY = groundY + p.yOffset;
         if (p.isClimbing) {
             // Climb at a controlled vertical rate instead of snapping to full height
-            const CLIMB_RISE_SPEED = 3.5; // units/sec
+            const CLIMB_RISE_SPEED = 1.2; // units/sec
             const delta = targetY - p.y;
             const step = Math.sign(delta) * Math.min(Math.abs(delta), CLIMB_RISE_SPEED * dt);
             p.y += step;
@@ -4691,6 +4720,66 @@ class Game {
         } else if (this.buildPreview) {
             this.scene.remove(this.buildPreview);
             this.buildPreview = null;
+        }
+        this.updateHand(dt);
+    }
+
+    updateHand(dt) {
+        if (!this.handGroup) return;
+        const p = this.player;
+        let target = null;
+        let isMining = false;
+
+        if (p.harvesting && !p.harvesting.fishing) {
+            // Mining: place the hand near the resource being harvested
+            const key = `${p.harvesting.tx},${p.harvesting.ty}`;
+            const mesh = this.resourceMeshes.get(key);
+            if (mesh) {
+                target = mesh.position.clone();
+            } else {
+                const h = this.world.getTileCenterHeight(p.harvesting.tx, p.harvesting.ty);
+                target = new THREE.Vector3(
+                    p.harvesting.tx * TILE_SIZE + TILE_SIZE / 2,
+                    h,
+                    p.harvesting.ty * TILE_SIZE + TILE_SIZE / 2
+                );
+            }
+            isMining = true;
+        } else if (p.isClimbing) {
+            // Climbing: raycast to a mountain bump in front/right of the camera
+            const localDir = new THREE.Vector3(0.5, -0.4, -0.7).normalize();
+            const worldDir = localDir.applyQuaternion(this.camera.quaternion);
+            const raycaster = new THREE.Raycaster(this.camera.position, worldDir);
+            const hits = raycaster.intersectObject(this.terrainMesh, false);
+            if (hits && hits.length > 0 && hits[0].distance < 5) {
+                target = hits[0].point;
+                const { tx, ty } = this.world.worldToTile(target.x, target.z);
+                const tile = this.world.getTile(tx, ty);
+                if (!tile || !['mountain', 'snow'].includes(tile.biome)) target = null;
+            }
+        }
+
+        const tool = this.handGroup.getObjectByName('tool');
+        if (tool) tool.visible = isMining;
+
+        if (target) {
+            this.handGroup.visible = true;
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+            if (isMining) {
+                const swing = (Math.sin(this.time * 8) + 1) * 0.5;
+                this.handGroup.position.copy(target)
+                    .add(right.multiplyScalar(0.6))
+                    .add(new THREE.Vector3(0, -0.1 + swing * 0.2, 0));
+                this.handGroup.lookAt(target);
+                this.handGroup.rotateZ(swing * 0.4);
+            } else {
+                this.handGroup.position.copy(target)
+                    .add(right.multiplyScalar(0.25))
+                    .add(new THREE.Vector3(0, 0.05, 0));
+                this.handGroup.lookAt(this.camera.position);
+            }
+        } else {
+            this.handGroup.visible = false;
         }
     }
 
