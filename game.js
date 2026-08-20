@@ -3959,6 +3959,55 @@ class Game {
                 c.stateTimer = 3 + Math.random() * 4;
             }
 
+            // --- Arrival detection for foraging states ---
+            if (c.state === 'seek_grass' && def.eatsGrass) {
+                const ax = c.targetX - c.x, az = c.targetZ - c.z;
+                const adist = Math.sqrt(ax * ax + az * az);
+                if (adist < 1.5) {
+                    // Arrived at grass - start grazing
+                    c.grazing = true;
+                    c.grazeTimer = 5 + Math.random() * 5;
+                    c.state = 'graze';
+                    c.targetX = c.x;
+                    c.targetZ = c.z;
+                    // Consume the grass resource
+                    const ctx = Math.floor(c.targetX), ctz = Math.floor(c.targetZ);
+                    const ct = this.world.getTile(ctx, ctz);
+                    if (ct && ct.resource === 'grass') {
+                        ct.resource = null;
+                        ct.resourceAmount = 0;
+                        this.removeResourceMesh(ctx, ctz);
+                        this.world.queueRespawn(ctx, ctz, 'grass');
+                    }
+                } else if (c.stateTimer <= 0) {
+                    // Timed out - give up and wander
+                    c.state = 'idle';
+                    c.stateTimer = 2;
+                }
+            }
+            if (c.state === 'seek_berries' && def.eatsBerries) {
+                const ax = c.targetX - c.x, az = c.targetZ - c.z;
+                const adist = Math.sqrt(ax * ax + az * az);
+                if (adist < 2) {
+                    // Arrived at berries - eat them
+                    const ctx = Math.floor(c.targetX), ctz = Math.floor(c.targetZ);
+                    const ct = this.world.getTile(ctx, ctz);
+                    if (ct && (ct.resource === 'bush' || ct.resource === 'red_berries')) {
+                        const berryType = ct.resource;
+                        ct.resource = null;
+                        ct.resourceAmount = 0;
+                        this.removeResourceMesh(ctx, ctz);
+                        this.world.queueRespawn(ctx, ctz, berryType);
+                        c.berryTimer = 25 + Math.random() * 20;
+                    }
+                    c.state = 'idle';
+                    c.stateTimer = 2;
+                } else if (c.stateTimer <= 0) {
+                    c.state = 'idle';
+                    c.stateTimer = 2;
+                }
+            }
+
             // Pounce timer countdown
             if (c.pounced) {
                 c.pounceTimer -= dt;
