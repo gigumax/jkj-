@@ -3,6 +3,8 @@
 //  Three.js powered 3D edition
 // ============================================================
 
+import { OnlineManager } from './online-manager.js';
+
 // --- Constants ---
 const TILE_SIZE = 4;       // 3D world units per tile
 window.TILE_SIZE = TILE_SIZE;
@@ -116,12 +118,12 @@ const ITEMS = {
 // --- Creature types ---
 const CREATURE_TYPES = {
     deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 12, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true, alertDist: 15, freezeDuration: 1.5, herdAnimal: true, crepuscular: true },
-    fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 10, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true, alertDist: 12, freezeDuration: 2, followsParent: true, crepuscular: true },
-    wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
-    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 2.0, aggroWhenAttacked: true, hungerChance: 0.05, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
-    fish:    { name: 'Fish',     health: 1,  speed: 1.5, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_fish: 1 }, xp: 1, biomes: ['water'], spawnWeight: 4, isPrey: false, inWater: true },
-    rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 8, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true, alertDist: 10, freezeDuration: 1.5, zigzag: true, burrowChance: true },
-    spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true, nocturnal: true },
+    fawn:    { name: 'Fawn',     health: 8,  speed: 2.0, damage: 0,  hostile: false, fleeDist: 10, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true, alertDist: 12, freezeDuration: 2, followsParent: true, crepuscular: true },
+    wolf:    { name: 'Wolf',     health: 80, speed: 2.0, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
+    bear:    { name: 'Bear',     health: 150, speed: 1.6, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 2.0, aggroWhenAttacked: true, hungerChance: 0.05, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
+    fish:    { name: 'Fish',     health: 1,  speed: 0.8, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_fish: 1 }, xp: 1, biomes: ['water'], spawnWeight: 4, isPrey: false, inWater: true },
+    rabbit:  { name: 'Rabbit',   health: 8,  speed: 1.5, damage: 0,  hostile: false, fleeDist: 8, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true, alertDist: 10, freezeDuration: 1.5, zigzag: true, burrowChance: true },
+    spider:  { name: 'Spider',   health: 10, speed: 1.0, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true, nocturnal: true },
 };
 
 // --- Crafting recipes ---
@@ -204,22 +206,22 @@ const BUILDINGS = {
     wood_hut: {
         icon: 'wood_hut', name: 'Wood Hut', cost: { plank: 10 }, tech: null,
         desc: 'Sleep here at night to restore health & energy', power: 0, powerUse: 0,
-        color: 0x8B6B47, size: { w: 3, h: 2.5, d: 3 },
+        color: 0x8B4513, size: { w: 3, h: 2.5, d: 3 },
     },
 };
 
-// --- Technology tree ---
+// --- Technology Tree ---
 const TECH_TREE = [
-    { id: 'stone_tools',       icon: 'stone_tools', name: 'Stone Tools',       cost: 5,   prereq: [],                  desc: 'Unlock stone pickaxe & axe' },
-    { id: 'smelting',          icon: 'smelting', name: 'Smelting',           cost: 10,  prereq: ['stone_tools'],      desc: 'Unlock furnace to smelt ore' },
-    { id: 'iron_tools',        icon: 'iron_tools', name: 'Iron Tools',         cost: 15,  prereq: ['smelting'],         desc: 'Unlock iron pickaxe & axe' },
-    { id: 'machinery',         icon: 'machinery', name: 'Machinery',          cost: 25,  prereq: ['iron_tools'],       desc: 'Craft gears for machines' },
-    { id: 'power_generation',  icon: 'power_generation', name: 'Power Generation',   cost: 30,  prereq: ['machinery'],        desc: 'Build power plants' },
-    { id: 'scientific_method', icon: 'scientific_method', name: 'Scientific Method',  cost: 35,  prereq: ['machinery'],        desc: 'Build research labs' },
-    { id: 'mining_automation', icon: 'mining_automation', name: 'Mining Automation',  cost: 40,  prereq: ['power_generation'], desc: 'Build mining drills' },
+    { id: 'stone_tools',       icon: 'stone_tools', name: 'Stone Tools',       cost: 5,   prereq: [],                       desc: 'Craft stone pickaxes and axes' },
+    { id: 'smelting',          icon: 'smelting', name: 'Smelting',             cost: 10,  prereq: ['stone_tools'],          desc: 'Build furnaces to smelt ore' },
+    { id: 'iron_tools',        icon: 'iron_tools', name: 'Iron Tools',         cost: 15,  prereq: ['smelting'],             desc: 'Craft iron pickaxes, axes, and guns' },
+    { id: 'machinery',         icon: 'machinery', name: 'Machinery',           cost: 25,  prereq: ['iron_tools'],           desc: 'Craft gears and build bikes' },
+    { id: 'power_generation',  icon: 'power_generation', name: 'Power Generation', cost: 30, prereq: ['machinery'],            desc: 'Build power plants' },
+    { id: 'scientific_method', icon: 'scientific_method', name: 'Scientific Method', cost: 35, prereq: ['machinery'],           desc: 'Build research labs' },
+    { id: 'mining_automation', icon: 'mining_automation', name: 'Mining Automation',  cost: 40,  prereq: ['power_generation'],     desc: 'Build mining drills' },
+    { id: 'oil_processing',    icon: 'oil_processing', name: 'Oil Processing',     cost: 45,  prereq: ['machinery'],            desc: 'Build oil pumps' },
     { id: 'electronics',       icon: 'electronics', name: 'Electronics',        cost: 50,  prereq: ['power_generation','scientific_method'], desc: 'Craft circuits & batteries' },
-    { id: 'oil_processing',    icon: 'oil_processing', name: 'Oil Processing',     cost: 45,  prereq: ['machinery'],        desc: 'Build oil pumps' },
-    { id: 'renewable_energy',  icon: 'renewable_energy', name: 'Renewable Energy',   cost: 60,  prereq: ['electronics'],      desc: 'Build solar panels' },
+    { id: 'renewable_energy',  icon: 'renewable_energy', name: 'Renewable Energy',   cost: 60,  prereq: ['electronics'],          desc: 'Build solar panels' },
     { id: 'automation',        icon: 'automation', name: 'Automation',         cost: 70,  prereq: ['electronics','mining_automation'], desc: 'Build assemblers' },
 ];
 
@@ -411,26 +413,29 @@ class World {
         }
     }
     generateBearCaves() {
-        // Place bear caves on mountain tiles adjacent to lower-elevation tiles (mountain sides)
+        // Place bear caves at the base of mountains (lowland tile adjacent to a mountain)
         for (let y = 2; y < WORLD_H - 2; y++) {
             for (let x = 2; x < WORLD_W - 2; x++) {
                 const tile = this.tiles[y][x];
-                if (tile.biome !== 'mountain') continue;
-                // Check if this is a mountain side (adjacent to non-mountain, non-water walkable tile)
+                if (tile.biome === 'mountain' || tile.biome === 'water' || !BIOMES[tile.biome].walkable) continue;
+                // Find an adjacent mountain side
                 const neighbors = [[0,-1],[1,0],[0,1],[-1,0]];
-                let hasLowNeighbor = false;
+                let mountainX = null, mountainY = null;
                 for (const [dx, dy] of neighbors) {
                     const nt = this.tiles[y + dy][x + dx];
-                    if (nt && (nt.biome === 'forest' || nt.biome === 'grass' || nt.biome === 'sand')) {
-                        hasLowNeighbor = true;
+                    if (nt && nt.biome === 'mountain') {
+                        mountainX = x + dx;
+                        mountainY = y + dy;
                         break;
                     }
                 }
-                if (!hasLowNeighbor) continue;
+                if (mountainX == null) continue;
                 // Use deterministic random to place ~1 cave per 20x20 area
                 const r = this.rand(x, y, 42);
                 if (r < 0.015) {
-                    this.bearCaves.push({ tx: x, ty: y, x: x + 0.5, z: y + 0.5 });
+                    const h = this.getTileHeight(x, y);
+                    const facing = Math.atan2(x - mountainX, y - mountainY);
+                    this.bearCaves.push({ tx: x, ty: y, x: x + 0.5, z: y + 0.5, h, facing });
                     tile.cave = true;
                 }
             }
@@ -1070,7 +1075,7 @@ class ModelFactory {
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.5, 4, 5), legMat);
-            upper.position.set(s * 0.18, 0.85, f * 0.45); upper.castShadow = true; g.add(upper);
+            upper.position.set(s * 0.18, 0.85, f * 0.45); upper.castShadow = true; upper.userData.isLeg = true; g.add(upper);
             const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.4, 4, 5), legMat);
             lower.position.set(s * 0.18, 0.3, f * 0.45); lower.castShadow = true; g.add(lower);
             const hoof = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.07, 5), darkMat);
@@ -1122,7 +1127,7 @@ class ModelFactory {
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.3, 4, 5), legMat);
-            upper.position.set(s * 0.11, 0.45, f * 0.28); g.add(upper);
+            upper.position.set(s * 0.11, 0.45, f * 0.28); upper.userData.isLeg = true; g.add(upper);
             const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.24, 4, 5), legMat);
             lower.position.set(s * 0.11, 0.16, f * 0.28); g.add(lower);
             const hoof = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.04, 4), new THREE.MeshLambertMaterial({ color: 0x6b5535 }));
@@ -1209,11 +1214,11 @@ class ModelFactory {
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.35, 4, 5), legMat);
-            upper.position.set(s * 0.18, 0.45, f * 0.35); upper.castShadow = true; g.add(upper);
+            upper.position.set(s * 0.18, 0.45, f * 0.35); upper.castShadow = true; upper.userData.isLeg = true; g.add(upper);
             const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.32, 4, 5), legMat);
             lower.position.set(s * 0.18, 0.16, f * 0.35); g.add(lower);
-            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), legMat);
-            paw.scale.set(1, 0.6, 1.4); paw.position.set(s * 0.18, 0.03, f * 0.35 + 0.02); g.add(paw);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), legMat);
+            paw.position.set(s * 0.18, 0.03, f * 0.35 + 0.02); g.add(paw);
         }
         const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.65, 6), bodyMat);
         tail.position.set(0, 0.72, -0.65); tail.rotation.x = 0.5; tail.castShadow = true; tail.userData.isTail = true; g.add(tail);
@@ -1252,11 +1257,11 @@ class ModelFactory {
         }
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.45, 4, 5), legMat);
-            upper.position.set(s * 0.28, 0.5, f * 0.42); upper.castShadow = true; g.add(upper);
+            upper.position.set(s * 0.28, 0.5, f * 0.42); upper.castShadow = true; upper.userData.isLeg = true; g.add(upper);
             const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.4, 4, 5), legMat);
             lower.position.set(s * 0.28, 0.18, f * 0.42); g.add(lower);
-            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 5), legMat);
-            paw.scale.set(1.2, 0.5, 1.5); paw.position.set(s * 0.28, 0.05, f * 0.42 + 0.03); g.add(paw);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 5), legMat);
+            paw.scale.set(0.8, 0.8, 1.1); paw.position.set(s * 0.28, 0.05, f * 0.42 + 0.03); g.add(paw);
         }
         const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 5, 4), bodyMat);
         tail.position.set(0, 1.0, -0.75); tail.userData.isTail = true; g.add(tail);
@@ -1292,9 +1297,9 @@ class ModelFactory {
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
             if (f === 1) {
                 const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 5), legMat);
-                thigh.position.set(s * 0.12, 0.18, f * 0.18); g.add(thigh);
-                const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.15, 4, 5), legMat);
-                foot.position.set(s * 0.12, 0.05, f * 0.2); foot.rotation.x = Math.PI / 2; g.add(foot);
+                thigh.position.set(s * 0.12, 0.18, f * 0.18); thigh.userData.isLeg = true; g.add(thigh);
+                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), legMat);
+                foot.position.set(s * 0.12, 0.04, f * 0.2); g.add(foot);
             } else {
                 const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.18, 4, 5), legMat);
                 leg.position.set(s * 0.08, 0.09, f * 0.1); leg.userData.isLeg = true; g.add(leg);
@@ -1650,31 +1655,20 @@ class Game {
     async initMultiplayer() {
         const statusEl = document.getElementById('online-status');
         try {
-            // Wait for OnlineManager module to load (module scripts are deferred)
-            let tries = 0;
-            while (!window.OnlineManager && tries < 50) {
-                await new Promise(r => setTimeout(r, 100));
-                tries++;
-            }
-            if (window.OnlineManager) {
-                this.online = new OnlineManager(this);
-                await this.online.init();
-                if (statusEl) {
-                    statusEl.textContent = 'Connected';
-                    statusEl.classList.add('connected');
-                }
-            } else {
-                if (statusEl) {
-                    statusEl.textContent = 'Offline mode';
-                    statusEl.classList.add('disconnected');
-                }
+            this.online = new OnlineManager(this);
+            await this.online.init();
+            if (statusEl) {
+                statusEl.textContent = 'Connected';
+                statusEl.classList.add('connected');
             }
         } catch (e) {
             console.warn('Multiplayer init failed:', e);
             if (statusEl) {
-                statusEl.textContent = 'Offline mode';
+                statusEl.textContent = 'Offline (sign-in failed)';
                 statusEl.classList.add('disconnected');
             }
+            // Retry auth on failure every 5s
+            setTimeout(() => this.initMultiplayer(), 5000);
         }
     }
 
@@ -1790,8 +1784,9 @@ class Game {
                 needed.add(key);
                 if (!this.caveMeshes.has(key)) {
                     const mesh = ModelFactory.createBearCave();
-                    const h = this.world.getTileHeight(cave.tx, cave.ty);
+                    const h = cave.h !== undefined ? cave.h : this.world.getTileHeight(cave.tx, cave.ty);
                     mesh.position.set(cave.tx * TILE_SIZE + TILE_SIZE / 2, h, cave.ty * TILE_SIZE + TILE_SIZE / 2);
+                    if (cave.facing !== undefined) mesh.rotation.y = cave.facing;
                     mesh.traverse(c => { if (c.isMesh) c.castShadow = true; });
                     this.scene.add(mesh);
                     this.caveMeshes.set(key, mesh);
@@ -2171,7 +2166,7 @@ class Game {
                 }
             }
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
-                this.player.jumpVel = 12;
+                this.player.jumpVel = 7;
             }
             const num = parseInt(e.key);
             if (num >= 1 && num <= 9 && this.gameRunning) {
@@ -3085,8 +3080,9 @@ class Game {
         let weaponName = 'bare hands';
         let attackRange = 3;
         let itemDef = null;
+        let itemKey = null;
         if (entry) {
-            const [itemKey] = entry;
+            itemKey = entry[0];
             itemDef = ITEMS[itemKey];
             damage = itemDef?.attackPower || 2;
             weaponName = itemDef?.name || itemKey;
@@ -3273,6 +3269,8 @@ class Game {
             if (!ptile) continue;
             if (def.inWater) {
                 if (ptile.biome !== 'water') continue;
+            } else if (type === 'bear' && (ptile.biome === 'mountain' || ptile.biome === 'snow' || ptile.biome === 'water')) {
+                continue;
             } else if (!BIOMES[ptile.biome].walkable) continue;
             const ph = this.world.getHeightAt(px + 0.5, pz + 0.5);
             this.creatures.push({
@@ -3305,6 +3303,7 @@ class Game {
                 sleepTimer: 0,
                 howlTimer: 15 + Math.random() * 30,
                 alertness: 0,
+                warningTimer: 0,
                 // New realistic behavior properties
                 alertState: false,       // frozen and looking at threat
                 alertTimer: 0,           // how long to stay frozen
@@ -3363,6 +3362,18 @@ class Game {
                         if (mesh.userData.bodyRef) mesh.userData.bodyRef.rotation.z = Math.PI / 2;
                     }
                     continue;
+                }
+            }
+
+            // --- Bear proximity aggro ---
+            if (c.type === 'bear' && !c.aggroed && !c.following && !c.sleeping && !c.knockedOut) {
+                c.warningTimer = Math.max(0, c.warningTimer - dt);
+                if (distToPlayer < def.aggroRange) {
+                    c.aggroed = true;
+                    this.notify('A bear is attacking you!', 'warning');
+                } else if (distToPlayer < (def.warningDist || 10) && c.warningTimer <= 0) {
+                    this.notify('A bear growls a warning! Back away!', 'warning');
+                    c.warningTimer = 5;
                 }
             }
 
@@ -4073,10 +4084,9 @@ class Game {
                 const canMove = tile && (def.inWater ? tile.biome === 'water' : BIOMES[tile.biome].walkable);
                 if (canMove) {
                     // Check height difference - creatures can't climb steep slopes
-                    // Bears can climb since they live on mountains
                     const newH = this.world.getHeightAt(nx, nz);
                     const heightDiff = Math.abs(newH - c.y);
-                    const maxCreatureStep = def.isPredator && def.biomes.includes('mountain') ? 100 : 3;
+                    const maxCreatureStep = 0.9;
                     if (heightDiff <= maxCreatureStep) {
                         c.x = nx;
                         c.z = nz;
@@ -4126,12 +4136,10 @@ class Game {
                         legs[li].rotation.x = Math.sin(c.walkPhase + li * Math.PI / 2) * legAmp;
                     }
                 }
-                // Body bob  vertical oscillation while moving
-                if (mesh.userData.bodyRef) {
-                    const bobAmp = isRunning ? 0.08 : 0.04;
-                    mesh.userData.bodyRef.position.y = Math.abs(Math.sin(c.walkPhase)) * bobAmp;
-                    mesh.userData.bodyRef.rotation.z = 0;
-                }
+                // Body bob  move the whole creature up and down while walking
+                const bobAmp = isRunning ? 0.08 : 0.04;
+                mesh.position.y = c.y + Math.abs(Math.sin(c.walkPhase)) * bobAmp;
+                mesh.rotation.z = 0;
                 // Head bob - slight up/down different from body, or lowered when grazing, or raised when alert
                 if (mesh.userData.headRef) {
                     if (c.state === 'graze') {
@@ -4568,7 +4576,7 @@ class Game {
 
         setupTapBtn('mob-jump', () => {
             if (this.player.yOffset === 0 && this.player.jumpVel === 0)
-                this.player.jumpVel = 12;
+                this.player.jumpVel = 7;
         });
         setupHoldBtn('mob-climb', 'v');
         setupHoldBtn('mob-sprint', 'shift');
