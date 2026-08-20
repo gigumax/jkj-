@@ -64,7 +64,9 @@ class OnlineManager {
         });
 
         // Listen for other players with the same seed
-        const playersQuery = query(collection(db, 'players'), where('seed', '==', seed), where('online', '==', true));
+        // Only filter by seed on the server; online/offline filtering is done client-side.
+        // This avoids needing a composite Firestore index that may not be deployed.
+        const playersQuery = query(collection(db, 'players'), where('seed', '==', seed));
         const unsub = onSnapshot(playersQuery, (snapshot) => {
             snapshot.docChanges().forEach((change) => {
                 const data = change.doc.data();
@@ -73,10 +75,12 @@ class OnlineManager {
 
                 if (change.type === 'removed' || data.online === false) {
                     this.removeOtherPlayer(uid);
-                } else {
+                } else if (data.online === true) {
                     this.updateOtherPlayer(uid, data);
                 }
             });
+        }, (err) => {
+            console.warn('Players listener error:', err);
         });
         this.unsubscribers.push(unsub);
 

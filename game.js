@@ -2468,21 +2468,21 @@ class Game {
     drinkWater() {
         const p = this.player;
         if (p.thirst >= p.maxThirst - 5) { this.notify('Not thirsty!', 'info'); return; }
-        const ptx = Math.floor(p.x), pty = Math.floor(p.z);
-        // Check for adjacent water tiles (3-tile radius for easier access from shore)
-        for (let dy = -3; dy <= 3; dy++) {
-            for (let dx = -3; dx <= 3; dx++) {
-                const t = this.world.getTile(ptx + dx, pty + dy);
-                if (t && t.biome === 'water') {
-                    p.thirst = Math.min(p.maxThirst, p.thirst + 40);
-                    p.energy = Math.min(p.maxEnergy, p.energy + 5);
-                    this.notify('[W] Drank water! +40 Thirst', 'success');
-                    this.updateUI();
-                    return;
-                }
-            }
+        // Must be looking at water to drink
+        const target = this.getTargetTile();
+        if (!target || target.distance > INTERACT_RANGE) {
+            this.notify('Look at water to drink!', 'warning');
+            return;
         }
-        this.notify('No water nearby! Find a lake or river.', 'warning');
+        const tile = this.world.getTile(target.tx, target.ty);
+        if (!tile || tile.biome !== 'water') {
+            this.notify('Look at water to drink!', 'warning');
+            return;
+        }
+        p.thirst = Math.min(p.maxThirst, p.thirst + 40);
+        p.energy = Math.min(p.maxEnergy, p.energy + 5);
+        this.notify('[W] Drank water! +40 Thirst', 'success');
+        this.updateUI();
     }
 
     // --- Interaction ---
@@ -3139,6 +3139,13 @@ class Game {
         }
 
         if (!targetCreature) return false;
+
+        // Only guns and rocks can kill animals
+        const canKillAnimals = !itemDef || itemDef?.tool === 'gun' || itemKey === 'stone';
+        if (!canKillAnimals) {
+            this.notify(`${weaponName} can't kill animals! Use a Hunting Gun or stones.`, 'warning');
+            return false;
+        }
 
         const def = CREATURE_TYPES[targetCreature.type];
         if (def.aggroWhenAttacked) targetCreature.aggroed = true;
