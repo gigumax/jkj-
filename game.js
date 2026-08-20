@@ -539,6 +539,11 @@ class Player {
         this.yOffset = 0;
         this.isClimbing = false;
         this.fallStartY = 0;
+        // Physics: momentum-based movement
+        this.vx = 0; // velocity x (world units/sec)
+        this.vz = 0; // velocity z (world units/sec)
+        this.vy = 0; // vertical velocity for jump/gravity (units/sec)
+        this.onGround = true;
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -4321,17 +4326,40 @@ class Game {
             isClimbing = true;
         }
 
+        // Physics: acceleration-based movement with momentum
+        const ACCEL = 30; // units/sec^2
+        const FRICTION = 8; // deceleration when no input
         if (dx !== 0 || dz !== 0) {
             const len = Math.sqrt(dx*dx + dz*dz);
             dx /= len; dz /= len;
-            let speed = PLAYER_SPEED * dt;
-            if (isSprinting && !isSwimming) speed *= 1.8;
-            if (isSwimming) speed *= 0.5; // slower in water
-            if (isClimbing) speed *= 0.25; // climbing is much slower than walking
-            if (p.frostbite > 50) speed *= 0.7; // frostbite slows you
-            if (p.sickness > 50) speed *= 0.85; // sickness slows you
-            const newX = p.x + dx * speed;
-            const newZ = p.z + dz * speed;
+            p.vx += dx * ACCEL * dt;
+            p.vz += dz * ACCEL * dt;
+        } else {
+            // Apply friction
+            const speed = Math.sqrt(p.vx*p.vx + p.vz*p.vz);
+            if (speed > 0) {
+                const decel = FRICTION * dt;
+                if (decel >= speed) { p.vx = 0; p.vz = 0; }
+                else { p.vx *= (speed - decel) / speed; p.vz *= (speed - decel) / speed; }
+            }
+        }
+        // Cap max horizontal speed
+        let maxSpeed = PLAYER_SPEED;
+        if (isSprinting && !isSwimming) maxSpeed *= 1.8;
+        if (isSwimming) maxSpeed *= 0.5;
+        if (isClimbing) maxSpeed *= 0.25;
+        if (p.frostbite > 50) maxSpeed *= 0.7;
+        if (p.sickness > 50) maxSpeed *= 0.85;
+        const hSpeed = Math.sqrt(p.vx*p.vx + p.vz*p.vz);
+        if (hSpeed > maxSpeed) {
+            p.vx = (p.vx / hSpeed) * maxSpeed;
+            p.vz = (p.vz / hSpeed) * maxSpeed;
+        }
+
+        // Apply velocity with collision
+        {
+            const newX = p.x + p.vx * dt;
+            const newZ = p.z + p.vz * dt;
             // Collision + max step height (can't climb steep walls unless climbing)
             const curH = this.world.getHeightAt(p.x, p.z);
             const MAX_STEP = 2.5;
@@ -4345,8 +4373,8 @@ class Game {
                 if (isClimbing && targetTile && CLIMBABLE_BIOMES.includes(targetTile.biome) && diff <= MAX_CLIMB) return true;
                 return false;
             };
-            if (canStep(newX, p.z)) p.x = newX;
-            if (canStep(p.x, newZ)) p.z = newZ;
+            if (canStep(newX, p.z)) p.x = newX; else p.vx = 0;
+            if (canStep(p.x, newZ)) p.z = newZ; else p.vz = 0;
             // Update facing
             p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
@@ -4355,12 +4383,13 @@ class Game {
             p.isClimbing = isClimbing;
         }
 
-        // Movement energy costs
-        if (isSwimming && (dx !== 0 || dz !== 0)) {
+        // Movement energy costs (based on actual velocity)
+        const isMoving = Math.sqrt(p.vx*p.vx + p.vz*p.vz) > 0.5;
+        if (isSwimming && isMoving) {
             p.energy = Math.max(0, p.energy - dt * 3); // swimming costs 3/s
         } else if (isSprinting) {
             p.energy = Math.max(0, p.energy - dt * 2); // running costs 2/s
-        } else if (dx !== 0 || dz !== 0) {
+        } else if (isMoving) {
             p.energy = Math.max(0, p.energy - dt * 0.5); // walking costs 0.5/s
         } else if (!isSwimming && !p.isClimbing) {
             p.energy = Math.max(0, p.energy - dt * 0.3); // idle drains 0.3/s
@@ -4383,7 +4412,10 @@ class Game {
         // Jump physics
         if (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0) {
             p.yOffset += p.jumpVel * dt;
-            p.jumpVel -= 30 * dt; // gravity
+            // Variable gravity: stronger when falling for snappier jumps
+            const gravity = p.jumpVel < 0 ? 35 : 25;
+            p.jumpVel -= gravity * dt;
+            p.onGround = false;
             // Track highest point for fall damage
             const currentY = groundY + p.yOffset;
             if (currentY > p.fallStartY) p.fallStartY = currentY;
@@ -4391,6 +4423,7 @@ class Game {
                 // Landing
                 p.yOffset = 0;
                 p.jumpVel = 0;
+                p.onGround = true;
                 // Fall damage
                 const fallDist = p.fallStartY - groundY;
                 if (fallDist > 8) {
@@ -4571,10 +4604,11 @@ class Game {
         if (pBiome === 'desert') thirstRate = 1.5;
         else if (pBiome === 'snow' || pBiome === 'sand') thirstRate = 0.8;
         p.thirst = Math.max(0, p.thirst - dt * thirstRate);
-        // Temperature moves toward biome target
+        // Temperature moves toward biome target (slower when weather is active)
         const biomeTemp = { desert: 40, sand: 30, snow: -10, mountain: 5, water: 10, grass: 20, forest: 18 };
         const targetTemp = (biomeTemp[pBiome] || 20) + (this.isNight ? -8 : 0);
-        p.temperature += (targetTemp - p.temperature) * dt * 0.1;
+        const tempRegRate = (this.weather === 'clear' || this.weather === 'fog') ? 0.1 : 0.03;
+        p.temperature += (targetTemp - p.temperature) * dt * tempRegRate;
         // Health effects from survival stats
         if (p.hunger <= 0) p.health = Math.max(0, p.health - dt * 1.5);
         if (p.thirst <= 0) p.health = Math.max(0, p.health - dt * 2);
@@ -4644,23 +4678,28 @@ class Game {
                 this.updateWeatherParticles();
             }
         }
-        // Weather effects on player
+        // Shelter detection: under a tree or inside a hut blocks rain/snow/hail
+        const isSheltered = this.inHut || (pTile && pTile.resource === 'tree' && !pTile.building);
+        // Weather effects on player (skipped if sheltered)
+        if (!isSheltered) {
         if (this.weather === 'rain') {
             p.thirst = Math.min(p.maxThirst, p.thirst + dt * 2); // rain hydrates
-            p.temperature -= dt * 0.5; // rain cools you
+            p.temperature -= dt * 3; // rain cools you (stronger)
             p.energy = Math.max(0, p.energy - dt * 0.2); // rain is tiring
             p.wetness = Math.min(100, p.wetness + dt * 8);
         } else if (this.weather === 'snow') {
-            p.temperature -= dt * 1.5; // snow is very cold
+            p.temperature -= dt * 5; // snow is very cold (stronger)
             p.energy = Math.max(0, p.energy - dt * 0.3);
             p.wetness = Math.min(100, p.wetness + dt * 2);
         } else if (this.weather === 'hail') {
-            p.temperature -= dt * 2.5; // hail is freezing
+            p.temperature -= dt * 7; // hail is freezing (stronger)
             p.energy = Math.max(0, p.energy - dt * 0.6); // hail is exhausting
             p.wetness = Math.min(100, p.wetness + dt * 12);
             p.health = Math.max(0, p.health - dt * 0.4); // hail is painful
             p.sickness = Math.min(100, p.sickness + dt * 1);
-        } else if (this.weather === 'fog') {
+        }
+        } // end if (!isSheltered)
+        if (this.weather === 'fog') {
             // Fog reduces visibility (handled in lighting)
         }
 
