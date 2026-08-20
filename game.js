@@ -528,6 +528,9 @@ class Player {
         this.hunger = 100; this.maxHunger = 100;
         this.thirst = 100; this.maxThirst = 100;
         this.temperature = 20; // comfortable temp ~20 deg C
+        this.wetness = 0;  // 0-100
+        this.sickness = 0; // 0-100
+        this.frostbite = 0; // 0-100
         this.rotation = 0;
         this.inventory = {};
         this.selectedSlot = 0;
@@ -4317,6 +4320,8 @@ class Game {
             if (isSprinting && !isSwimming) speed *= 1.8;
             if (isSwimming) speed *= 0.5; // slower in water
             if (isClimbing) speed *= 0.25; // climbing is much slower than walking
+            if (p.frostbite > 50) speed *= 0.7; // frostbite slows you
+            if (p.sickness > 50) speed *= 0.85; // sickness slows you
             const newX = p.x + dx * speed;
             const newZ = p.z + dz * speed;
             // Collision + max step height (can't climb steep walls unless climbing)
@@ -4620,13 +4625,13 @@ class Game {
             if (pBiome2 === 'desert' || pBiome2 === 'sand') {
                 this.weather = r < 0.6 ? 'clear' : r < 0.85 ? 'fog' : 'rain';
             } else if (pBiome2 === 'snow' || pBiome2 === 'mountain') {
-                this.weather = r < 0.4 ? 'clear' : r < 0.8 ? 'snow' : 'fog';
+                this.weather = r < 0.35 ? 'clear' : r < 0.65 ? 'snow' : r < 0.85 ? 'fog' : 'hail';
             } else {
                 this.weather = r < 0.5 ? 'clear' : r < 0.8 ? 'rain' : r < 0.92 ? 'fog' : 'clear';
             }
             this.weatherTimer = 40 + Math.random() * 80;
             if (this.weather !== oldWeather) {
-                const names = { clear: 'Skies clear up', rain: 'It starts raining', snow: 'Snow begins to fall', fog: 'Fog rolls in' };
+                const names = { clear: 'Skies clear up', rain: 'It starts raining', snow: 'Snow begins to fall', fog: 'Fog rolls in', hail: 'Hail begins to fall' };
                 this.notify(names[this.weather] || 'Weather changes', 'info');
                 this.updateWeatherParticles();
             }
@@ -4636,11 +4641,50 @@ class Game {
             p.thirst = Math.min(p.maxThirst, p.thirst + dt * 2); // rain hydrates
             p.temperature -= dt * 0.5; // rain cools you
             p.energy = Math.max(0, p.energy - dt * 0.2); // rain is tiring
+            p.wetness = Math.min(100, p.wetness + dt * 8);
         } else if (this.weather === 'snow') {
             p.temperature -= dt * 1.5; // snow is very cold
             p.energy = Math.max(0, p.energy - dt * 0.3);
+            p.wetness = Math.min(100, p.wetness + dt * 2);
+        } else if (this.weather === 'hail') {
+            p.temperature -= dt * 2.5; // hail is freezing
+            p.energy = Math.max(0, p.energy - dt * 0.6); // hail is exhausting
+            p.wetness = Math.min(100, p.wetness + dt * 12);
+            p.health = Math.max(0, p.health - dt * 0.4); // hail is painful
+            p.sickness = Math.min(100, p.sickness + dt * 1);
         } else if (this.weather === 'fog') {
             // Fog reduces visibility (handled in lighting)
+        }
+
+        // Sickness and frostbite
+        // Wetness dries off faster in warm, clear weather
+        if (this.weather !== 'rain' && this.weather !== 'hail') {
+            const dryRate = p.temperature > 25 ? 8 : p.temperature > 5 ? 3 : 1;
+            p.wetness = Math.max(0, p.wetness - dt * dryRate);
+        }
+        // Sickness builds from being wet and cold or very hot; recovers when dry and comfortable
+        if (p.wetness > 30 && p.temperature < 5) {
+            p.sickness = Math.min(100, p.sickness + dt * 1.5);
+        } else if (p.temperature > 40) {
+            p.sickness = Math.min(100, p.sickness + dt * 0.8);
+        } else if (p.temperature > 10 && p.temperature < 35 && p.wetness < 20) {
+            p.sickness = Math.max(0, p.sickness - dt * 1);
+        }
+        // Frostbite builds from being very cold (especially wet)
+        if (p.temperature < -5) {
+            const frostRate = p.wetness > 30 ? 2 : 1;
+            p.frostbite = Math.min(100, p.frostbite + dt * frostRate);
+        } else if (p.temperature > 15) {
+            p.frostbite = Math.max(0, p.frostbite - dt * 2);
+        }
+        // Ailment effects
+        if (p.sickness > 50) {
+            p.health = Math.max(0, p.health - dt * 0.5);
+            p.energy = Math.max(0, p.energy - dt * 0.5);
+        }
+        if (p.frostbite > 50) {
+            p.health = Math.max(0, p.health - dt * 0.8);
+            p.energy = Math.max(0, p.energy - dt * 0.3);
         }
         // Update weather particles
         if (this.weatherParticles) {
@@ -4656,6 +4700,15 @@ class Game {
                         y = this.camera.position.y + 15;
                         x = camX + (Math.random() - 0.5) * 40;
                         z = camZ + (Math.random() - 0.5) * 40;
+                    }
+                } else if (this.weather === 'hail') {
+                    y -= dt * 18;
+                    x += (Math.random() - 0.5) * dt * 2;
+                    z += (Math.random() - 0.5) * dt * 2;
+                    if (y < this.camera.position.y - 10) {
+                        y = this.camera.position.y + 10;
+                        x = camX + (Math.random() - 0.5) * 30;
+                        z = camZ + (Math.random() - 0.5) * 30;
                     }
                 } else if (this.weather === 'snow') {
                     y -= dt * 3;
@@ -4981,6 +5034,7 @@ class Game {
                 if (this.weather === 'fog') density *= 3;
                 else if (this.weather === 'rain') density *= 1.5;
                 else if (this.weather === 'snow') density *= 1.3;
+                else if (this.weather === 'hail') density *= 1.6;
                 this.scene.fog.density = density;
             }
         }
@@ -4994,9 +5048,9 @@ class Game {
             this.weatherParticles.material.dispose();
             this.weatherParticles = null;
         }
-        if (this.weather !== 'rain' && this.weather !== 'snow') return;
+        if (this.weather !== 'rain' && this.weather !== 'snow' && this.weather !== 'hail') return;
 
-        const count = this.weather === 'rain' ? 800 : 500;
+        const count = this.weather === 'rain' ? 800 : this.weather === 'hail' ? 600 : 500;
         const geo = new THREE.BufferGeometry();
         const positions = new Float32Array(count * 3);
         const camX = this.camera.position.x, camZ = this.camera.position.z;
@@ -5007,11 +5061,12 @@ class Game {
             positions[i * 3 + 2] = camZ + (Math.random() - 0.5) * 40;
         }
         geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const isHail = this.weather === 'hail';
         const mat = new THREE.PointsMaterial({
             color: this.weather === 'rain' ? 0x8899bb : 0xffffff,
-            size: this.weather === 'rain' ? 0.15 : 0.25,
+            size: this.weather === 'rain' ? 0.15 : isHail ? 0.35 : 0.25,
             transparent: true,
-            opacity: this.weather === 'rain' ? 0.6 : 0.8,
+            opacity: this.weather === 'rain' ? 0.6 : isHail ? 0.85 : 0.8,
             depthWrite: false
         });
         this.weatherParticles = new THREE.Points(geo, mat);
@@ -5040,12 +5095,19 @@ class Game {
         const tempEl = document.getElementById('temp-display');
         if (tempEl) {
             const t = Math.round(this.player.temperature);
-            tempEl.textContent = `${t}C`;
-            tempEl.style.color = t < 0 ? '#3498db' : t > 35 ? '#e74c3c' : '#2ecc71';
+            const p = this.player;
+            const cond = (p.frostbite >= 30 ? ' Frost' : '') + (p.sickness >= 30 ? ' Sick' : '');
+            tempEl.textContent = `${t}C${cond}`;
+            let c = '#2ecc71';
+            if (p.frostbite > 50) c = '#3498db';
+            else if (p.sickness > 50) c = '#9b59b6';
+            else if (t < 0) c = '#3498db';
+            else if (t > 35) c = '#e74c3c';
+            tempEl.style.color = c;
         }
         const weatherEl = document.getElementById('weather-display');
         if (weatherEl) {
-            const icons = { clear: 'Clear', rain: 'Rain', snow: 'Snow', fog: 'Fog' };
+            const icons = { clear: 'Clear', rain: 'Rain', snow: 'Snow', fog: 'Fog', hail: 'Hail' };
             weatherEl.textContent = icons[this.weather] || 'Clear';
         }
         this.updateInventoryUI();
