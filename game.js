@@ -2482,7 +2482,7 @@ class Game {
 
     // --- Interaction ---
     interact() {
-        if (this.player.harvesting) return;
+        if (this.paused || !this.gameRunning || this.player.harvesting) return;
         // Inside hut: raycast against 3D bed / campfire
         if (this.inHut) {
             this.interactWithHutInterior();
@@ -2521,8 +2521,8 @@ class Game {
     }
 
     forage(tx, ty, tile, resDef) {
-        const resKey = this.getLastResourceType(resDef);
-        this.player.harvesting = { tx, ty, progress: 0, total: 1.5, resource: tile.resource, foraging: true, resKey };
+        if (!resDef) return;
+        this.player.harvesting = { tx, ty, progress: 0, total: 0.4, resource: tile.resource, foraging: true };
         this.notify('Foraging...', 'info');
     }
 
@@ -2531,7 +2531,7 @@ class Game {
         const tile = this.world.getTile(h.tx, h.ty);
         if (!tile || !tile.resource) { this.player.harvesting = null; return; }
         const resDef = RESOURCE_TYPES[h.resource];
-        const resKey = h.resKey || this.getLastResourceType(resDef);
+        if (!resDef) { this.player.harvesting = null; return; }
         for (const [item, amt] of Object.entries(resDef.yields)) {
             this.player.addItem(item, amt);
             const displayName = this.getFoodDisplayName(item);
@@ -2540,7 +2540,7 @@ class Game {
         tile.resource = null;
         tile.resourceAmount = 0;
         this.removeResourceMesh(h.tx, h.ty);
-        this.world.queueRespawn(h.tx, h.ty, resKey);
+        this.world.queueRespawn(h.tx, h.ty, h.resource);
         this.player.energy = Math.max(0, this.player.energy - 1);
         this.player.harvesting = null;
         this.researchPoints += 0.3;
@@ -2548,7 +2548,7 @@ class Game {
         this.updateUI();
         this.checkQuests();
         if (this.online && this.online.isOnline) {
-            this.online.sendWorldChange('resourceForaged', { tx: h.tx, ty: h.ty, resource: resKey });
+            this.online.sendWorldChange('resourceForaged', { tx: h.tx, ty: h.ty, resource: h.resource });
         }
     }
 
