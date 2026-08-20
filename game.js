@@ -3337,7 +3337,7 @@ class Game {
             } else if (type === 'bear' && (ptile.biome === 'mountain' || ptile.biome === 'snow' || ptile.biome === 'water')) {
                 continue;
             } else if (!BIOMES[ptile.biome].walkable) continue;
-            const ph = this.world.getHeightAt(px + 0.5, pz + 0.5);
+            const ph = def.inWater ? this.world.getHeightAt(px + 0.5, pz + 0.5) : this.world.getTileHeight(Math.floor(px + 0.5), Math.floor(pz + 0.5));
             this.creatures.push({
                 id: Math.random().toString(36).slice(2),
                 type, x: px + 0.5, z: pz + 0.5, y: ph,
@@ -4150,7 +4150,7 @@ class Game {
                 const canMove = tile && (def.inWater ? tile.biome === 'water' : BIOMES[tile.biome].walkable);
                 if (canMove) {
                     // Check height difference - creatures can't climb steep slopes (can descend)
-                    const newH = this.world.getHeightAt(nx, nz);
+                    const newH = def.inWater ? this.world.getHeightAt(nx, nz) : this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
                     const dy = newH - c.y;
                     const moveDist = Math.sqrt((nx - c.x) ** 2 + (nz - c.z) ** 2) || 0.001;
                     const maxCreatureSlope = 1.2; // max upward slope (units per tile)
