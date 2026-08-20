@@ -3100,6 +3100,10 @@ class Game {
     }
 
     // --- Creatures ---
+    playerHasFood() {
+        return Object.entries(this.player.inventory).some(([k, c]) => c > 0 && ITEMS[k]?.edible);
+    }
+
     feedCreature() {
         const p = this.player;
         const slots = Object.keys(p.inventory).filter(k => ITEMS[k]?.edible);
@@ -3392,6 +3396,7 @@ class Game {
 
     updateCreatures(dt) {
         const p = this.player;
+        const playerHasFood = this.playerHasFood();
         this.attackCooldown = Math.max(0, this.attackCooldown - dt);
         for (let i = this.creatures.length - 1; i >= 0; i--) {
             const c = this.creatures[i];
@@ -3751,7 +3756,7 @@ class Game {
                 // Count player as a threat too
                 let nearestThreat = predatorThreat;
                 let nearestThreatDist = predatorThreat ? Math.sqrt((c.x - predatorThreat.x)**2 + (c.z - predatorThreat.z)**2) : 999;
-                if (distToPlayer < nearestThreatDist) {
+                if (distToPlayer < nearestThreatDist && !playerHasFood) {
                     nearestThreatDist = distToPlayer;
                     nearestThreat = null; // null means player threat
                 }
@@ -3941,7 +3946,7 @@ class Game {
                         other.alertState = false;
                     }
                 }
-            } else if (def.isPrey && c.fleeDist > 0 && distToPlayer < c.fleeDist && !c.following) {
+            } else if (def.isPrey && c.fleeDist > 0 && distToPlayer < c.fleeDist && !c.following && !playerHasFood) {
                 // Prey flees from player (skittish behavior)
                 c.state = 'flee';
                 const fleeAng = Math.atan2(c.z - p.z, c.x - p.x);
