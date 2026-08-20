@@ -1901,6 +1901,11 @@ class Game {
         mesh.position.set(wx, wy, wz);
         mesh.userData = { type: 'resource', tx, ty, resourceType };
         mesh.traverse(c => { if (c.isMesh) { c.castShadow = true; c.userData = mesh.userData; }});
+        // Invisible hitbox makes tiny plants easy to click/raycast
+        const hitBox = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 2, TILE_SIZE), new THREE.MeshBasicMaterial({ visible: false }));
+        hitBox.position.y = 1;
+        hitBox.userData = mesh.userData;
+        mesh.add(hitBox);
         this.scene.add(mesh);
         this.resourceMeshes.set(`${tx},${ty}`, mesh);
     }
@@ -2421,8 +2426,8 @@ class Game {
         if (intersects.length > 0) {
             const hit = intersects[0];
             let obj = hit.object;
-            while (obj.userData && !obj.userData.tx) obj = obj.parent;
-            if (obj.userData && obj.userData.tx !== undefined) {
+            while (obj && (!obj.userData || obj.userData.tx === undefined)) obj = obj.parent;
+            if (obj && obj.userData && obj.userData.tx !== undefined) {
                 return { tx: obj.userData.tx, ty: obj.userData.ty, type: obj.userData.type, distance: hit.distance };
             }
         }
