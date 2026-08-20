@@ -1834,12 +1834,20 @@ class Game {
 
         // First-person hand + tool for climbing and mining
         this.handGroup = new THREE.Group();
-        const hand = new THREE.Mesh(
-            new THREE.SphereGeometry(0.25, 10, 10),
-            new THREE.MeshLambertMaterial({ color: 0xffccaa })
-        );
-        hand.castShadow = true;
-        this.handGroup.add(hand);
+        const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa });
+        const handModel = new THREE.Group();
+        const palm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), skinMat);
+        palm.position.set(0, 0, 0);
+        handModel.add(palm);
+        const fingers = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 0.08), skinMat);
+        fingers.position.set(0, 0.22, -0.02);
+        handModel.add(fingers);
+        const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.08), skinMat);
+        thumb.position.set(0.18, 0.05, -0.02);
+        thumb.rotation.z = -0.5;
+        handModel.add(thumb);
+        handModel.traverse(c => { if (c.isMesh) c.castShadow = true; });
+        this.handGroup.add(handModel);
 
         const toolGroup = new THREE.Group();
         toolGroup.name = 'tool';
@@ -4818,18 +4826,20 @@ class Game {
         if (target) {
             this.handGroup.visible = true;
             const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+            const out = new THREE.Vector3().copy(this.camera.position).sub(target).normalize();
             if (isMining) {
                 const swing = (Math.sin(this.time * 8) + 1) * 0.5;
                 this.handGroup.position.copy(target)
-                    .add(right.multiplyScalar(0.6))
+                    .add(out.multiplyScalar(0.35))
+                    .add(right.multiplyScalar(0.15))
                     .add(new THREE.Vector3(0, -0.1 + swing * 0.2, 0));
                 this.handGroup.lookAt(target);
                 this.handGroup.rotateZ(swing * 0.4);
             } else {
                 this.handGroup.position.copy(target)
-                    .add(right.multiplyScalar(0.25))
-                    .add(new THREE.Vector3(0, 0.05, 0));
-                this.handGroup.lookAt(this.camera.position);
+                    .add(out.multiplyScalar(0.15))
+                    .add(right.multiplyScalar(0.05));
+                this.handGroup.lookAt(target);
             }
         } else {
             this.handGroup.visible = false;
