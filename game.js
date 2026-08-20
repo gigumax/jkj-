@@ -557,6 +557,9 @@ class Player {
         this.vz = 0; // velocity z (world units/sec)
         this.vy = 0; // vertical velocity for jump/gravity (units/sec)
         this.onGround = true;
+        this.breath = 100; // breath for diving underwater
+        this.maxBreath = 100;
+        this.isDiving = false;
     }
     get tool() {
         const slots = Object.keys(this.inventory).filter(k => ITEMS[k]?.tool);
@@ -2231,8 +2234,16 @@ class Game {
                     chatInput.focus();
                 }
             }
-            if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
-                this.player.jumpVel = 7;
+            if (e.code === 'Space' && this.gameRunning) {
+                const p = this.player;
+                const ptx = Math.floor(p.x), pty = Math.floor(p.z);
+                const tile = this.world.getTile(ptx, pty);
+                const isSwimming = tile && tile.biome === 'water';
+                if (isSwimming) {
+                    p.isDiving = true;
+                } else if (p.yOffset === 0 && p.jumpVel === 0) {
+                    p.jumpVel = 7;
+                }
             }
             const num = parseInt(e.key);
             if (num >= 1 && num <= 9 && this.gameRunning) {
@@ -2247,7 +2258,10 @@ class Game {
                 }
             }
         });
-        window.addEventListener('keyup', (e) => { this.keys[e.key.toLowerCase()] = false; });
+        window.addEventListener('keyup', (e) => {
+            this.keys[e.key.toLowerCase()] = false;
+            if (e.code === 'Space') this.player.isDiving = false;
+        });
 
         // Clear all keys when window loses focus
         window.addEventListener('blur', () => { this.keys = {}; });
@@ -4646,10 +4660,25 @@ class Game {
             }, { passive: false });
         };
 
-        setupTapBtn('mob-jump', () => {
-            if (this.player.yOffset === 0 && this.player.jumpVel === 0)
-                this.player.jumpVel = 7;
-        });
+        // Mobile jump/dive button: hold to dive when swimming, tap to jump on land
+        const mobJumpBtn = document.getElementById('mob-jump');
+        mobJumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            mobJumpBtn.classList.add('active');
+            const p = this.player;
+            const ptx = Math.floor(p.x), pty = Math.floor(p.z);
+            const tile = this.world.getTile(ptx, pty);
+            if (tile && tile.biome === 'water') {
+                p.isDiving = true;
+            } else if (p.yOffset === 0 && p.jumpVel === 0) {
+                p.jumpVel = 7;
+            }
+        }, { passive: false });
+        mobJumpBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            mobJumpBtn.classList.remove('active');
+            this.player.isDiving = false;
+        }, { passive: false });
         setupHoldBtn('mob-climb', 'v');
         setupHoldBtn('mob-sprint', 'shift');
         setupTapBtn('mob-attack', () => {
@@ -4832,7 +4861,29 @@ class Game {
         // Swimming drains energy even when idle
         if (isSwimming) {
             p.energy = Math.max(0, p.energy - dt * 0.5);
-            if (p.energy <= 0) p.health = Math.max(0, p.health - dt * 3); // drowning damage
+        }
+        // Diving mechanics: when diving in water, lower yOffset to go underwater
+        if (isSwimming && p.isDiving) {
+            p.yOffset = Math.max(p.yOffset - dt * 3, -6); // dive down up to 6 units
+        } else if (isSwimming) {
+            // Float back to surface when not diving
+            if (p.yOffset < 0) {
+                p.yOffset = Math.min(0, p.yOffset + dt * 2.5);
+            }
+        }
+        // Determine if camera is underwater (water surface is at y=0)
+        const camWaterY = groundY + p.yOffset + PLAYER_HEIGHT;
+        const isUnderwater = isSwimming && camWaterY < 0;
+        // Breath system
+        if (isUnderwater) {
+            p.breath = Math.max(0, p.breath - dt * 8); // ~12.5s of breath
+            if (p.breath <= 0) {
+                p.health = Math.max(0, p.health - dt * 5); // drowning damage
+                if (p.health <= 0) { this.notify('You drowned!', 'danger'); this.respawn(); return; }
+            }
+        } else {
+            // Regenerate breath when at surface
+            p.breath = Math.min(p.maxBreath, p.breath + dt * 25);
         }
         // Climbing costs energy
         if (p.isClimbing) {
@@ -4844,8 +4895,8 @@ class Game {
 
         // Update player Y to terrain height + jump offset
         const groundY = this.world.getHeightAt(p.x, p.z);
-        // Jump physics
-        if (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0) {
+        // Jump physics (skip when swimming - diving manages yOffset separately)
+        if (!isSwimming && (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0)) {
             p.yOffset += p.jumpVel * dt;
             // Variable gravity: stronger when falling for snappier jumps
             const gravity = p.jumpVel < 0 ? 35 : 25;
@@ -4944,6 +4995,18 @@ class Game {
             const lookY = p.y + eyeHeight + Math.sin(camPitch);
             const lookZ = p.z * TILE_SIZE - Math.cos(camYaw) * Math.cos(camPitch);
             this.camera.lookAt(lookX, lookY, lookZ);
+        }
+
+        // Underwater visual effect: blue fog and background
+        if (isUnderwater) {
+            if (this.scene.fog) {
+                this.scene.fog.color.setHex(0x0a3a5a);
+                this.scene.fog.far = 20;
+                this.scene.fog.near = 1;
+            }
+            this.scene.background.setHex(0x0a3a5a);
+        } else if (isSwimming) {
+            // At surface but not underwater - restore will happen in updateDayNightLighting
         }
 
         // Sun target follows player (position is set in updateDayNightLighting)
