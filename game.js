@@ -1265,86 +1265,109 @@ class ModelFactory {
 
     static createBear() {
         const g = new THREE.Group();
-        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a3a28 });
-        const legMat = new THREE.MeshLambertMaterial({ color: 0x3a2a18 });
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.9, 4, 8), bodyMat);
-        body.rotation.x = Math.PI / 2; body.position.set(0, 0.85, 0);
-        body.scale.set(1, 0.85, 1.35);
-        body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), bodyMat);
-        chest.position.set(0, 0.88, 0.5); g.add(chest);
-        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), new THREE.MeshLambertMaterial({ color: 0x5a4a38 }));
-        belly.position.set(0, 0.72, 0); belly.scale.set(0.9, 0.7, 1.1); g.add(belly);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), bodyMat);
-        head.position.set(0, 1.12, 0.9); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.3, 4, 6), new THREE.MeshLambertMaterial({ color: 0x2a1a08 }));
-        snout.position.set(0, 1.08, 1.28); snout.rotation.x = Math.PI / 2; g.add(snout);
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
-        nose.position.set(0, 1.1, 1.43); g.add(nose);
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x4a3520 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x3a2818 });
+        const bellyMat = new THREE.MeshLambertMaterial({ color: 0x5a4530 });
+        const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1208 });
+        // Body - bulky, rounded
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.75, 6, 10), bodyMat);
+        body.rotation.x = Math.PI / 2; body.position.set(0, 0.75, 0);
+        body.scale.set(1, 1.1, 1.3); body.castShadow = true; body.userData.isBody = true; g.add(body);
+        // Chest - broad
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), bodyMat);
+        chest.position.set(0, 0.78, 0.42); chest.scale.set(0.9, 1, 0.85); g.add(chest);
+        // Rump - rounded
+        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.33, 8, 6), bodyMat);
+        rump.position.set(0, 0.78, -0.4); rump.scale.set(0.85, 0.9, 0.9); g.add(rump);
+        // Belly - lower
+        const belly = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 5), bellyMat);
+        belly.position.set(0, 0.62, 0); belly.scale.set(0.85, 0.6, 1.1); g.add(belly);
+        // Shoulder hump
+        const hump = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 5), bodyMat);
+        hump.position.set(0, 0.95, 0.3); hump.scale.set(0.7, 0.5, 0.6); g.add(hump);
+        // Neck - thick, short
+        const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.15, 5, 8), bodyMat);
+        neck.position.set(0, 0.95, 0.55); neck.rotation.x = -0.2; g.add(neck);
+        // Head - round, wide
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 7), bodyMat);
+        head.position.set(0, 1.0, 0.72); head.scale.set(1, 0.9, 1.1); head.userData.isHead = true; g.add(head);
+        // Snout - broad, tapered
+        const snout = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.2, 5, 8), bellyMat);
+        snout.position.set(0, 0.95, 1.0); snout.rotation.x = Math.PI / 2 - 0.15; g.add(snout);
+        // Nose
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 5, 4), darkMat);
+        nose.position.set(0, 0.96, 1.15); g.add(nose);
+        // Ears - round, small
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 5), bodyMat);
-            ear.position.set(s * 0.22, 1.45, 0.82); g.add(ear);
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5), bodyMat);
+            ear.position.set(s * 0.15, 1.22, 0.65); ear.scale.set(1, 0.8, 0.6); g.add(ear);
         }
-        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        // Eyes - small, dark
         for (let s = -1; s <= 1; s += 2) {
-            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), eyeMat);
-            eye.position.set(s * 0.13, 1.18, 1.15); g.add(eye);
-            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), pupilMat);
-            pupil.position.set(s * 0.13, 1.18, 1.18); g.add(pupil);
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.02, 5, 4), darkMat);
+            eye.position.set(s * 0.09, 1.05, 0.9); g.add(eye);
         }
+        // Legs - thick, plantigrade
         for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.45, 4, 5), legMat);
-            upper.position.set(s * 0.28, 0.5, f * 0.42); upper.castShadow = true; upper.userData.isLeg = true; g.add(upper);
-            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.4, 4, 5), legMat);
-            lower.position.set(s * 0.28, 0.18, f * 0.42); g.add(lower);
-            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.09, 6, 5), legMat);
-            paw.scale.set(0.8, 0.8, 1.1); paw.position.set(s * 0.28, 0.05, f * 0.42 + 0.03); g.add(paw);
+            const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.35, 5, 8), legMat);
+            upper.position.set(s * 0.22, 0.42, f * 0.35); upper.castShadow = true; upper.userData.isLeg = true; g.add(upper);
+            const lower = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.3, 5, 8), legMat);
+            lower.position.set(s * 0.22, 0.15, f * 0.35); g.add(lower);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 5), legMat);
+            paw.scale.set(0.9, 0.5, 1.3); paw.position.set(s * 0.22, 0.03, f * 0.35 + 0.02); g.add(paw);
         }
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.09, 5, 4), bodyMat);
-        tail.position.set(0, 1.0, -0.75); tail.userData.isTail = true; g.add(tail);
+        // Tail - very short
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), bodyMat);
+        tail.position.set(0, 0.85, -0.55); tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
     static createRabbit() {
         const g = new THREE.Group();
-        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xb0b0b0 });
-        const legMat = new THREE.MeshLambertMaterial({ color: 0x909090 });
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0xa8a8a8 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
         const bellyMat = new THREE.MeshLambertMaterial({ color: 0xd0d0d0 });
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.55, 4, 8), bodyMat);
-        body.rotation.x = Math.PI / 2; body.position.set(0, 0.35, 0);
+        const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+        const pinkMat = new THREE.MeshLambertMaterial({ color: 0xddaaaa });
+        // Body - round, compact
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 7), bodyMat);
+        body.position.set(0, 0.32, 0); body.scale.set(1, 0.9, 1.3);
         body.castShadow = true; body.userData.isBody = true; g.add(body);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 5), bodyMat);
-        head.position.set(0, 0.5, 0.26); head.userData.isHead = true; g.add(head);
-        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), new THREE.MeshLambertMaterial({ color: 0xffaaaa }));
-        snout.position.set(0, 0.5, 0.35); g.add(snout);
-        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), new THREE.MeshLambertMaterial({ color: 0x1a1a1a }));
-        nose.position.set(0, 0.52, 0.39); g.add(nose);
+        // Head - slightly smaller sphere
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 7, 6), bodyMat);
+        head.position.set(0, 0.42, 0.2); head.scale.set(1, 0.95, 1.1); head.userData.isHead = true; g.add(head);
+        // Nose
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), pinkMat);
+        nose.position.set(0, 0.4, 0.32); g.add(nose);
+        // Ears - long, upright, slightly angled
         for (let s = -1; s <= 1; s += 2) {
-            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.6, 4, 5), bodyMat);
-            ear.position.set(s * 0.05, 0.85, 0.24); g.add(ear);
+            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.4, 5, 8), bodyMat);
+            ear.position.set(s * 0.04, 0.72, 0.18); ear.rotation.z = s * 0.08; g.add(ear);
+            const earInner = new THREE.Mesh(new THREE.CapsuleGeometry(0.012, 0.35, 4, 6), pinkMat);
+            earInner.position.set(s * 0.04, 0.72, 0.18); earInner.rotation.z = s * 0.08; g.add(earInner);
         }
-        const eyeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-        const pupilMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        // Eyes - small, dark, set into head
         for (let s = -1; s <= 1; s += 2) {
-            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 5), eyeMat);
-            eye.position.set(s * 0.05, 0.54, 0.37); g.add(eye);
-            const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 5, 4), pupilMat);
-            pupil.position.set(s * 0.05, 0.54, 0.39); g.add(pupil);
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 5, 4), darkMat);
+            eye.position.set(s * 0.06, 0.45, 0.28); g.add(eye);
         }
-        for (let s = -1; s <= 1; s += 2) for (let f = -1; f <= 1; f += 2) {
-            if (f === 1) {
-                const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 5), legMat);
-                thigh.position.set(s * 0.12, 0.18, f * 0.18); thigh.userData.isLeg = true; g.add(thigh);
-                const foot = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), legMat);
-                foot.position.set(s * 0.12, 0.04, f * 0.2); g.add(foot);
-            } else {
-                const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.18, 4, 5), legMat);
-                leg.position.set(s * 0.08, 0.09, f * 0.1); leg.userData.isLeg = true; g.add(leg);
-            }
+        // Front legs - short
+        for (let s = -1; s <= 1; s += 2) {
+            const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.025, 0.12, 4, 5), legMat);
+            leg.position.set(s * 0.07, 0.14, 0.16); leg.userData.isLeg = true; g.add(leg);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), legMat);
+            paw.scale.set(0.8, 0.5, 1.1); paw.position.set(s * 0.07, 0.04, 0.18); g.add(paw);
         }
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 5, 4), bellyMat);
-        tail.position.set(0, 0.38, -0.22); tail.userData.isTail = true; g.add(tail);
+        // Back legs - folded, powerful
+        for (let s = -1; s <= 1; s += 2) {
+            const thigh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), legMat);
+            thigh.position.set(s * 0.09, 0.2, -0.08); thigh.scale.set(1, 1.3, 0.8); thigh.userData.isLeg = true; g.add(thigh);
+            const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.12, 4, 6), legMat);
+            foot.position.set(s * 0.09, 0.05, 0.02); foot.rotation.x = Math.PI / 2; g.add(foot);
+        }
+        // Tail - fluffy cotton ball
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), bellyMat);
+        tail.position.set(0, 0.35, -0.18); tail.userData.isTail = true; g.add(tail);
         return g;
     }
 

@@ -277,18 +277,204 @@
         <!-- Multiplayer HUD -->
         <div id="mp-hud" class="hidden">
             <div id="mp-players"><span id="mp-count">1</span> player(s) online</div>
-            <div id="mp-chat-log"></div>
-            <input type="text" id="mp-chat-input" placeholder="Press Enter to chat..." maxlength="200">
-        </div>
-    </div>
-    <script src="icons.js?v=7"></script>
-    <script type="module" src="game.js?v=49"></script>
-    <script>
-        // Prevent default touch behaviors on mobile
-        document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });
 
-        // Clear old service worker / cache once to load fresh custom SVG sprites
-        const SW_VERSION = 'v19';
+            <!-- Harvest progress -->
+            <div id="harvest-progress" class="hidden">
+                <div id="harvest-progress-fill"></div>
+                <span id="harvest-label"></span>
+            </div>
+
+            <!-- Crafting progress (for time-based crafts like bike/car) -->
+            <div id="craft-progress" class="hidden">
+                <div id="craft-progress-fill"></div>
+                <span id="craft-label"></span>
+            </div>
+
+            <!-- Vehicle HUD -->
+            <div id="vehicle-hud" class="hidden"> Riding </div>
+
+            <!-- Bottom controls -->
+            <div id="bottom-controls">
+                <button class="ctrl-btn" id="btn-craft" title="Crafting (Q)">Craft</button>
+                <button class="ctrl-btn" id="btn-build" title="Build (B)">Build</button>
+                <button class="ctrl-btn" id="btn-tech" title="Technology (T)">Tech</button>
+            </div>
+
+            <!-- Quest / Objective tracker -->
+            <div id="quest-tracker">
+                <div id="quest-icon"></div>
+                <div id="quest-text"></div>
+            </div>
+
+            <!-- Notifications -->
+            <div id="notifications"></div>
+
+            <!-- Start screen -->
+            <div id="start-screen">
+                <div class="start-content">
+                    <h1>Explore & Build 3D</h1>
+                    <p class="tagline">First-person 3D survival. Gather resources. Craft tools. Build machines. Research technology. Endless exploration awaits!</p>
+
+                    <div class="how-to-play">
+                        <h3>How to Play</h3>
+                        <div class="htp-section">
+                            <div class="htp-title">1. Explore & Gather</div>
+                            <div class="htp-desc">Walk to <b>trees</b> and <b>rocks</b>. Look at them and press <kbd>E</kbd> or <kbd>Click</kbd> to harvest. You get <b>wood</b>, <b>stone</b>, <b>food</b>, and more. Resources respawn over time!</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">Forage Plants - Beware!</div>
+                            <div class="htp-desc">Look at plants and press <kbd>E</kbd> to pick them up - picking is always safe! Select a food item with <kbd>1-9</kbd> and press <kbd>F</kbd> to eat it. Some plants are nutritious, but some are poisonous or even deadly. You won't know which is which until you eat one!</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">2. Craft Tools</div>
+                            <div class="htp-desc">Press <kbd>Q</kbd> to open crafting. Make a <b>wooden pickaxe</b> (needs wood + stone) to mine harder rocks. Better tools = faster harvesting.</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">3. Build Structures</div>
+                            <div class="htp-desc">Press <kbd>B</kbd> to open build menu. Place a <b>campfire</b> to restore energy. Build <b>furnaces</b> to smelt ore into ingots.</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">4. Research Technology</div>
+                            <div class="htp-desc">Press <kbd>T</kbd> to open the tech tree. You earn <b>Research Points (RP)</b> from harvesting, crafting, and building <b>labs</b>. Unlock new tools, buildings, and automation!</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">5. Automate Everything</div>
+                            <div class="htp-desc">Build <b>mining drills</b>, <b>power plants</b>, <b>assemblers</b>, and <b>solar panels</b>. Create a self-running industrial empire!</div>
+                        </div>
+                        <div class="htp-section">
+                            <div class="htp-title">Survival Tips</div>
+                            <div class="htp-desc"><b>Walking</b> slowly drains energy. <b>Running</b> (hold Shift) drains it faster. <b>Swimming</b> drains energy quickly - if you run out while swimming, you drown! Stay near a campfire to restore energy. If you die, you respawn nearby - no game over, ever!</div>
+                        </div>
+                    </div>
+
+                    <div class="controls-info">
+                        <h3>Controls</h3>
+                        <div class="control-row"><kbd>W A S D</kbd> <span>Move</span></div>
+                        <div class="control-row"><kbd>Shift</kbd> <span>Sprint (uses energy)</span></div>
+                        <div class="control-row"><kbd>Space</kbd> <span>Jump</span></div>
+                        <div class="control-row"><kbd>V</kbd> <span>Hold to climb mountains</span></div>
+                        <div class="control-row"><kbd>Mouse</kbd> <span>Look around</span></div>
+                        <div class="control-row"><kbd>I / Click</kbd> <span>Harvest / Interact / Place</span></div>
+                        <div class="control-row"><kbd>F</kbd> <span>Eat selected food item</span></div>
+                        <div class="control-row"><kbd>G</kbd> <span>Feed nearby animal</span></div>
+                        <div class="control-row"><kbd>R</kbd> <span>Drink water (near lakes/rivers)</span></div>
+                        <div class="control-row"><kbd>C</kbd> <span>Dig soil (makes a hole)</span></div>
+                        <div class="control-row"><kbd>E</kbd> <span>Inventory (1-9 to browse pages)</span></div>
+                        <div class="control-row"><kbd>Q</kbd> <span>Crafting Menu</span></div>
+                        <div class="control-row"><kbd>B</kbd> <span>Build Menu</span></div>
+                        <div class="control-row"><kbd>T</kbd> <span>Technology Tree</span></div>
+                        <div class="control-row"><kbd>ESC</kbd> <span>Cancel / Close / Release mouse</span></div>
+                        <div class="control-row"><kbd>P</kbd> <span>Pause game</span></div>
+                    </div>
+                    <div class="controls-info" id="mobile-controls-info" style="display:none;">
+                        <h3>Mobile Controls</h3>
+                        <div class="control-row"><span>Left joystick</span> <span>Move around</span></div>
+                        <div class="control-row"><span>Right screen drag</span> <span>Look around</span></div>
+                        <div class="control-row"><span>Right screen tap</span> <span>Interact / Attack</span></div>
+                        <div class="control-row"><span>^ Button</span> <span>Jump</span></div>
+                        <div class="control-row"><span>> Button (hold)</span> <span>Sprint</span></div>
+                        <div class="control-row"><span>^ Button (hold)</span> <span>Climb mountains</span></div>
+                        <div class="control-row"><span>X Button</span> <span>Attack creature</span></div>
+                        <div class="control-row"><span>H Button</span> <span>Interact / Harvest</span></div>
+                        <div class="control-row"><span>[H] Button</span> <span>Eat selected food</span></div>
+                        <div class="control-row"><span>F Button</span> <span>Feed nearby animal</span></div>
+                        <div class="control-row"><span>[I] Button</span> <span>Open inventory</span></div>
+                        <div class="control-row"><span>|| Button</span> <span>Pause game</span></div>
+                        <div class="control-row"><span>X Button</span> <span>Cancel build / Close panels</span></div>
+                        <div class="control-row"><span>Tap inventory slot</span> <span>Select item</span></div>
+                    </div>
+                    <div class="online-setup">
+                        <input type="text" id="player-name-input" placeholder="Your name..." maxlength="16">
+                        <span id="online-status">Connecting...</span>
+                    </div>
+                    <button id="start-btn">> Start Game</button>
+                </div>
+            </div>
+
+            <!-- Pause screen -->
+            <div id="pause-screen" class="hidden">
+                <div class="start-content">
+                    <h1>Paused</h1>
+                    <p>Game is paused. Click resume to continue playing.</p>
+                    <button id="resume-btn">> Resume</button>
+                </div>
+            </div>
+
+            <!-- Mobile controls -->
+            <div id="mobile-controls" class="hidden">
+                <!-- Left joystick -->
+                <div id="joystick-zone">
+                    <div id="joystick-base">
+                        <div id="joystick-knob"></div>
+                    </div>
+                </div>
+                <!-- Right action buttons -->
+                <div id="mobile-actions">
+                    <button class="mob-btn" id="mob-jump">^</button>
+                    <button class="mob-btn" id="mob-sprint">></button>
+                    <button class="mob-btn" id="mob-climb">^</button>
+                    <button class="mob-btn" id="mob-attack">X</button>
+                    <button class="mob-btn" id="mob-interact">H</button>
+                </div>
+                <!-- Secondary action buttons (left side, above joystick) -->
+                <div id="mobile-actions-2">
+                    <button class="mob-btn-sm" id="mob-eat">Eat</button>
+                    <button class="mob-btn-sm" id="mob-feed">F</button>
+                    <button class="mob-btn-sm" id="mob-inv">[I]</button>
+                    <button class="mob-btn-sm" id="mob-pause">||</button>
+                    <button class="mob-btn-sm" id="mob-cancel">X</button>
+                </div>
+                <!-- Look area (right side of screen) -->
+                <div id="mobile-look-zone"></div>
+            </div>
+
+            <!-- Mobile toggle button on start screen -->
+            <div id="mobile-toggle-wrapper">
+                <button id="mobile-toggle">Mobile Mode: Off</button>
+            </div>
+
+            <!-- Respawn screen -->
+            <div id="game-over" class="hidden">
+                <div class="start-content">
+                    <h1>You Died!</h1>
+                    <p>The world resets. Try again!</p>
+                    <button id="restart-btn">> Restart</button>
+                </div>
+            </div>
+
+            <!-- Multiplayer HUD -->
+            <div id="mp-hud" class="hidden">
+                <div id="mp-players"><span id="mp-count">1</span> player(s) online</div>
+                <div id="mp-chat-log"></div>
+                <input type="text" id="mp-chat-input" placeholder="Press Enter to chat..." maxlength="200">
+            </div>
+        </div>
+        <script src="icons.js?v=7"></script>
+        <script type="module" src="game.js?v=48"></script>
+        <script>
+            // Prevent default touch behaviors on mobile
+            document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });
+
+            // Clear old service worker / cache once to load fresh custom SVG sprites
+            const SW_VERSION = 'v19';
+            if (localStorage.getItem('sw-version') !== SW_VERSION) {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        for (const r of regs) r.unregister();
+                    });
+                }
+                if ('caches' in window) {
+                    caches.keys().then(keys => {
+                        for (const k of keys) caches.delete(k);
+                    });
+                }
+                localStorage.setItem('sw-version', SW_VERSION);
+                const url = new URL(location.href);
+                url.searchParams.set('nocache', SW_VERSION);
+                location.replace(url.href);
+            }
+
+            // Register service worker for PWA (if supported)
         if (localStorage.getItem('sw-version') !== SW_VERSION) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(regs => {
