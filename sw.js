@@ -1,4 +1,4 @@
-const CACHE_NAME = 'explore-build-v13';
+const CACHE_NAME = 'explore-build-v14';
 const PRECACHE = [
     './style.css',
     './icons.js',
