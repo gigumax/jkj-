@@ -88,6 +88,9 @@ const SPRITES = {
     // --- Misc ---
     quest: '<circle cx="12" cy="12" r="8" fill="#f1c40f" stroke="#f39c12" stroke-width="1.5"/><circle cx="12" cy="12" r="4" fill="#e67e22" stroke="#d35400" stroke-width="1"/><circle cx="12" cy="12" r="1.5" fill="#c0392b"/>',
     locked: '<rect x="6" y="10" width="12" height="10" rx="2" fill="#7f8c8d" stroke="#5d6d7e" stroke-width="1.5"/><path d="M9 10V7a3 3 0 016 0v3" fill="none" stroke="#5d6d7e" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="#2c3e50"/>',
+    camera: '<rect x="3" y="7" width="18" height="13" rx="2" fill="#34495e" stroke="#2c3e50" stroke-width="1.5"/><rect x="8" y="5" width="8" height="4" rx="1" fill="#34495e" stroke="#2c3e50" stroke-width="1.5"/><circle cx="12" cy="13" r="4" fill="#1a1a2e" stroke="#7f8c8d" stroke-width="1.5"/><circle cx="12" cy="13" r="2" fill="#3498db" opacity="0.6"/>',
+    bike: '<circle cx="6" cy="17" r="4" fill="none" stroke="#2c3e50" stroke-width="2"/><circle cx="18" cy="17" r="4" fill="none" stroke="#2c3e50" stroke-width="2"/><path d="M6 17l4-7h6l-2 7M10 10l4 7M14 10h3" stroke="#2c3e50" stroke-width="1.5" fill="none"/><circle cx="10" cy="10" r="1" fill="#e74c3c"/>',
+    car: '<rect x="2" y="12" width="20" height="6" rx="1" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/><rect x="5" y="8" width="14" height="5" rx="1" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/><circle cx="7" cy="18" r="2" fill="#2c3e50"/><circle cx="17" cy="18" r="2" fill="#2c3e50"/><rect x="6" y="9" width="5" height="3" fill="#85c1e9" opacity="0.7"/><rect x="13" y="9" width="5" height="3" fill="#85c1e9" opacity="0.7"/>',
 };
 
 function _svgDataUri(svgInner) {

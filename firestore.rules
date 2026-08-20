@@ -1,0 +1,31 @@
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Players collection: anyone can read, only authenticated users can write their own doc
+    match /players/{playerId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == playerId;
+    }
+
+    // World changes: anyone can read, authenticated users can create
+    match /worldChanges/{changeId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Chat: anyone can read, authenticated users can create
+    match /chat/{messageId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

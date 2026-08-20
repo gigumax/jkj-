@@ -5,6 +5,7 @@
 
 // --- Constants ---
 const TILE_SIZE = 4;       // 3D world units per tile
+window.TILE_SIZE = TILE_SIZE;
 const WORLD_W = 100;
 const WORLD_H = 100;
 const PLAYER_SPEED = 1.5;
@@ -107,6 +108,9 @@ const ITEMS = {
     fishing_rod: { icon: 'fishing_rod', name: 'Fishing Rod', tool: 'fishing' },
     raw_fish:    { icon: 'raw_fish', name: 'Raw Fish', edible: true, energy: 10, health: -3, attackPower: 2 },
     cooked_fish: { icon: 'cooked_fish', name: 'Cooked Fish', edible: true, energy: 22, health: 5, attackPower: 2 },
+    camera:      { icon: 'camera', name: 'Camera', tool: 'camera' },
+    bike:        { icon: 'bike', name: 'Bike', tool: 'vehicle', speedMult: 2.5 },
+    car:         { icon: 'car', name: 'Car', tool: 'vehicle', speedMult: 4.0 },
 };
 
 // --- Creature types ---
@@ -114,7 +118,8 @@ const CREATURE_TYPES = {
     deer:    { name: 'Deer',     health: 20, speed: 3.5, damage: 0,  hostile: false, fleeDist: 12, attackRange: 0, drops: { raw_meat: 2, leather: 1 }, xp: 3, biomes: ['forest','grass'], spawnWeight: 3, canBeFed: true, followChance: 0.08, isPrey: true, canFightWolf: true, eatsGrass: true, alertDist: 15, freezeDuration: 1.5, herdAnimal: true, crepuscular: true },
     fawn:    { name: 'Fawn',     health: 8,  speed: 2.8, damage: 0,  hostile: false, fleeDist: 10, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['forest','grass'], spawnWeight: 2, canBeFed: true, followChance: 0.15, isPrey: true, eatsGrass: true, alertDist: 12, freezeDuration: 2, followsParent: true, crepuscular: true },
     wolf:    { name: 'Wolf',     health: 80, speed: 4.5, damage: 18, hostile: false, fleeDist: 0, attackRange: 2.0, drops: { raw_meat: 2, leather: 1, fang: 2 }, xp: 10, biomes: ['forest','grass'], spawnWeight: 0.15, packSpawn: true, isPredator: true, huntsPrey: true, stalkDist: 20, cautious: true, territorial: true, aggroRange: 6, starveTimer: 60 },
-    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 0.1, aggroWhenAttacked: true, hungerChance: 0.15, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
+    bear:    { name: 'Bear',     health: 150, speed: 3.0, damage: 35, hostile: false, fleeDist: 0, attackRange: 2.8, drops: { raw_meat: 5, leather: 3, fang: 3 }, xp: 20, biomes: ['mountain','forest'], spawnWeight: 2.0, aggroWhenAttacked: true, hungerChance: 0.05, canBeFed: true, followChance: 0.03, isPredator: true, huntsPrey: true, eatsBerries: true, foragesBerries: true, fishes: true, solitary: true, aggroRange: 5, warningDist: 10 },
+    fish:    { name: 'Fish',     health: 1,  speed: 1.5, damage: 0,  hostile: false, fleeDist: 0, attackRange: 0, drops: { raw_fish: 1 }, xp: 1, biomes: ['water'], spawnWeight: 4, isPrey: false, inWater: true },
     rabbit:  { name: 'Rabbit',   health: 8,  speed: 3.5, damage: 0,  hostile: false, fleeDist: 8, attackRange: 0, drops: { raw_meat: 1 }, xp: 1, biomes: ['grass','forest','sand'], spawnWeight: 3, canBeFed: true, followChance: 0.05, isPrey: true, alertDist: 10, freezeDuration: 1.5, zigzag: true, burrowChance: true },
     spider:  { name: 'Spider',   health: 10, speed: 2.5, damage: 6,  hostile: false, fleeDist: 0, attackRange: 1.2, drops: { fang: 1, leather: 1, spider_web: 1 }, xp: 3, biomes: ['desert','mountain','forest'], spawnWeight: 2, aggroWhenAttacked: true, onWeb: true, nocturnal: true },
 };
@@ -136,6 +141,9 @@ const RECIPES = [
     { id: 'hunting_gun',  output: { hunting_gun: 1 },  cost: { iron_ingot: 2, wood: 1, stone: 1 }, tech: 'iron_tools' },
     { id: 'fishing_rod',  output: { fishing_rod: 1 },  cost: { spider_web: 1, wood: 2 }, tech: null },
     { id: 'cooked_fish',  output: { cooked_fish: 1 },  cost: { raw_fish: 1, wood: 1 }, tech: null },
+    { id: 'camera',       output: { camera: 1 },       cost: { circuit: 1, battery: 1, iron_ingot: 2 }, tech: 'electronics' },
+    { id: 'bike',         output: { bike: 1 },         cost: { iron_ingot: 3, gear: 2, leather: 1 }, tech: 'machinery', time: 15 },
+    { id: 'car',          output: { car: 1 },          cost: { iron_ingot: 10, gear: 5, circuit: 2, battery: 2, copper_ingot: 3 }, tech: 'automation', time: 300 },
 ];
 
 // --- Buildings ---
@@ -1013,6 +1021,7 @@ class ModelFactory {
             case 'bear':   { const m = this.createBear(); m.scale.set(1.8, 1.8, 1.8); return m; }
             case 'rabbit': return this.createRabbit();
             case 'spider': { const m = this.createSpider(); m.scale.set(0.4, 0.4, 0.4); return m; }
+            case 'fish':   return this.createFish();
             default: return new THREE.Group();
         }
     }
@@ -1534,6 +1543,39 @@ class ModelFactory {
         }
         return group;
     }
+
+    static createFish() {
+        const g = new THREE.Group();
+        const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6090c0 });
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), bodyMat);
+        body.scale.set(1, 0.5, 1.8);
+        body.castShadow = true;
+        body.userData.isBody = true;
+        g.add(body);
+        // Tail
+        const tailMat = new THREE.MeshLambertMaterial({ color: 0x5080b0 });
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 4), tailMat);
+        tail.position.set(0, 0, -0.4);
+        tail.rotation.x = Math.PI / 2;
+        tail.scale.set(1, 1, 0.3);
+        tail.userData.isTail = true;
+        g.add(tail);
+        // Fin
+        const fin = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.2, 4), tailMat);
+        fin.position.set(0, 0.15, 0);
+        fin.rotation.x = Math.PI;
+        fin.scale.set(0.5, 1, 0.3);
+        g.add(fin);
+        // Eyes
+        const eyeMat = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        for (let s = -1; s <= 1; s += 2) {
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), eyeMat);
+            eye.position.set(s * 0.12, 0.05, 0.2);
+            g.add(eye);
+        }
+        g.scale.set(0.6, 0.6, 0.6);
+        return g;
+    }
 }
 
 // ============================================================
@@ -1548,6 +1590,8 @@ class Game {
         this.pointerLocked = false;
         this.notifications = [];
         this.buildMode = null;
+        this.crafting = null; // { recipe, progress, total, paused }
+        this.mountedVehicle = null; // 'bike' or 'car'
         this.gameRunning = false;
         this.researchPoints = 0;
         this.completedTech = new Set();
@@ -1596,6 +1640,42 @@ class Game {
 
         this.setupInput();
         this.setupUI();
+
+        // Multiplayer
+        this.online = null;
+        this.multiplayerEnabled = true;
+        this.initMultiplayer();
+    }
+
+    async initMultiplayer() {
+        const statusEl = document.getElementById('online-status');
+        try {
+            // Wait for OnlineManager module to load (module scripts are deferred)
+            let tries = 0;
+            while (!window.OnlineManager && tries < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                tries++;
+            }
+            if (window.OnlineManager) {
+                this.online = new OnlineManager(this);
+                await this.online.init();
+                if (statusEl) {
+                    statusEl.textContent = 'Connected';
+                    statusEl.classList.add('connected');
+                }
+            } else {
+                if (statusEl) {
+                    statusEl.textContent = 'Offline mode';
+                    statusEl.classList.add('disconnected');
+                }
+            }
+        } catch (e) {
+            console.warn('Multiplayer init failed:', e);
+            if (statusEl) {
+                statusEl.textContent = 'Offline mode';
+                statusEl.classList.add('disconnected');
+            }
+        }
     }
 
     // --- Three.js setup ---
@@ -1851,6 +1931,10 @@ class Game {
         thumb.position.set(0.18, 0.05, -0.02);
         thumb.rotation.z = -0.5;
         handModel.add(thumb);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.7, 0.14), skinMat);
+        arm.position.set(0, -0.45, 0);
+        arm.userData.isArm = true;
+        handModel.add(arm);
         handModel.traverse(c => { if (c.isMesh) c.castShadow = true; });
         this.handGroup.add(handModel);
 
@@ -1878,8 +1962,34 @@ class Game {
     start() {
       try {
         document.getElementById('start-screen').classList.add('hidden');
-        const seed = Math.floor(Math.random() * 1000000);
+
+        // Read multiplayer settings
+        const nameInput = document.getElementById('player-name-input');
+        const onlineToggle = document.getElementById('online-toggle');
+        if (nameInput && nameInput.value.trim()) {
+            if (this.online) this.online.playerName = nameInput.value.trim().substring(0, 16);
+        }
+        if (onlineToggle) {
+            this.multiplayerEnabled = onlineToggle.checked;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        let seed = Math.floor(Math.random() * 1000000);
+        const urlSeed = params.get('seed');
+        if (urlSeed) {
+            const parsed = parseInt(urlSeed, 10);
+            if (!isNaN(parsed)) seed = parsed;
+        }
+        console.log('World seed:', seed);
         this.initWorldWithSeed(seed);
+
+        // Join multiplayer session
+        if (this.multiplayerEnabled && this.online && this.online.uid) {
+            this.online.joinGame(seed).then(() => {
+                document.getElementById('mp-hud').classList.remove('hidden');
+                this.updateMPCount();
+            }).catch(e => console.warn('Multiplayer join failed:', e));
+        }
       } catch (err) {
         console.error('Game start error:', err);
         alert('Error starting game: ' + err.message + '\n\n' + err.stack);
@@ -2039,8 +2149,20 @@ class Game {
             if (e.key.toLowerCase() === 'f' && this.gameRunning) this.eatSelectedItem();
             if (e.key.toLowerCase() === 'g' && this.gameRunning) this.feedCreature();
             if (e.key.toLowerCase() === 'c' && this.gameRunning) this.dig();
+            if (e.key.toLowerCase() === 'x' && this.gameRunning) this.takeVideo();
             if (e.key.toLowerCase() === 'r' && this.gameRunning) this.drinkWater();
             if (e.key.toLowerCase() === 'p' && this.gameRunning) this.togglePause();
+            if (e.key.toLowerCase() === 'm' && this.gameRunning) this.toggleVehicle();
+            if (e.key.toLowerCase() === 'o' && this.gameRunning) this.toggleCraftPause();
+            // Enter key opens chat in multiplayer
+            if (e.key === 'Enter' && this.gameRunning && this.online && this.online.isOnline) {
+                const chatInput = document.getElementById('mp-chat-input');
+                if (chatInput && document.activeElement !== chatInput) {
+                    e.preventDefault();
+                    if (this.pointerLocked) document.exitPointerLock();
+                    chatInput.focus();
+                }
+            }
             if (e.code === 'Space' && this.gameRunning && this.player.yOffset === 0 && this.player.jumpVel === 0) {
                 this.player.jumpVel = 12;
             }
@@ -2133,6 +2255,45 @@ class Game {
                 document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
                 this.requestPointerLock();
             });
+        });
+        this.setupChatInput();
+    }
+
+    updateMPCount() {
+        const el = document.getElementById('mp-count');
+        if (el && this.online) {
+            el.textContent = this.online.getOnlineCount();
+        }
+    }
+
+    setupChatInput() {
+        const input = document.getElementById('mp-chat-input');
+        if (!input) return;
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const msg = input.value.trim();
+                if (msg && this.online && this.online.isOnline) {
+                    this.online.sendChat(msg);
+                    // Show own message
+                    const log = document.getElementById('mp-chat-log');
+                    if (log) {
+                        const div = document.createElement('div');
+                        div.className = 'chat-msg';
+                        div.innerHTML = `<span class="chat-name">${this.online.playerName}:</span> ${msg.substring(0, 200)}`;
+                        log.appendChild(div);
+                        log.scrollTop = log.scrollHeight;
+                    }
+                }
+                input.value = '';
+                input.blur();
+                if (!this.mobileMode) this.requestPointerLock();
+            }
+            if (e.key === 'Escape') {
+                input.value = '';
+                input.blur();
+                if (!this.mobileMode) this.requestPointerLock();
+            }
+            e.stopPropagation();
         });
     }
 
@@ -2256,6 +2417,46 @@ class Game {
         geo.computeVertexNormals();
     }
 
+    // --- Camera / Video ---
+    takeVideo() {
+        if (!this.player.hasItem('camera', 1)) {
+            this.notify('Need a Camera to record! Craft one with Electronics tech.', 'warning');
+            return;
+        }
+        if (this.recording) {
+            this.notify('Already recording...', 'info');
+            return;
+        }
+        if (!this.online || !this.online.isOnline) {
+            this.notify('Camera requires multiplayer mode to share videos!', 'warning');
+            return;
+        }
+        this.recording = true;
+        this.notify('Recording video... (1.5s)', 'info');
+        const frames = [];
+        const frameCount = 6;
+        const interval = 250; // ms between frames
+        const tmpCanvas = document.createElement('canvas');
+        const vw = 320, vh = 180;
+        tmpCanvas.width = vw;
+        tmpCanvas.height = vh;
+        const tmpCtx = tmpCanvas.getContext('2d');
+        let captured = 0;
+        const captureFrame = () => {
+            if (captured >= frameCount) {
+                this.recording = false;
+                this.notify('Video recorded! Sending to chat...', 'success');
+                this.online.sendVideo(frames);
+                return;
+            }
+            tmpCtx.drawImage(this.canvas, 0, 0, vw, vh);
+            frames.push(tmpCanvas.toDataURL('image/jpeg', 0.4));
+            captured++;
+            setTimeout(captureFrame, interval);
+        };
+        captureFrame();
+    }
+
     // --- Drinking ---
     drinkWater() {
         const p = this.player;
@@ -2319,7 +2520,16 @@ class Game {
 
     forage(tx, ty, tile, resDef) {
         const resKey = this.getLastResourceType(resDef);
-        // Picking up a plant is always safe - effects only apply when eaten
+        this.player.harvesting = { tx, ty, progress: 0, total: 1.5, resource: tile.resource, foraging: true, resKey };
+        this.notify('Foraging...', 'info');
+    }
+
+    completeForage() {
+        const h = this.player.harvesting;
+        const tile = this.world.getTile(h.tx, h.ty);
+        if (!tile || !tile.resource) { this.player.harvesting = null; return; }
+        const resDef = RESOURCE_TYPES[h.resource];
+        const resKey = h.resKey || this.getLastResourceType(resDef);
         for (const [item, amt] of Object.entries(resDef.yields)) {
             this.player.addItem(item, amt);
             const displayName = this.getFoodDisplayName(item);
@@ -2327,13 +2537,17 @@ class Game {
         }
         tile.resource = null;
         tile.resourceAmount = 0;
-        this.removeResourceMesh(tx, ty);
-        this.world.queueRespawn(tx, ty, resKey);
+        this.removeResourceMesh(h.tx, h.ty);
+        this.world.queueRespawn(h.tx, h.ty, resKey);
         this.player.energy = Math.max(0, this.player.energy - 1);
+        this.player.harvesting = null;
         this.researchPoints += 0.3;
         this.updateInventoryUI();
         this.updateUI();
         this.checkQuests();
+        if (this.online && this.online.isOnline) {
+            this.online.sendWorldChange('resourceForaged', { tx: h.tx, ty: h.ty, resource: resKey });
+        }
     }
 
     getLastResourceType(resDef) {
@@ -2635,6 +2849,10 @@ class Game {
         this.researchPoints += 0.5;
         this.updateInventoryUI();
         this.checkQuests();
+        // Sync to multiplayer
+        if (this.online && this.online.isOnline) {
+            this.online.sendWorldChange('resourceHarvested', { tx: h.tx, ty: h.ty, resource: h.resource });
+        }
     }
 
     interactWithBuilding(tx, ty, tile) {
@@ -2714,6 +2932,10 @@ class Game {
         this.updateUI();
         this.renderBuild();
         this.checkQuests();
+        // Sync to multiplayer
+        if (this.online && this.online.isOnline) {
+            this.online.sendWorldChange('buildingPlaced', { tx, ty, buildingType: this.buildMode, buildingData: tile.buildingData });
+        }
     }
 
     // --- Building tick ---
@@ -2970,7 +3192,7 @@ class Game {
     }
 
     getCreatureHeight(type) {
-        const heights = { deer: 2.0, fawn: 1.2, wolf: 1.1, bear: 1.8, rabbit: 0.7, spider: 0.8 };
+        const heights = { deer: 2.0, fawn: 1.2, wolf: 1.1, bear: 1.8, rabbit: 0.7, spider: 0.8, fish: 0.3 };
         return heights[type] || 1.5;
     }
 
@@ -2983,16 +3205,19 @@ class Game {
         let cx = cx0, cz = cz0;
         if (cx < 1 || cx >= WORLD_W - 1 || cz < 1 || cz >= WORLD_H - 1) return;
         const tile = this.world.getTile(cx, cz);
-        if (!tile || !BIOMES[tile.biome].walkable) return;
+        if (!tile) return;
+        // Allow fish in water, other creatures need walkable terrain
+        const isFishTile = tile.biome === 'water';
+        if (!isFishTile && !BIOMES[tile.biome].walkable) return;
         // Pick a creature type that fits the biome, weighted by spawnWeight
         let candidates = Object.entries(CREATURE_TYPES).filter(([_, def]) => def.biomes.includes(tile.biome));
         // Time-based spawning: nocturnal creatures spawn at night, diurnal during day
         if (this.isNight) {
-            // At night: only nocturnal creatures (spider) + wolves
-            candidates = candidates.filter(([t, d]) => d.nocturnal || t === 'wolf');
+            // At night: only nocturnal creatures (spider) + wolves + fish
+            candidates = candidates.filter(([t, d]) => d.nocturnal || t === 'wolf' || d.inWater);
         } else {
-            // During day: block nocturnal creatures (spider)
-            candidates = candidates.filter(([t, d]) => !d.nocturnal);
+            // During day: block nocturnal creatures (spider), keep fish
+            candidates = candidates.filter(([t, d]) => !d.nocturnal || d.inWater);
         }
         if (candidates.length === 0) return;
         // Boost wolf spawn weight by 20% at night for more wolf packs
@@ -3031,7 +3256,10 @@ class Game {
             const px = cx + (Math.random() - 0.5) * 4;
             const pz = cz + (Math.random() - 0.5) * 4;
             const ptile = this.world.getTile(Math.floor(px), Math.floor(pz));
-            if (!ptile || !BIOMES[ptile.biome].walkable) continue;
+            if (!ptile) continue;
+            if (def.inWater) {
+                if (ptile.biome !== 'water') continue;
+            } else if (!BIOMES[ptile.biome].walkable) continue;
             const ph = this.world.getHeightAt(px + 0.5, pz + 0.5);
             this.creatures.push({
                 id: Math.random().toString(36).slice(2),
@@ -3214,32 +3442,57 @@ class Game {
                 c.fishTimer -= dt;
                 if (c.fishTimer <= 0) {
                     const ctx = Math.floor(c.x), ctz = Math.floor(c.z);
-                    // Look for water nearby
-                    let foundWater = false;
-                    for (let sy = -5; sy <= 5 && !foundWater; sy++) {
-                        for (let sx = -5; sx <= 5 && !foundWater; sx++) {
+                    // Look for water nearby (wider search)
+                    let bestWater = null, bestWaterDist = 999;
+                    for (let sy = -15; sy <= 15; sy++) {
+                        for (let sx = -15; sx <= 15; sx++) {
                             const t = this.world.getTile(ctx + sx, ctz + sy);
                             if (t && t.biome === 'water') {
                                 const wx = ctx + sx + 0.5, wz = ctz + sy + 0.5;
                                 const wd = Math.sqrt((wx - c.x) ** 2 + (wz - c.z) ** 2);
-                                if (wd < 2) {
-                                    // At water - try to catch fish
-                                    if (Math.random() < 0.5) {
-                                        this.notify('The bear catches a fish from the water!', 'info');
-                                    }
-                                    c.fishTimer = 30 + Math.random() * 40;
-                                    foundWater = true;
-                                } else {
-                                    c.state = 'seek_water';
-                                    c.targetX = wx;
-                                    c.targetZ = wz;
-                                    c.stateTimer = 8;
-                                    foundWater = true;
+                                if (wd < bestWaterDist) {
+                                    bestWaterDist = wd;
+                                    bestWater = { wx, wz };
                                 }
                             }
                         }
                     }
-                    if (!foundWater) c.fishTimer = 10 + Math.random() * 20;
+                    if (bestWater) {
+                        if (bestWaterDist < 2) {
+                            // At water - try to catch fish
+                            // Look for actual fish creatures nearby
+                            let caughtFish = false;
+                            for (const other of this.creatures) {
+                                if (other.type !== 'fish') continue;
+                                const fdx = other.x - c.x, fdz = other.z - c.z;
+                                if (Math.sqrt(fdx * fdx + fdz * fdz) < 3) {
+                                    // Catch and eat the fish
+                                    const fidx = this.creatures.indexOf(other);
+                                    if (fidx >= 0) {
+                                        this.creatures.splice(fidx, 1);
+                                        const fmesh = this.creatureMeshes.get(other.id);
+                                        if (fmesh) { this.scene.remove(fmesh); this.creatureMeshes.delete(other.id); }
+                                    }
+                                    caughtFish = true;
+                                    if (distToPlayer < 30) this.notify('The bear catches a fish from the lake!', 'info');
+                                    break;
+                                }
+                            }
+                            if (!caughtFish && Math.random() < 0.4) {
+                                if (distToPlayer < 30) this.notify('The bear is fishing in the lake...', 'info');
+                            }
+                            c.fishTimer = 20 + Math.random() * 30;
+                        } else {
+                            // Go to the nearest water
+                            c.state = 'seek_water';
+                            c.targetX = bestWater.wx;
+                            c.targetZ = bestWater.wz;
+                            c.stateTimer = 15;
+                            c.fishTimer = bestWaterDist / c.speed + 5;
+                        }
+                    } else {
+                        c.fishTimer = 15 + Math.random() * 20;
+                    }
                 }
             }
 
@@ -3715,6 +3968,25 @@ class Game {
                 }
             }
 
+            // --- Fish swimming in water ---
+            if (def.inWater) {
+                c.stateTimer -= dt;
+                if (c.stateTimer <= 0) {
+                    // Pick a new random target in water
+                    const ang = Math.random() * Math.PI * 2;
+                    const swimDist = 3 + Math.random() * 8;
+                    const ntx = c.x + Math.cos(ang) * swimDist;
+                    const ntz = c.z + Math.sin(ang) * swimDist;
+                    const ntile = this.world.getTile(Math.floor(ntx), Math.floor(ntz));
+                    if (ntile && ntile.biome === 'water') {
+                        c.targetX = ntx;
+                        c.targetZ = ntz;
+                    }
+                    c.stateTimer = 3 + Math.random() * 5;
+                }
+                c.y = 0.3; // slightly below water surface
+            }
+
             // Move toward target (skip if pounced)
             if (c.pounced) {
                 c.x = p.x;
@@ -3735,7 +4007,8 @@ class Game {
                 const nx = c.x + (tdx / tdist) * speed;
                 const nz = c.z + (tdz / tdist) * speed;
                 const tile = this.world.getTile(Math.floor(nx), Math.floor(nz));
-                if (tile && BIOMES[tile.biome].walkable) {
+                const canMove = tile && (def.inWater ? tile.biome === 'water' : BIOMES[tile.biome].walkable);
+                if (canMove) {
                     // Check height difference - creatures can't climb steep slopes
                     // Bears can climb since they live on mountains
                     const newH = this.world.getHeightAt(nx, nz);
@@ -3903,15 +4176,34 @@ class Game {
         if (!recipe) return;
         if (recipe.tech && !this.completedTech.has(recipe.tech)) { this.notify('Technology not researched!', 'warning'); return; }
         if (!this.player.hasCost(recipe.cost)) { this.notify('Not enough resources!', 'warning'); return; }
+        if (this.crafting) { this.notify('Already crafting! Press O to pause/resume.', 'warning'); return; }
         this.player.payCost(recipe.cost);
-        for (const [item, amt] of Object.entries(recipe.output)) {
-            this.player.addItem(item, amt);
-            this.notify(`Crafted: ${ITEMS[item]?.name || item} x${amt}`, 'success');
+        if (recipe.time) {
+            this.crafting = { recipe, progress: 0, total: recipe.time, paused: false };
+            const mins = Math.floor(recipe.time / 60);
+            const secs = Math.floor(recipe.time % 60);
+            const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            this.notify(`Started crafting ${ITEMS[Object.keys(recipe.output)[0]]?.name}... (${timeStr})`, 'info');
+        } else {
+            for (const [item, amt] of Object.entries(recipe.output)) {
+                this.player.addItem(item, amt);
+                this.notify(`Crafted: ${ITEMS[item]?.name || item} x${amt}`, 'success');
+            }
+            this.researchPoints += 1;
         }
-        this.researchPoints += 1;
         this.updateInventoryUI();
         this.renderCrafting();
         this.checkQuests();
+    }
+
+    toggleCraftPause() {
+        if (!this.crafting) return;
+        this.crafting.paused = !this.crafting.paused;
+        if (this.crafting.paused) {
+            this.notify('Crafting paused. Press O to resume.', 'info');
+        } else {
+            this.notify('Crafting resumed!', 'info');
+        }
     }
 
     // --- Quest System ---
@@ -4345,7 +4637,9 @@ class Game {
         }
         // Cap max horizontal speed
         let maxSpeed = PLAYER_SPEED;
-        if (isSprinting && !isSwimming) maxSpeed *= 1.8;
+        if (this.mountedVehicle === 'bike') maxSpeed *= 2.5;
+        if (this.mountedVehicle === 'car') maxSpeed *= 4.0;
+        if (isSprinting && !isSwimming && !this.mountedVehicle) maxSpeed *= 1.8;
         if (isSwimming) maxSpeed *= 0.5;
         if (isClimbing) maxSpeed *= 0.25;
         if (p.frostbite > 50) maxSpeed *= 0.7;
@@ -4378,8 +4672,6 @@ class Game {
             // Update facing
             p.rotation = Math.atan2(dx, dz);
             if (p.harvesting) p.harvesting = null;
-            p.isClimbing = isClimbing;
-        } else {
             p.isClimbing = isClimbing;
         }
 
@@ -4517,16 +4809,47 @@ class Game {
             this.sun.target.updateMatrixWorld();
         }
 
-        // Harvesting / Fishing
+        // Harvesting / Fishing / Foraging
         if (p.harvesting) {
             p.harvesting.progress += dt;
             if (p.harvesting.progress >= p.harvesting.total) {
                 if (p.harvesting.fishing) this.completeFishing();
+                else if (p.harvesting.foraging) this.completeForage();
                 else this.completeHarvest();
             }
             this.updateHarvestUI();
         } else {
             document.getElementById('harvest-progress').classList.add('hidden');
+        }
+
+        // Time-based crafting (bike, car)
+        if (this.crafting) {
+            if (!this.crafting.paused) {
+                const isLongCraft = this.crafting.total > 60;
+                const energyDrain = isLongCraft ? 2.0 : 0;
+                if (energyDrain > 0 && p.energy <= 1) {
+                    this.notify('Too exhausted to craft! Paused. Eat or rest to resume.', 'warning');
+                    this.crafting.paused = true;
+                } else {
+                    this.crafting.progress += dt;
+                    if (energyDrain > 0) p.energy = Math.max(0, p.energy - dt * energyDrain);
+                    if (this.crafting.progress >= this.crafting.total) {
+                        for (const [item, amt] of Object.entries(this.crafting.recipe.output)) {
+                            this.player.addItem(item, amt);
+                            this.notify(`Crafted: ${ITEMS[item]?.name || item} x${amt}!`, 'success');
+                        }
+                        this.researchPoints += 2;
+                        this.crafting = null;
+                        this.updateInventoryUI();
+                        this.renderCrafting();
+                        this.checkQuests();
+                    }
+                }
+            }
+            this.updateCraftProgressUI();
+        } else {
+            const cp = document.getElementById('craft-progress');
+            if (cp) cp.classList.add('hidden');
         }
 
         // Interaction prompt (throttled)
@@ -4822,6 +5145,23 @@ class Game {
             this.buildPreview = null;
         }
         this.updateHand(dt);
+
+        // Vehicle HUD
+        const vhud = document.getElementById('vehicle-hud');
+        if (vhud) {
+            if (this.mountedVehicle) {
+                vhud.textContent = this.mountedVehicle === 'car' ? '🚗 Driving Car (M to dismount)' : '🚲 Riding Bike (M to dismount)';
+                vhud.classList.remove('hidden');
+            } else {
+                vhud.classList.add('hidden');
+            }
+        }
+
+        // Multiplayer sync
+        if (this.online && this.online.isOnline) {
+            this.online.update(dt);
+            this.updateMPCount();
+        }
     }
 
     updateHand(dt) {
@@ -4831,7 +5171,7 @@ class Game {
         let isMining = false;
 
         if (p.harvesting && !p.harvesting.fishing) {
-            // Mining: place the hand near the resource being harvested
+            // Mining or foraging: place the hand near the resource
             const key = `${p.harvesting.tx},${p.harvesting.ty}`;
             const mesh = this.resourceMeshes.get(key);
             if (mesh) {
@@ -4844,7 +5184,7 @@ class Game {
                     p.harvesting.ty * TILE_SIZE + TILE_SIZE / 2
                 );
             }
-            isMining = true;
+            isMining = !p.harvesting.foraging; // show tool for mining, bare hand for foraging
         } else if (p.isClimbing) {
             // Climbing: raycast to a mountain bump in front/right of the camera
             const localDir = new THREE.Vector3(0.5, -0.4, -0.7).normalize();
@@ -4874,6 +5214,15 @@ class Game {
                     .add(new THREE.Vector3(0, -0.1 + swing * 0.2, 0));
                 this.handGroup.lookAt(target);
                 this.handGroup.rotateZ(swing * 0.4);
+            } else if (p.harvesting && p.harvesting.foraging) {
+                // Foraging: gentle reaching motion toward berries
+                const reach = (Math.sin(this.time * 5) + 1) * 0.5;
+                this.handGroup.position.copy(target)
+                    .add(out.multiplyScalar(0.2))
+                    .add(right.multiplyScalar(0.1))
+                    .add(new THREE.Vector3(0, -0.05 + reach * 0.15, 0));
+                this.handGroup.lookAt(target);
+                this.handGroup.rotateZ(reach * 0.2);
             } else {
                 this.handGroup.position.copy(target)
                     .add(out.multiplyScalar(0.15))
@@ -4945,6 +5294,11 @@ class Game {
             el.classList.remove('hidden');
             return;
         }
+        if (h.foraging) {
+            label.textContent = `Foraging...`;
+            el.classList.remove('hidden');
+            return;
+        }
         const resDef = RESOURCE_TYPES[h.resource];
         const pct = (h.progress / h.total) * 100;
         fill.style.width = pct + '%';
@@ -4953,6 +5307,40 @@ class Game {
         const displayName = isMystery ? 'Mysterious Food' : resDef.name;
         label.textContent = `Harvesting ${displayName}...`;
         el.classList.remove('hidden');
+    }
+
+    updateCraftProgressUI() {
+        const el = document.getElementById('craft-progress');
+        if (!el || !this.crafting) return;
+        const fill = document.getElementById('craft-progress-fill');
+        const label = document.getElementById('craft-label');
+        const pct = (this.crafting.progress / this.crafting.total) * 100;
+        fill.style.width = pct + '%';
+        const itemName = ITEMS[Object.keys(this.crafting.recipe.output)[0]]?.name || 'Item';
+        const remaining = Math.ceil(this.crafting.total - this.crafting.progress);
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        const status = this.crafting.paused ? ' (PAUSED - press O)' : '';
+        label.textContent = `Crafting ${itemName}... ${timeStr} left${status}`;
+        el.classList.remove('hidden');
+    }
+
+    toggleVehicle() {
+        if (this.mountedVehicle) {
+            this.mountedVehicle = null;
+            this.notify('Dismounted vehicle', 'info');
+            return;
+        }
+        if (this.player.hasItem('car', 1)) {
+            this.mountedVehicle = 'car';
+            this.notify('Driving car! Press M to dismount.', 'success');
+        } else if (this.player.hasItem('bike', 1)) {
+            this.mountedVehicle = 'bike';
+            this.notify('Riding bike! Press M to dismount.', 'success');
+        } else {
+            this.notify('No vehicle to mount! Craft a bike or car.', 'warning');
+        }
     }
 
     // --- Render ---
@@ -5241,7 +5629,9 @@ class Game {
                 const has = this.player.hasItem(item, amt);
                 return `<span class="cost-item${has ? '' : ' lacking'}">${sprite(ITEMS[item]?.icon)} ${amt}</span>`;
             }).join('');
-            card.innerHTML = `<div class="recipe-header"><span class="recipe-icon">${sprite(ITEMS[Object.keys(recipe.output)[0]]?.icon)}</span><span class="recipe-name">${outItems}</span></div><div class="recipe-cost">Cost: ${costItems}</div>`;
+            const timeStr = recipe.time ? (recipe.time > 60 ? `${Math.floor(recipe.time/60)}m ${recipe.time%60}s` : `${recipe.time}s`) : '';
+            const timeHtml = timeStr ? `<span style="color:#f0c070;font-size:11px;"> ⏱ ${timeStr}</span>` : '';
+            card.innerHTML = `<div class="recipe-header"><span class="recipe-icon">${sprite(ITEMS[Object.keys(recipe.output)[0]]?.icon)}</span><span class="recipe-name">${outItems}${timeHtml}</span></div><div class="recipe-cost">Cost: ${costItems}</div>`;
             card.addEventListener('click', (e) => { e.stopPropagation(); this.craft(recipe.id); });
             list.appendChild(card);
         }
@@ -5304,6 +5694,9 @@ class Game {
         }
     }
 }
+
+// Expose to module scripts
+window.ModelFactory = ModelFactory;
 
 // --- Start ---
 const game = new Game();
