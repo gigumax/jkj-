@@ -1963,15 +1963,12 @@ class Game {
       try {
         document.getElementById('start-screen').classList.add('hidden');
 
-        // Read multiplayer settings
+        // Read player name
         const nameInput = document.getElementById('player-name-input');
-        const onlineToggle = document.getElementById('online-toggle');
         if (nameInput && nameInput.value.trim()) {
             if (this.online) this.online.playerName = nameInput.value.trim().substring(0, 16);
         }
-        if (onlineToggle) {
-            this.multiplayerEnabled = onlineToggle.checked;
-        }
+        this.multiplayerEnabled = true; // always online
 
         const params = new URLSearchParams(window.location.search);
         let seed = Math.floor(Math.random() * 1000000);
@@ -1983,12 +1980,22 @@ class Game {
         console.log('World seed:', seed);
         this.initWorldWithSeed(seed);
 
-        // Join multiplayer session
-        if (this.multiplayerEnabled && this.online && this.online.uid) {
+        // Join multiplayer session (always online)
+        if (this.online && this.online.uid) {
             this.online.joinGame(seed).then(() => {
                 document.getElementById('mp-hud').classList.remove('hidden');
                 this.updateMPCount();
             }).catch(e => console.warn('Multiplayer join failed:', e));
+        } else if (this.online) {
+            // OnlineManager loaded but auth not ready yet — wait then join
+            this.online.init().then(() => {
+                if (this.online && this.online.uid) {
+                    this.online.joinGame(seed).then(() => {
+                        document.getElementById('mp-hud').classList.remove('hidden');
+                        this.updateMPCount();
+                    }).catch(e => console.warn('Multiplayer join failed:', e));
+                }
+            }).catch(e => console.warn('Multiplayer init failed:', e));
         }
       } catch (err) {
         console.error('Game start error:', err);
