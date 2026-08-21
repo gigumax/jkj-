@@ -1718,6 +1718,7 @@ class Game {
 
     async initMultiplayer() {
         const statusEl = document.getElementById('online-status');
+        if (this._mpAuthFailed) return;
         try {
             this.online = new OnlineManager(this);
             await this.online.init();
@@ -1726,12 +1727,24 @@ class Game {
                 statusEl.classList.add('connected');
             }
         } catch (e) {
+            const permanent = e && ['auth/configuration-not-found', 'auth/invalid-api-key', 'auth/operation-not-allowed', 'auth/unauthorized-domain'].includes(e.code);
+            if (permanent) {
+                this._mpAuthFailed = true;
+                this.online = null;
+                console.warn('Multiplayer unavailable:', e.code, e.message);
+                if (statusEl) {
+                    statusEl.textContent = 'Offline (auth not configured)';
+                    statusEl.classList.add('disconnected');
+                }
+                this.notify('Multiplayer is disabled: Firebase Anonymous sign-in is not configured.', 'warning');
+                return;
+            }
             console.warn('Multiplayer init failed:', e);
             if (statusEl) {
                 statusEl.textContent = 'Offline (sign-in failed)';
                 statusEl.classList.add('disconnected');
             }
-            // Retry auth on failure every 5s
+            // Retry transient auth failures after a short delay
             setTimeout(() => this.initMultiplayer(), 5000);
         }
     }
