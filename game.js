@@ -1726,8 +1726,15 @@ class Game {
                 statusEl.textContent = 'Connected';
                 statusEl.classList.add('connected');
             }
+            if (this._pendingJoinSeed) {
+                this.online.joinGame(this._pendingJoinSeed).then(() => {
+                    document.getElementById('mp-hud').classList.remove('hidden');
+                    this.updateMPCount();
+                }).catch(e => console.warn('Multiplayer join failed:', e));
+            }
         } catch (e) {
-            const permanent = e && ['auth/configuration-not-found', 'auth/invalid-api-key', 'auth/operation-not-allowed', 'auth/unauthorized-domain'].includes(e.code);
+            const permanent = e && (['auth/configuration-not-found', 'auth/invalid-api-key', 'auth/operation-not-allowed', 'auth/unauthorized-domain', 'auth/argument-error'].includes(e.code) ||
+                (typeof e.message === 'string' && /configuration-not-found|invalid-api-key|operation-not-allowed|unauthorized-domain|anonymous sign-in/i.test(e.message)));
             if (permanent) {
                 this._mpAuthFailed = true;
                 this.online = null;
@@ -2057,22 +2064,17 @@ class Game {
         console.log('World seed:', seed);
         this.initWorldWithSeed(seed);
 
-        // Join multiplayer session (always online)
-        if (this.online && this.online.uid) {
+        // Join multiplayer session if already authenticated
+        if (this._mpAuthFailed) {
+            // permanently offline - silently skip
+        } else if (this.online && this.online.uid) {
             this.online.joinGame(seed).then(() => {
                 document.getElementById('mp-hud').classList.remove('hidden');
                 this.updateMPCount();
             }).catch(e => console.warn('Multiplayer join failed:', e));
         } else if (this.online) {
-            // OnlineManager loaded but auth not ready yet — wait then join
-            this.online.init().then(() => {
-                if (this.online && this.online.uid) {
-                    this.online.joinGame(seed).then(() => {
-                        document.getElementById('mp-hud').classList.remove('hidden');
-                        this.updateMPCount();
-                    }).catch(e => console.warn('Multiplayer join failed:', e));
-                }
-            }).catch(e => console.warn('Multiplayer init failed:', e));
+            // Auth still in progress - join once it finishes
+            this._pendingJoinSeed = seed;
         }
       } catch (err) {
         console.error('Game start error:', err);
