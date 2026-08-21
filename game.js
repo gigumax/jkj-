@@ -4862,6 +4862,8 @@ class Game {
         if (isSwimming) {
             p.energy = Math.max(0, p.energy - dt * 0.5);
         }
+        // Ground height for dive/breath calculations
+        const groundY = this.world.getHeightAt(p.x, p.z);
         // Diving mechanics: when diving in water, lower yOffset to go underwater
         if (isSwimming && p.isDiving) {
             p.yOffset = Math.max(p.yOffset - dt * 3, -6); // dive down up to 6 units
@@ -4880,10 +4882,14 @@ class Game {
             if (p.breath <= 0) {
                 p.health = Math.max(0, p.health - dt * 5); // drowning damage
                 if (p.health <= 0) { this.notify('You drowned!', 'danger'); this.respawn(); return; }
+            } else if (p.breath < 25 && !this._lowBreathWarned) {
+                this._lowBreathWarned = true;
+                this.notify('Running out of breath! Surface to breathe!', 'warning');
             }
         } else {
             // Regenerate breath when at surface
             p.breath = Math.min(p.maxBreath, p.breath + dt * 25);
+            this._lowBreathWarned = false;
         }
         // Climbing costs energy
         if (p.isClimbing) {
@@ -4894,7 +4900,6 @@ class Game {
         p.z = Math.max(0.5, Math.min(WORLD_H - 0.5, p.z));
 
         // Update player Y to terrain height + jump offset
-        const groundY = this.world.getHeightAt(p.x, p.z);
         // Jump physics (skip when swimming - diving manages yOffset separately)
         if (!isSwimming && (p.jumpVel !== 0 || p.yOffset > 0 || p.yOffset < 0)) {
             p.yOffset += p.jumpVel * dt;
@@ -5735,6 +5740,17 @@ class Game {
         if (hungerBar) hungerBar.style.width = (this.player.hunger / this.player.maxHunger * 100) + '%';
         const thirstBar = document.getElementById('thirst-bar');
         if (thirstBar) thirstBar.style.width = (this.player.thirst / this.player.maxThirst * 100) + '%';
+        // Breath bar: only visible when swimming
+        const breathHud = document.getElementById('hud-breath');
+        const breathBar = document.getElementById('breath-bar');
+        const ptx2 = Math.floor(this.player.x), pty2 = Math.floor(this.player.z);
+        const swimTile = this.world.getTile(ptx2, pty2);
+        const swimmingNow = swimTile && swimTile.biome === 'water';
+        if (breathHud) breathHud.style.display = swimmingNow ? '' : 'none';
+        if (breathBar) {
+            breathBar.style.width = (this.player.breath / this.player.maxBreath * 100) + '%';
+            breathBar.style.background = this.player.breath < 30 ? '#e74c3c' : '#3498db';
+        }
         const tempEl = document.getElementById('temp-display');
         if (tempEl) {
             const t = Math.round(this.player.temperature);
