@@ -1334,7 +1334,7 @@ class ModelFactory {
         const pinkMat = new THREE.MeshLambertMaterial({ color: 0xddaaaa });
         // Body - round, compact
         const body = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 7), bodyMat);
-        body.position.set(0, 0.32, 0); body.scale.set(1, 0.9, 1.3);
+        body.position.set(0, 0.32, 0); body.scale.set(1, 0.95, 1.2);
         body.castShadow = true; body.userData.isBody = true; g.add(body);
         // Head - slightly smaller sphere
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 7, 6), bodyMat);
@@ -1369,8 +1369,8 @@ class ModelFactory {
             foot.position.set(s * 0.09, 0.05, 0.02); foot.rotation.x = Math.PI / 2; g.add(foot);
         }
         // Tail - fluffy cotton ball
-        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), bellyMat);
-        tail.position.set(0, 0.35, -0.18); tail.userData.isTail = true; g.add(tail);
+        const tail = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), bellyMat);
+        tail.position.set(0, 0.34, -0.18); tail.userData.isTail = true; g.add(tail);
         return g;
     }
 
@@ -1378,9 +1378,9 @@ class ModelFactory {
         const g = new THREE.Group();
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2a });
         const legMat = new THREE.MeshLambertMaterial({ color: 0x0a0a1a });
-        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6), bodyMat);
-        abdomen.position.set(0, 0.48, -0.15); abdomen.scale.set(1, 0.7, 1.2); abdomen.castShadow = true; abdomen.userData.isBody = true; g.add(abdomen);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 5), bodyMat);
+        const abdomen = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), bodyMat);
+        abdomen.position.set(0, 0.48, -0.18); abdomen.scale.set(0.9, 0.65, 1.05); abdomen.castShadow = true; abdomen.userData.isBody = true; g.add(abdomen);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 5), bodyMat);
         head.position.set(0, 0.42, 0.35); head.userData.isHead = true; g.add(head);
         const eyeMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
         for (let i = 0; i < 4; i++) {
@@ -1399,17 +1399,17 @@ class ModelFactory {
             const side = i < 4 ? -1 : 1;
             const idx = i % 4;
             const z = -0.05 + idx * 0.12;
-            const femur = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.5, 4, 5), legMat);
+            const femur = new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.55, 4, 5), legMat);
             femur.position.set(side * 0.18, 0.4, z);
-            femur.rotation.z = side * 0.8;
+            femur.rotation.z = side * 0.9;
             femur.castShadow = true; femur.userData.isLeg = true; g.add(femur);
-            const tibia = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.45, 4, 5), legMat);
+            const tibia = new THREE.Mesh(new THREE.CapsuleGeometry(0.015, 0.5, 4, 5), legMat);
             tibia.position.set(side * 0.42, 0.15, z);
-            tibia.rotation.z = side * -0.6;
+            tibia.rotation.z = side * -0.7;
             tibia.rotation.x = 0.4; g.add(tibia);
-            const tarsus = new THREE.Mesh(new THREE.CapsuleGeometry(0.015, 0.25, 4, 5), legMat);
+            const tarsus = new THREE.Mesh(new THREE.CapsuleGeometry(0.01, 0.3, 4, 5), legMat);
             tarsus.position.set(side * 0.62, 0.04, z - 0.05);
-            tarsus.rotation.z = side * -1.1;
+            tarsus.rotation.z = side * -1.2;
             g.add(tarsus);
         }
         return g;
@@ -1616,17 +1616,17 @@ class ModelFactory {
     static createFish() {
         const g = new THREE.Group();
         const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6090c0 });
-        const body = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), bodyMat);
-        body.scale.set(1, 0.5, 1.8);
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), bodyMat);
+        body.scale.set(0.8, 0.45, 2.0);
         body.castShadow = true;
         body.userData.isBody = true;
         g.add(body);
         // Tail
         const tailMat = new THREE.MeshLambertMaterial({ color: 0x5080b0 });
-        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 4), tailMat);
-        tail.position.set(0, 0, -0.4);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 4), tailMat);
+        tail.position.set(0, 0, -0.45);
         tail.rotation.x = Math.PI / 2;
-        tail.scale.set(1, 1, 0.3);
+        tail.scale.set(1, 0.8, 0.25);
         tail.userData.isTail = true;
         g.add(tail);
         // Fin
