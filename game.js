@@ -1044,13 +1044,13 @@ class ModelFactory {
         // Body - tapered, deeper at chest, slimmer at rear
         const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.9, 6, 10), bodyMat);
         torso.rotation.x = Math.PI / 2; torso.position.set(0, 1.0, 0);
-        torso.scale.set(1, 1.15, 1); torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
+        torso.scale.set(1, 1.05, 1); torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
         // Chest - fuller front
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 6), bodyMat);
-        chest.position.set(0, 1.0, 0.48); chest.scale.set(0.9, 1.1, 0.85); g.add(chest);
-        // Rump - rounded rear
-        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
-        rump.position.set(0, 1.02, -0.5); rump.scale.set(0.85, 0.9, 0.9); g.add(rump);
+        chest.position.set(0, 1.0, 0.48); chest.scale.set(0.9, 1.05, 0.8); g.add(chest);
+        // Rump - small tapered rear
+        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 6), bodyMat);
+        rump.position.set(0, 0.98, -0.48); rump.scale.set(0.65, 0.7, 0.75); g.add(rump);
         // Belly - lighter underside
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 5), bellyMat);
         belly.position.set(0, 0.88, 0); belly.scale.set(0.8, 0.5, 1.2); g.add(belly);
@@ -1111,13 +1111,13 @@ class ModelFactory {
         // Body - small, round
         const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.5, 5, 8), bodyMat);
         torso.rotation.x = Math.PI / 2; torso.position.set(0, 0.55, 0);
-        torso.scale.set(1, 1.1, 1); torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
+        torso.scale.set(1, 1.05, 1); torso.castShadow = true; torso.userData.isBody = true; g.add(torso);
         // Chest
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 5), bodyMat);
         chest.position.set(0, 0.55, 0.25); chest.scale.set(0.85, 1, 0.8); g.add(chest);
         // Rump
-        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.14, 7, 5), bodyMat);
-        rump.position.set(0, 0.56, -0.28); rump.scale.set(0.8, 0.85, 0.85); g.add(rump);
+        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.11, 7, 5), bodyMat);
+        rump.position.set(0, 0.54, -0.27); rump.scale.set(0.6, 0.7, 0.75); g.add(rump);
         // Neck - short
         const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.3, 4, 6), bodyMat);
         neck.position.set(0, 0.72, 0.3); neck.rotation.x = -0.45; g.add(neck);
