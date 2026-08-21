@@ -56,6 +56,10 @@
                 <span class="hud-icon" id="hud-thirst-icon"></span>
                 <div class="hud-bar"><div class="hud-bar-fill" id="thirst-bar"></div></div>
             </div>
+            <div class="hud-item" id="hud-breath" style="display:none;">
+                <span class="hud-icon">🫧</span>
+                <div class="hud-bar"><div class="hud-bar-fill" id="breath-bar" style="background:#3498db;"></div></div>
+            </div>
             <div class="hud-item" id="hud-temp">
                 <span class="hud-icon" id="hud-temp-icon"></span>
                 <span id="temp-display">20C</span>
@@ -282,13 +286,13 @@
         </div>
     </div>
     <script src="icons.js?v=7"></script>
-    <script type="module" src="game.js?v=49"></script>
+    <script type="module" src="game.js?v=55"></script>
     <script>
         // Prevent default touch behaviors on mobile
         document.addEventListener('touchmove', (e) => { if (e.scale && e.scale !== 1) e.preventDefault(); }, { passive: false });
 
         // Clear old service worker / cache once to load fresh custom SVG sprites
-        const SW_VERSION = 'v19';
+        const SW_VERSION = 'v26';
         if (localStorage.getItem('sw-version') !== SW_VERSION) {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(regs => {

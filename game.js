@@ -1220,8 +1220,8 @@ class ModelFactory {
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), bodyMat);
         chest.position.set(0, 0.62, 0.35); chest.scale.set(0.85, 1.15, 0.8); g.add(chest);
         // Slim waist
-        const waist = new THREE.Mesh(new THREE.SphereGeometry(0.17, 7, 5), bodyMat);
-        waist.position.set(0, 0.68, -0.38); waist.scale.set(0.75, 0.85, 0.8); g.add(waist);
+        const waist = new THREE.Mesh(new THREE.SphereGeometry(0.15, 7, 5), bodyMat);
+        waist.position.set(0, 0.66, -0.36); waist.scale.set(0.7, 0.75, 0.75); g.add(waist);
         // Belly
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 5), bellyMat);
         belly.position.set(0, 0.55, 0); belly.scale.set(0.75, 0.45, 1.1); g.add(belly);
@@ -1280,8 +1280,8 @@ class ModelFactory {
         const chest = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), bodyMat);
         chest.position.set(0, 0.78, 0.42); chest.scale.set(0.9, 1, 0.85); g.add(chest);
         // Rump - rounded
-        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.33, 8, 6), bodyMat);
-        rump.position.set(0, 0.78, -0.4); rump.scale.set(0.85, 0.9, 0.9); g.add(rump);
+        const rump = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), bodyMat);
+        rump.position.set(0, 0.76, -0.4); rump.scale.set(0.75, 0.8, 0.85); g.add(rump);
         // Belly - lower
         const belly = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 5), bellyMat);
         belly.position.set(0, 0.62, 0); belly.scale.set(0.85, 0.6, 1.1); g.add(belly);
@@ -1363,8 +1363,8 @@ class ModelFactory {
         }
         // Back legs - folded, powerful
         for (let s = -1; s <= 1; s += 2) {
-            const thigh = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), legMat);
-            thigh.position.set(s * 0.09, 0.2, -0.08); thigh.scale.set(1, 1.3, 0.8); thigh.userData.isLeg = true; g.add(thigh);
+            const thigh = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 5), legMat);
+            thigh.position.set(s * 0.09, 0.18, -0.08); thigh.scale.set(0.9, 1.0, 0.7); thigh.userData.isLeg = true; g.add(thigh);
             const foot = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.12, 4, 6), legMat);
             foot.position.set(s * 0.09, 0.05, 0.02); foot.rotation.x = Math.PI / 2; g.add(foot);
         }
@@ -3369,7 +3369,7 @@ class Game {
             } else if (type === 'bear' && (ptile.biome === 'mountain' || ptile.biome === 'snow' || ptile.biome === 'water')) {
                 continue;
             } else if (!BIOMES[ptile.biome].walkable) continue;
-            const ph = def.inWater ? this.world.getHeightAt(px + 0.5, pz + 0.5) : this.world.getTileHeight(Math.floor(px + 0.5), Math.floor(pz + 0.5));
+            const ph = this.world.getHeightAt(px + 0.5, pz + 0.5);
             this.creatures.push({
                 id: Math.random().toString(36).slice(2),
                 type, x: px + 0.5, z: pz + 0.5, y: ph,
@@ -4182,7 +4182,7 @@ class Game {
                 const canMove = tile && (def.inWater ? tile.biome === 'water' : BIOMES[tile.biome].walkable);
                 if (canMove) {
                     // Check height difference - creatures can't climb steep slopes (can descend)
-                    const newH = def.inWater ? this.world.getHeightAt(nx, nz) : this.world.getTileHeight(Math.floor(nx), Math.floor(nz));
+                    const newH = this.world.getHeightAt(nx, nz);
                     const dy = newH - c.y;
                     const moveDist = Math.sqrt((nx - c.x) ** 2 + (nz - c.z) ** 2) || 0.001;
                     const maxCreatureSlope = 1.2; // max upward slope (units per tile)
