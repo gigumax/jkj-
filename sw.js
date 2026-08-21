@@ -1,4 +1,4 @@
-const CACHE_NAME = 'explore-build-v28';
+const CACHE_NAME = 'explore-build-v30';
 const PRECACHE = [
     './style.css',
     './icons.js',
@@ -25,7 +25,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
     const { request } = e;
     // Always fetch index.html and game.js from the network first to avoid stale code
-    if (request.destination === 'document' || request.url.includes('game.js?v=56') || request.url.includes('online-manager') || request.url.includes('firebase-init')) {
+    if (request.destination === 'document' || request.url.includes('game.js') || request.url.includes('online-manager') || request.url.includes('firebase-init')) {
         e.respondWith(
             fetch(request).then((resp) => {
                 if (resp && resp.status === 200 && request.method === 'GET') {
