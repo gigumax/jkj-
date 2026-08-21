@@ -4858,7 +4858,7 @@ class Game {
             if (canStep(p.x, newZ)) p.z = newZ; else p.vz = 0;
             // Update facing
             p.rotation = Math.atan2(dx, dz);
-            if (p.harvesting) p.harvesting = null;
+            if (p.harvesting && (dx !== 0 || dz !== 0)) p.harvesting = null;
             p.isClimbing = isClimbing;
         }
 
